@@ -1,0 +1,44 @@
+[build-system]
+requires = ["flit_core>=3.2"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "beam_networks"
+description = "Solver for Timoshenko beam networks"
+readme = "README.md"
+authors = [
+    { name = "Hannes Holey", email = "hannes.holey@unimi.it" },
+    { name = "Stefan Hiemer", email = "stefan.hiemer@unimi.it" },
+]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Programming Language :: Python",
+    "Private :: Do Not Upload",
+]
+
+requires-python = ">=3.8"
+dynamic = ["version"]
+dependencies = ["numpy",
+                "jax",
+                "matplotlib",
+                "scipy",
+                "tqdm",
+                "pandas[hdf5]",
+                "meshio",
+                "h5py",
+                "trimesh[easy]",
+                "PyYAML"]
+
+[project.optional-dependencies]
+tests = ['pytest', 'coverage']
+doc = ['sphinx', 'sphinx_rtd_theme']
+
+[project.scripts]
+vtk2img = "timoshenko_solver.viz:vtk2img"
+
+[tool.pytest.ini_options]
+addopts = "-v -m 'not slow'"
+testpaths = ["tests"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
