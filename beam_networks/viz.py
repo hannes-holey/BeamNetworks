@@ -9,8 +9,6 @@ from matplotlib.collections import LineCollection
 from matplotlib.colors import Normalize
 import matplotlib
 
-from beam_networks.analyze import get_crack
-
 
 def _plot_network(ax, nodes, edges, dr,
                   edge_data=None,
@@ -116,29 +114,6 @@ def _plot_network(ax, nodes, edges, dr,
     return ax
 
 
-def _plot_crack_graph(ax, nodes, edges, removed_edges):
-    """Plot crack as red line
-
-    Parameters
-    ----------
-    ax : matplotlib.pyplot.axis object
-        Axis to plot into
-    nodes : np.ndarray
-        Nodal coordinates
-    edges : np.ndarray
-        Edge connectivity
-    removed_edges : np.ndarray
-        Removed edges
-    """
-
-    crack_nodes, crack_edges, length = get_crack(nodes, edges, removed_edges, nbound=10)
-
-    dr = crack_nodes[crack_edges[:, 1]] - crack_nodes[crack_edges[:, 0]]
-
-    if crack_edges is not None:
-        _plot_network(ax, crack_nodes, crack_edges, dr, color='C3', lw=2)
-
-
 def plot_solution_1D(ax, d, s, length=1.):
     """Plot a 1D solution along a 1D beam (composed of more than one element)
 
@@ -230,8 +205,6 @@ def _array_to_colors(arr, lim=None, cmap='plasma'):
 
 
 def vtk2img(wdir=None, dpi=300, cbar_global_lim=False, ftype='png'):
-
-    # TODO: deformed, undeformed in background, crack
 
     if wdir is None:
         parser = ArgumentParser()

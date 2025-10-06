@@ -8,7 +8,7 @@ from beam_networks.assembly import assemble_global_system
 from beam_networks.stress import get_element_mises_stress, get_element_principal_stress
 from beam_networks.bc import _get_bc_dof, _assemble_BCs
 from beam_networks.utils import check_input_dict, _remove_isolated_nodes_edges, _mic
-from beam_networks.viz import _plot_network, _plot_crack_graph
+from beam_networks.viz import _plot_network
 from beam_networks.io import _to_vtk, _to_vtk_periodic, _to_stl, _from_tar, _to_tar
 
 

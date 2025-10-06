@@ -162,56 +162,6 @@ def point_selection(nodes, point, num=1):
     return node_mask
 
 
-def _ccw(A, B, C):
-    """Check if points A, B, and C are counter-clockwise (2D only)
-
-    Parameters
-    ----------
-    A : array-like
-        Coordinates of point A
-    B : array-like
-        Coordinates of point B
-    C : array-like
-        Coordinates of point C
-
-    Returns
-    -------
-    bool
-        True if counter-clockwise
-    """
-
-    Ax, Ay = A
-    Bx, By = B
-    Cx, Cy = C
-
-    return (Cy - Ay) * (Bx - Ax) > (By - Ay) * (Cx - Ax)
-
-
-def _intersect(A, B, C, D):
-    """Check if segments AB and CD intersect (in 2D)
-
-    Parameters
-    ----------
-    A : array-like
-        Coordinates of point A
-    B : array-like
-        Coordinates of point B
-    C : array-like
-        Coordinates of point C
-    D : array-like
-        Coordinates of point D
-
-    Returns
-    -------
-    bool
-        True if segments intersect
-    """
-    m_1 = _ccw(A, C, D) != _ccw(B, C, D)
-    m_2 = _ccw(A, B, C) != _ccw(A, B, D)
-
-    return np.logical_and(m_1, m_2)
-
-
 def _threshold_bondlength(nodes, edges, threshold=None):
     """Select bondlengths smaller than a certain threshold
 

@@ -34,7 +34,7 @@ tests = ['pytest', 'coverage']
 doc = ['sphinx', 'sphinx_rtd_theme']
 
 [project.scripts]
-vtk2img = "timoshenko_solver.viz:vtk2img"
+vtk2img = "beam_networks.viz:vtk2img"
 
 [tool.pytest.ini_options]
 addopts = "-v -m 'not slow'"
