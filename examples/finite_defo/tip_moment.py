@@ -30,7 +30,7 @@ def simple_plot(ax, nodes, edges, c=1., cmap=plt.cm.coolwarm):
 
 if __name__ == "__main__":
 
-    plt.style.use('paper.mplstyle')
+    plt.style.use('../paper.mplstyle')
     sx, sy = plt.rcParams['figure.figsize']
     fig, ax = plt.subplots(1, figsize=(sx, sx))
 
