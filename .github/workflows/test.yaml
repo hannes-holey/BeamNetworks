@@ -17,6 +17,8 @@ jobs:
     steps:
     - name: Checkout source
       uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
 
     - name: Install requirements
       run: |
