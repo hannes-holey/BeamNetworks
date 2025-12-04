@@ -18,7 +18,7 @@ jobs:
     - name: Checkout source
       uses: actions/checkout@v5
 
-     name: Install requirements
+    - name: Install requirements
       run: |
         sudo apt-get update
         sudo apt-get install libhdf5-dev
