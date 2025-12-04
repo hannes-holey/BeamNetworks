@@ -1,5 +1,5 @@
 [build-system]
-requires = ["flit_core>=3.2"]
+requires = ["flit_core>=3.2", "DiscoverVersion"]
 build-backend = "flit_core.buildapi"
 
 [project]
@@ -11,22 +11,22 @@ authors = [
     { name = "Stefan Hiemer", email = "stefan.hiemer@unimi.it" },
 ]
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
-    "Programming Language :: Python",
-    "Private :: Do Not Upload",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU GPLv3"
 ]
 
 requires-python = ">=3.8"
 dynamic = ["version"]
-dependencies = ["numpy",
-                "matplotlib",
-                "scipy",
-                "tqdm",
-                "pandas[hdf5]",
-                "trimesh[easy]",
-                "meshio",
-                "PyYAML"
-                ]
+dependencies = [
+    "DiscoverVersion",
+    "numpy",
+    "matplotlib",
+    "scipy",
+    "tqdm",
+    "pandas[hdf5]",
+    "trimesh[easy]",
+    "meshio",
+    "PyYAML"]
 
 [project.optional-dependencies]
 tests = ['pytest', 'coverage']

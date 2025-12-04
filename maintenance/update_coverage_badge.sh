@@ -1,7 +1,5 @@
 #!/bin/bash
 
-coverage run --source=beam_networks -m pytest
-
 TOTAL=$(coverage report | awk 'END{print $4}' | sed 's/%//')
 
 if (( $(echo "$TOTAL <= 50" | bc -l) )) ; then
