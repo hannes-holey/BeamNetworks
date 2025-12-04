@@ -1,5 +1,6 @@
 # BeamNetworks
 
+[![Tests](https://github.com/hannes-holey/BeamNetworks/actions/workflows/test.yaml/badge.svg)](https://github.com/hannes-holey/BeamNetworks/actions/workflows/test.yaml)
 [![Coverage](maintenance/coverage.svg)](maintenance/coverage.svg)
 
 Solver for the elastic deformation of beam networks.
