@@ -3,7 +3,6 @@ import pytest
 import subprocess
 
 
-# @pytest.mark.slow
 @pytest.mark.parametrize('example_directory', [
     'first_steps',
     'geometry',

@@ -19,15 +19,14 @@ classifiers = [
 requires-python = ">=3.8"
 dynamic = ["version"]
 dependencies = ["numpy",
-                "jax",
                 "matplotlib",
                 "scipy",
                 "tqdm",
                 "pandas[hdf5]",
-                "meshio",
-                "h5py",
                 "trimesh[easy]",
-                "PyYAML"]
+                "meshio",
+                "PyYAML"
+                ]
 
 [project.optional-dependencies]
 tests = ['pytest', 'coverage']
@@ -37,8 +36,5 @@ doc = ['sphinx', 'sphinx_rtd_theme']
 vtk2img = "beam_networks.viz:vtk2img"
 
 [tool.pytest.ini_options]
-addopts = "-v -m 'not slow'"
+addopts = "-v"
 testpaths = ["tests"]
-markers = [
-    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-]

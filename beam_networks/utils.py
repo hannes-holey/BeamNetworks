@@ -55,36 +55,6 @@ def _dict_has_keys(d, required):
     return np.all([key in d.keys() for key in required])
 
 
-def coupon_collector_bound(num_different_coupons: int, sureness: float = 1e-3) -> int:
-    r"""A lower bound to how many coupons you need to buy to
-    to be sure you will see all the coupon collection.
-
-    bound derived from
-    https://en.wikipedia.org/wiki/Coupon_collector%27s_problem
-
-    $$
-    P\left [ T > \beta n \log n \right ] = P \left [ \bigcup_i {Z}_i^{\beta n \log n} \right ]
-    \le n \cdot P [ {Z}_1^{\beta n \log n} ] \le n^{-\beta + 1}
-    $$
-
-    Parameters
-    ----------
-    num_different_coupons : int
-        Number of different coupon types
-    sureness : float, optional
-        Sureness (the default is 1e-3, which means 99.9% probability of seeing all coupons)
-
-    Returns
-    -------
-    int
-        Value of the lower bound
-    """
-    float_bound = num_different_coupons * \
-        (np.log(num_different_coupons) - np.log(sureness))
-    int_bound = int(float_bound) + 1
-    return int_bound
-
-
 def box_selection(nodes, lim):
     """Select nodes which are within a cuboid.
 
