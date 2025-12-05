@@ -596,16 +596,12 @@ class Network:
             Class instance with nodes and edges given by the prescribed lattice
         """
 
-        a0 = a
-
         basis = np.array([
             [w, 0.0],
             [1. - w, 0.0],
             [0.5 - w, 0.5],
             [0.5 + w, 0.5]
         ]) * a
-
-        a0 = a * np.sqrt(2) / 2
 
         nx, ny = (np.array(bbox) / np.maximum(np.ones(2) * a,
                                               np.amax(basis, axis=0))).astype(int) + 1
@@ -626,11 +622,6 @@ class Network:
                               np.all(lattice_coords >= 0., axis=-1))
         lattice_coords = lattice_coords[mask]
 
-        kdtree = cKDTree(lattice_coords)
-        _connections = kdtree.query_pairs(r=1.0, output_type='ndarray')  # Neighbors within a0
-        d = np.linalg.norm(lattice_coords[_connections[:, 0]] - lattice_coords[_connections[:, 1]], axis=-1)
-
-        # Now we find connections between neighboring atoms using a KD-Tree
         d0 = np.linalg.norm(basis[1] - basis[0])
         d1 = np.linalg.norm(basis[2] - basis[0])
 

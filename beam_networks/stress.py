@@ -54,7 +54,7 @@ def _stress_stretch_bend_ratio(rhs, beam_prop):
     Iy, Iz, _, A, kappa, ymax = get_geometric_props(beam_prop)
 
     F = rhs[:, 3]
-    Q = rhs[:, 4]
+    # Q = rhs[:, 4]
     M0 = rhs[:, 2]
     M1 = rhs[:, 5]
 
@@ -62,7 +62,7 @@ def _stress_stretch_bend_ratio(rhs, beam_prop):
 
     s_bend = M * ymax / 2 / Iz
     s_stretch = np.abs(F) / A
-    s_shear = np.abs(Q) / A
+    # s_shear = np.abs(Q) / A
 
     return s_bend / (s_stretch + s_bend)
 
@@ -487,15 +487,15 @@ def _stress_3d(rhs, beam_prop, mode):
     return sxx, _z, _z, _z, _z, sxy
 
 
-def principal_strain(coords, adj, d, sol, beam_prop, mode='mean'):
+# def principal_strain(coords, adj, d, sol, beam_prop, mode='mean'):
 
-    exx, eyy, ezz, eyz, exz, exy = _strain(coords, adj, d, sol, beam_prop, mode=mode)
+#     exx, eyy, ezz, eyz, exz, exy = _strain(coords, adj, d, sol, beam_prop, mode=mode)
 
-    strain = np.vstack([exx, exy, exz, exy, eyy, eyz, exz, eyz, ezz]).T.reshape(-1, 3, 3)
+#     strain = np.vstack([exx, exy, exz, exy, eyy, eyz, exz, eyz, ezz]).T.reshape(-1, 3, 3)
 
-    ev = np.linalg.eigvals(strain)
+#     ev = np.linalg.eigvals(strain)
 
-    return np.sort(ev, axis=1)[:, ::-1]
+#     return np.sort(ev, axis=1)[:, ::-1]
 
 
 # def _strain(coords, adj, d_vec, sol, beam_prop, mode='mean'):
