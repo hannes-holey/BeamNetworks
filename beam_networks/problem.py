@@ -356,14 +356,14 @@ class BeamNetwork(Network):
         solver : str, optional
             Type of solver to use, currently 'direct' and 'cg' available (the default is 'direct')
         stress_mode : str
-            Either 'max' or 'mean', i.e. calculate maximum or mean von Mises 
+            Either 'max' or 'mean', i.e. calculate maximum or mean von Mises
             stress per beam
         preconditioner : str, optional
             Type of preconditioner, 'diagonal' or None (the default is None)
         verbosity : int, optional
-            level of verbosity, if between 25/50 print information about 
-            displacements and reaction forces, if between 50/100 print 
-            information about stiffness matrix, if greater equal 100 print 
+            level of verbosity, if between 25/50 print information about
+            displacements and reaction forces, if between 50/100 print
+            information about stiffness matrix, if greater equal 100 print
             condition number (default is 0). Only active for sparse matrices.
 
         Raises
@@ -494,7 +494,7 @@ class BeamNetwork(Network):
     def scale_solution(self, scale_factor):
         self.sol *= scale_factor
 
-    def plot(self, ax, removed_edges=None, node_ids=False, contour=None, cax=None, aspect=1., lim=None, lw=2.,
+    def plot(self, ax, node_ids=False, contour=None, cax=None, aspect=1., lim=None, lw=2.,
              scale=1.):
         """Generate 2D plot of the deformed network structure.
 
@@ -502,8 +502,6 @@ class BeamNetwork(Network):
         ----------
         ax : matplotlib.pyplot.axis object
             Axis to plot into
-        removed_edges : iterable, optional
-            List of edge indices which have been removed from the original structure (the default is None)
         node_ids : bool, optional
             Print node numbers nect to undeformed structure (the default is False)
         contour : numpy.ndarray, optional
@@ -531,9 +529,6 @@ class BeamNetwork(Network):
         # deformed
         ax = _plot_network(ax, self.displaced_nodes, self.edges, self.displaced_edge_vectors, contour,
                            cax=cax, lim=lim, lw=lw)
-
-        if removed_edges is not None:
-            _plot_crack_graph(ax, self.nodes, self._edges, removed_edges)
 
         ax.set_xlabel(r'$x$')
         ax.set_ylabel(r'$y$')

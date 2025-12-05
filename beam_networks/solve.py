@@ -36,12 +36,12 @@ def solve(K, bc_D, d_D, bc_N, F_N,
     solver : str, optional
         Type of solver, 'direct' or 'cg' (the default is 'direct')
     preconditioner : str, optional
-        Type of preconditioner, 'diagonal' or None (the default is None). Only 
+        Type of preconditioner, 'diagonal' or None (the default is None). Only
         active for sparse matrices.
     verbosity : int, optional
-        level of verbosity, if between 25/50 print information about 
-        displacements and reaction forces, if between 50/100 print 
-        information about stiffness matrix, if greater equal 100 print 
+        level of verbosity, if between 25/50 print information about
+        displacements and reaction forces, if between 50/100 print
+        information about stiffness matrix, if greater equal 100 print
         condition number (default is 0). Only active for sparse matrices.
 
     Returns
@@ -87,10 +87,10 @@ def _solve_sparse(K_global, bc_D, d_D, bc_N, F_N,
     preconditioner : str, optional
         Type of preconditioner, 'diagonal' or None (the default is None)
     verbosity : int, optional
-        level of verbosity, if between 25/50 print information about 
-        displacements and reaction forces, if between 50/100 print 
-        information about stiffness matrix, if greater equal 100 print 
-        condition number (default is 0). 
+        level of verbosity, if between 25/50 print information about
+        displacements and reaction forces, if between 50/100 print
+        information about stiffness matrix, if greater equal 100 print
+        condition number (default is 0).
 
 
     Returns
