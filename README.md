@@ -59,6 +59,21 @@ We test against analytic solutions for a 1D cantilever beam both in 2D and 3D sp
 pytest
 ```
 
+## Dependencies
+The software relies on a couple of external dependecies.
+
+For assembly and solution of the elastic problem:
+- [__numpy__](https://numpy.org)
+- [__scipy__](https://scipy.org)
+
+For post-processing and visualization:
+- [__matplotlib__](https://matplotlib.org)
+- [__pandas__](https://pandas.pydata.org)
+- [__meshio__](https://github.com/nschloe/meshio)
+- [__trimesh__](https://trimesh.org)
+- [__PyYAML__](https://pyyaml.org/)
+
+
 ## Funding
 This project received funding from the European Union’s Horizon Europe research and 
 innovation programme via the ARCHIBIOFOAM project under grant agreement No 101161052. 
