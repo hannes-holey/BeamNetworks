@@ -1,0 +1,1752 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>beam_networks package &#8212; beam_networks  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=eba8b062" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'beam_networks';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="API Reference" href="modules.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">beam_networks  documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="index.html">BeamNetworks</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="modules.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">beam_networks package</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/hannes-holey/BeamNetworks">Github repository</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/beam_networks.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>beam_networks package</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-beam_networks.assembly">beam_networks.assembly module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.assembly.assemble_global_system"><code class="docutils literal notranslate"><span class="pre">assemble_global_system()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-beam_networks.bc">beam_networks.bc module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-beam_networks.fracture">beam_networks.fracture module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.fracture.FractureProblem"><code class="docutils literal notranslate"><span class="pre">FractureProblem</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.fracture.FractureProblem.failure_criterion"><code class="docutils literal notranslate"><span class="pre">FractureProblem.failure_criterion()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.fracture.FractureProblem.removed_edges"><code class="docutils literal notranslate"><span class="pre">FractureProblem.removed_edges</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.fracture.FractureProblem.run"><code class="docutils literal notranslate"><span class="pre">FractureProblem.run()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.fracture.FractureProblem.write"><code class="docutils literal notranslate"><span class="pre">FractureProblem.write()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-beam_networks.geo">beam_networks.geo module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.geo.get_geometric_props"><code class="docutils literal notranslate"><span class="pre">get_geometric_props()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.geo.get_geometric_props_derivative"><code class="docutils literal notranslate"><span class="pre">get_geometric_props_derivative()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-beam_networks.io">beam_networks.io module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-beam_networks.network">beam_networks.network module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network"><code class="docutils literal notranslate"><span class="pre">Network</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.Lx"><code class="docutils literal notranslate"><span class="pre">Network.Lx</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.Ly"><code class="docutils literal notranslate"><span class="pre">Network.Ly</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.Lz"><code class="docutils literal notranslate"><span class="pre">Network.Lz</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.bondlengths"><code class="docutils literal notranslate"><span class="pre">Network.bondlengths</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.bounds"><code class="docutils literal notranslate"><span class="pre">Network.bounds</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.boxsize"><code class="docutils literal notranslate"><span class="pre">Network.boxsize</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.coordination"><code class="docutils literal notranslate"><span class="pre">Network.coordination</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.edge_vectors"><code class="docutils literal notranslate"><span class="pre">Network.edge_vectors</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.edges"><code class="docutils literal notranslate"><span class="pre">Network.edges</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.generate_bowtie_lattice"><code class="docutils literal notranslate"><span class="pre">Network.generate_bowtie_lattice()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.generate_cubic_lattice"><code class="docutils literal notranslate"><span class="pre">Network.generate_cubic_lattice()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.generate_square_lattice"><code class="docutils literal notranslate"><span class="pre">Network.generate_square_lattice()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.is_connected"><code class="docutils literal notranslate"><span class="pre">Network.is_connected</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.nodes"><code class="docutils literal notranslate"><span class="pre">Network.nodes</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.num_edges"><code class="docutils literal notranslate"><span class="pre">Network.num_edges</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.num_nodes"><code class="docutils literal notranslate"><span class="pre">Network.num_nodes</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.pbc_edges"><code class="docutils literal notranslate"><span class="pre">Network.pbc_edges</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.pbc_nodes"><code class="docutils literal notranslate"><span class="pre">Network.pbc_nodes</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.volume"><code class="docutils literal notranslate"><span class="pre">Network.volume</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.xhi"><code class="docutils literal notranslate"><span class="pre">Network.xhi</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.xlo"><code class="docutils literal notranslate"><span class="pre">Network.xlo</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.yhi"><code class="docutils literal notranslate"><span class="pre">Network.yhi</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.ylo"><code class="docutils literal notranslate"><span class="pre">Network.ylo</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.zhi"><code class="docutils literal notranslate"><span class="pre">Network.zhi</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.zlo"><code class="docutils literal notranslate"><span class="pre">Network.zlo</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-beam_networks.problem">beam_networks.problem module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork"><code class="docutils literal notranslate"><span class="pre">BeamNetwork</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.add_BC"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.add_BC()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.assemble_BCs"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.assemble_BCs()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.compute_equivalent_stress"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.compute_equivalent_stress()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.compute_principal_stresses"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.compute_principal_stresses()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.compute_ratio"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.compute_ratio()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.delete_BC"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.delete_BC()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.displaced_edge_vectors"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.displaced_edge_vectors</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.displaced_nodes"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.displaced_nodes</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.displacement"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.displacement</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.dof_per_node"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.dof_per_node</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.has_bc"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.has_bc</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.has_stiffness"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.has_stiffness</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.load"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.load()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.modify_BC"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.modify_BC()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.num_dof"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.num_dof</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.plot"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.plot()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.rotation"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.rotation</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.save"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.save()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.scale_BC"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.scale_BC()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.scale_solution"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.scale_solution()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.solve"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.solve()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.stiffness"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.stiffness</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.to_stl"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.to_stl()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.to_vtk"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.to_vtk()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-beam_networks.solve">beam_networks.solve module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.solve.solve"><code class="docutils literal notranslate"><span class="pre">solve()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-beam_networks.stiffness">beam_networks.stiffness module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.stiffness.get_element_stiffness_global"><code class="docutils literal notranslate"><span class="pre">get_element_stiffness_global()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.stiffness.get_element_stiffness_global_vec"><code class="docutils literal notranslate"><span class="pre">get_element_stiffness_global_vec()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.stiffness.get_element_stiffness_local_vec"><code class="docutils literal notranslate"><span class="pre">get_element_stiffness_local_vec()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-beam_networks.stress">beam_networks.stress module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.stress.get_element_mises_stress"><code class="docutils literal notranslate"><span class="pre">get_element_mises_stress()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.stress.get_element_principal_stress"><code class="docutils literal notranslate"><span class="pre">get_element_principal_stress()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.stress.principal_stress"><code class="docutils literal notranslate"><span class="pre">principal_stress()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.stress.stretch_bend_ratio"><code class="docutils literal notranslate"><span class="pre">stretch_bend_ratio()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.stress.vmises_stress"><code class="docutils literal notranslate"><span class="pre">vmises_stress()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-beam_networks.tesselate">beam_networks.tesselate module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.tesselate.renumber_adjacency"><code class="docutils literal notranslate"><span class="pre">renumber_adjacency()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.tesselate.sanity_checks"><code class="docutils literal notranslate"><span class="pre">sanity_checks()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.tesselate.tesselate"><code class="docutils literal notranslate"><span class="pre">tesselate()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-beam_networks.utils">beam_networks.utils module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.utils.box_selection"><code class="docutils literal notranslate"><span class="pre">box_selection()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.utils.check_input_dict"><code class="docutils literal notranslate"><span class="pre">check_input_dict()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.utils.get_edges_from_disks"><code class="docutils literal notranslate"><span class="pre">get_edges_from_disks()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.utils.point_selection"><code class="docutils literal notranslate"><span class="pre">point_selection()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.utils.zero_pad_2d_array"><code class="docutils literal notranslate"><span class="pre">zero_pad_2d_array()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-beam_networks.viz">beam_networks.viz module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.viz.plot_solution_1D"><code class="docutils literal notranslate"><span class="pre">plot_solution_1D()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.viz.vtk2img"><code class="docutils literal notranslate"><span class="pre">vtk2img()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-beam_networks">Module contents</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="beam-networks-package">
+<h1>beam_networks package<a class="headerlink" href="#beam-networks-package" title="Link to this heading">#</a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">#</a></h2>
+</section>
+<section id="module-beam_networks.assembly">
+<span id="beam-networks-assembly-module"></span><h2>beam_networks.assembly module<a class="headerlink" href="#module-beam_networks.assembly" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="beam_networks.assembly.assemble_global_system">
+<span class="sig-prename descclassname"><span class="pre">beam_networks.assembly.</span></span><span class="sig-name descname"><span class="pre">assemble_global_system</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nodes_positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edges_indices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beam_prop</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sorted_edges</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vectorize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bsr'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.assembly.assemble_global_system" title="Link to this definition">#</a></dt>
+<dd><p>Assembly of the global stiffness matrix for a Timoshenko beam network (wrapper)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nodes_positions</strong> (<em>np.ndarray</em>) – Nodal coordinates</p></li>
+<li><p><strong>edges_indices</strong> (<em>np.ndarray</em><em> (of </em><em>ints</em><em>)</em>) – Edge connectivity</p></li>
+<li><p><strong>dr</strong> (<em>np.ndarray</em>) – Edge vectors</p></li>
+<li><p><strong>beam_prop</strong> (<em>dict</em>) – Beam properties (cross section and elastic properties)</p></li>
+<li><p><strong>sorted_edges</strong> (<em>bool</em><em>, </em><em>optional</em>) – Edge indices are sorted (the default is True)</p></li>
+<li><p><strong>vectorize</strong> (<em>bool</em><em>, </em><em>optional</em>) – Collect all element stiffness matrices in a large array before assembly.
+Faster, but may cause memory issues for very large systems (the default is True).</p></li>
+<li><p><strong>matrix</strong> (<em>str</em><em>, </em><em>optional</em>) – Format of the global stiffness matrix during assembly.
+Choose from [‘bsr’, ‘lil’, ‘dense’].
+‘bsr’ : Block sparse row matrix (Default)
+‘lil’ : List of lists
+‘dense’: Only for small matrices</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – Verbosity (the default is False which hides the progress bar)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The global matrix</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray or scipy.sparse.bsr_array</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-beam_networks.bc">
+<span id="beam-networks-bc-module"></span><h2>beam_networks.bc module<a class="headerlink" href="#module-beam_networks.bc" title="Link to this heading">#</a></h2>
+</section>
+<section id="module-beam_networks.fracture">
+<span id="beam-networks-fracture-module"></span><h2>beam_networks.fracture module<a class="headerlink" href="#module-beam_networks.fracture" title="Link to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="beam_networks.fracture.FractureProblem">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">beam_networks.fracture.</span></span><span class="sig-name descname"><span class="pre">FractureProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_trajectory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.fracture.FractureProblem" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#beam_networks.problem.BeamNetwork" title="beam_networks.problem.BeamNetwork"><code class="xref py py-class docutils literal notranslate"><span class="pre">BeamNetwork</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="beam_networks.fracture.FractureProblem.failure_criterion">
+<span class="sig-name descname"><span class="pre">failure_criterion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'vM'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.fracture.FractureProblem.failure_criterion" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.fracture.FractureProblem.removed_edges">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">removed_edges</span></span><a class="headerlink" href="#beam_networks.fracture.FractureProblem.removed_edges" title="Link to this definition">#</a></dt>
+<dd><p>List of inactive edges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Inactive edges indices</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beam_networks.fracture.FractureProblem.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cascade'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sign</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fail_crit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'vM'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.fracture.FractureProblem.run" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beam_networks.fracture.FractureProblem.write">
+<span class="sig-name descname"><span class="pre">write</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.fracture.FractureProblem.write" title="Link to this definition">#</a></dt>
+<dd><p>Wrapper for different output writers. Currently only calls HDF5 output.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-beam_networks.geo">
+<span id="beam-networks-geo-module"></span><h2>beam_networks.geo module<a class="headerlink" href="#module-beam_networks.geo" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="beam_networks.geo.get_geometric_props">
+<span class="sig-prename descclassname"><span class="pre">beam_networks.geo.</span></span><span class="sig-name descname"><span class="pre">get_geometric_props</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beam_prop</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.geo.get_geometric_props" title="Link to this definition">#</a></dt>
+<dd><p>Get geometric properties of the beam cross section.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>beam_prop</strong> (<em>dict</em>) – Beam properties (cross section and elastic properties)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>float</em> – Second moment of area Iy</p></li>
+<li><p><em>float</em> – Second moment of area Iz</p></li>
+<li><p><em>float</em> – Second polar moment of area Ip</p></li>
+<li><p><em>float</em> – Area</p></li>
+<li><p><em>float</em> – Shear correction factor</p></li>
+<li><p><em>float</em> – Maximum distance from beam neutral axis to the surface</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="beam_networks.geo.get_geometric_props_derivative">
+<span class="sig-prename descclassname"><span class="pre">beam_networks.geo.</span></span><span class="sig-name descname"><span class="pre">get_geometric_props_derivative</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beam_prop</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">derivative</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.geo.get_geometric_props_derivative" title="Link to this definition">#</a></dt>
+<dd><p>Get derivative of geometric properties of the beam cross section with
+respect to radius</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>beam_prop</strong> (<em>dict</em>) – Beam properties (cross section and elastic properties)</p></li>
+<li><p><strong>derivative</strong> (<em>bool</em>) – if not None returns the derivative with respect to a shape parameter.
+The shape parameter is determined by the value of derivative which
+depends on the shape of your beam.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>float</em> – Derivative of second moment of area Iy</p></li>
+<li><p><em>float</em> – Derivative of second moment of area Iz</p></li>
+<li><p><em>float</em> – Derivative of second polar moment of area Ip</p></li>
+<li><p><em>float</em> – Derivative of area</p></li>
+<li><p><em>float</em> – Derivative of shear correction factor</p></li>
+<li><p><em>float</em> – Derivative of maximum distance from beam neutral axis to the surface</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-beam_networks.io">
+<span id="beam-networks-io-module"></span><h2>beam_networks.io module<a class="headerlink" href="#module-beam_networks.io" title="Link to this heading">#</a></h2>
+</section>
+<section id="module-beam_networks.network">
+<span id="beam-networks-network-module"></span><h2>beam_networks.network module<a class="headerlink" href="#module-beam_networks.network" title="Link to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="beam_networks.network.Network">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">beam_networks.network.</span></span><span class="sig-name descname"><span class="pre">Network</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nodes_positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edges_indices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">periodic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boxsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.network.Network" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class for network structure.</p>
+<p>Contains methods to generate lattice structures and some basic properties of the network.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.network.Network.Lx">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">Lx</span></span><a class="headerlink" href="#beam_networks.network.Network.Lx" title="Link to this definition">#</a></dt>
+<dd><p>Boxlength (x)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.network.Network.Ly">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">Ly</span></span><a class="headerlink" href="#beam_networks.network.Network.Ly" title="Link to this definition">#</a></dt>
+<dd><p>Boxlength (y)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.network.Network.Lz">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">Lz</span></span><a class="headerlink" href="#beam_networks.network.Network.Lz" title="Link to this definition">#</a></dt>
+<dd><p>Boxlength (z)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.network.Network.bondlengths">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">bondlengths</span></span><a class="headerlink" href="#beam_networks.network.Network.bondlengths" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.network.Network.bounds">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">bounds</span></span><a class="headerlink" href="#beam_networks.network.Network.bounds" title="Link to this definition">#</a></dt>
+<dd><p>Lower and upper bounds of the nodal coordinates</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xlo, xhi, ylo, yhi[, zlo, zhi]</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.network.Network.boxsize">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">boxsize</span></span><a class="headerlink" href="#beam_networks.network.Network.boxsize" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.network.Network.coordination">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">coordination</span></span><a class="headerlink" href="#beam_networks.network.Network.coordination" title="Link to this definition">#</a></dt>
+<dd><p>Mean coordination number.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.network.Network.edge_vectors">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">edge_vectors</span></span><a class="headerlink" href="#beam_networks.network.Network.edge_vectors" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.network.Network.edges">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">edges</span></span><a class="headerlink" href="#beam_networks.network.Network.edges" title="Link to this definition">#</a></dt>
+<dd><p>Exposes only active edges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beam_networks.network.Network.generate_bowtie_lattice">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">generate_bowtie_lattice</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bbox</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[1.0,</span> <span class="pre">1.0]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.network.Network.generate_bowtie_lattice" title="Link to this definition">#</a></dt>
+<dd><p>Generates a bowtie lattice.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>float</em><em>, </em><em>optional</em>) – Lattice constant (distance between nearest neighbors)</p></li>
+<li><p><strong>bbox</strong> (<em>array-like</em>) – Size of the bounding box, filled with repeated unit cells
+(the default is [1., 1., 1.])</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Class instance with nodes and edges given by the prescribed lattice</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#beam_networks.network.Network" title="beam_networks.network.Network">beam_networks.network.Network</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beam_networks.network.Network.generate_cubic_lattice">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">generate_cubic_lattice</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pbc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bbox</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[1.0,</span> <span class="pre">1.0,</span> <span class="pre">1.0]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lattice_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sc'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.network.Network.generate_cubic_lattice" title="Link to this definition">#</a></dt>
+<dd><p>Generates a cubic lattice.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>float</em><em>, </em><em>optional</em>) – Lattice constant (distance between nearest neighbors)</p></li>
+<li><p><strong>pbc</strong> (<em>iterable</em><em>, </em><em>optional</em>) – Periodic boundary conditions (the default is None, which means no periodic BCs).</p></li>
+<li><p><strong>bbox</strong> (<em>array-like</em>) – Size of the bounding box, filled with repeated unit cells
+(the default is [1., 1., 1.])</p></li>
+<li><p><strong>lattice_type</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the lattice type [‘sc’, ‘bcc’, ‘fcc’] (the default is ‘sc’)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Class instance with nodes and edges given by the prescribed lattice</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#beam_networks.network.Network" title="beam_networks.network.Network">beam_networks.network.Network</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beam_networks.network.Network.generate_square_lattice">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">generate_square_lattice</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bbox</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[1.0,</span> <span class="pre">1.0]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lattice_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sc'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.network.Network.generate_square_lattice" title="Link to this definition">#</a></dt>
+<dd><p>Generates a cubic lattice.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>float</em><em>, </em><em>optional</em>) – Lattice constant (distance between nearest neighbors)</p></li>
+<li><p><strong>bbox</strong> (<em>array-like</em>) – Size of the bounding box, filled with repeated unit cells
+(the default is [1., 1., 1.])</p></li>
+<li><p><strong>lattice_type</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the lattice type [‘sc’, ‘bcc’, ‘fcc’] (the default is ‘sc’)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Class instance with nodes and edges given by the prescribed lattice</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#beam_networks.network.Network" title="beam_networks.network.Network">beam_networks.network.Network</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.network.Network.is_connected">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">is_connected</span></span><a class="headerlink" href="#beam_networks.network.Network.is_connected" title="Link to this definition">#</a></dt>
+<dd><p>Check if structure is fully connected</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.network.Network.nodes">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">nodes</span></span><a class="headerlink" href="#beam_networks.network.Network.nodes" title="Link to this definition">#</a></dt>
+<dd><p>Exposes only activated nodes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.network.Network.num_edges">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">num_edges</span></span><a class="headerlink" href="#beam_networks.network.Network.num_edges" title="Link to this definition">#</a></dt>
+<dd><p>Number of active edges</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.network.Network.num_nodes">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">num_nodes</span></span><a class="headerlink" href="#beam_networks.network.Network.num_nodes" title="Link to this definition">#</a></dt>
+<dd><p>Number of active nodes</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.network.Network.pbc_edges">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">pbc_edges</span></span><a class="headerlink" href="#beam_networks.network.Network.pbc_edges" title="Link to this definition">#</a></dt>
+<dd><p>Mask for edges that cross periodic boundary conditions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.network.Network.pbc_nodes">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">pbc_nodes</span></span><a class="headerlink" href="#beam_networks.network.Network.pbc_nodes" title="Link to this definition">#</a></dt>
+<dd><p>Nodal positions for edges that cross periodic boundary conditions.
+Nodes are shifted to the neighboring periodic images for visualization purposes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Nodal coordinates</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.network.Network.volume">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">volume</span></span><a class="headerlink" href="#beam_networks.network.Network.volume" title="Link to this definition">#</a></dt>
+<dd><p>Compute volume of network as convex hull.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.network.Network.xhi">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">xhi</span></span><a class="headerlink" href="#beam_networks.network.Network.xhi" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.network.Network.xlo">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">xlo</span></span><a class="headerlink" href="#beam_networks.network.Network.xlo" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.network.Network.yhi">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">yhi</span></span><a class="headerlink" href="#beam_networks.network.Network.yhi" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.network.Network.ylo">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ylo</span></span><a class="headerlink" href="#beam_networks.network.Network.ylo" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.network.Network.zhi">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">zhi</span></span><a class="headerlink" href="#beam_networks.network.Network.zhi" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.network.Network.zlo">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">zlo</span></span><a class="headerlink" href="#beam_networks.network.Network.zlo" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-beam_networks.problem">
+<span id="beam-networks-problem-module"></span><h2>beam_networks.problem module<a class="headerlink" href="#module-beam_networks.problem" title="Link to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="beam_networks.problem.BeamNetwork">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">beam_networks.problem.</span></span><span class="sig-name descname"><span class="pre">BeamNetwork</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nodes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edges</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beam_prop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'E':</span> <span class="pre">1.0,</span> <span class="pre">'name':</span> <span class="pre">'circle',</span> <span class="pre">'nu':</span> <span class="pre">0.3,</span> <span class="pre">'radius':</span> <span class="pre">1.0}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">periodic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boxsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'matrix':</span> <span class="pre">'bsr',</span> <span class="pre">'vectorize':</span> <span class="pre">True,</span> <span class="pre">'verbose':</span> <span class="pre">True}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outdir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">assemble_on_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.problem.BeamNetwork" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#beam_networks.network.Network" title="beam_networks.network.Network"><code class="xref py py-class docutils literal notranslate"><span class="pre">Network</span></code></a></p>
+<p>Beam Network structure. Derives from Network.</p>
+<p>Adding a cross section and elastic properties to the edges of a network
+makes it a beam network. Solves the elastic problem given appropriate
+boundary conditions.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="beam_networks.problem.BeamNetwork.add_BC">
+<span class="sig-name descname"><span class="pre">add_BC</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">select</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">active</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_per_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.problem.BeamNetwork.add_BC" title="Link to this definition">#</a></dt>
+<dd><p>Add boundary condition.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – Name/Identifier of the BC</p></li>
+<li><p><strong>type</strong> (<em>str</em>) – BC type, either ‘D’ for Dirichlet or ‘N’ for Neumann</p></li>
+<li><p><strong>select</strong> (<em>str</em>) – How to select nodes, either ‘box’, ‘node’, or ‘point’</p></li>
+<li><p><strong>selection</strong> (<em>array-like</em>) – For box selection: lower and upper limits of bounding box in relative units,
+i.e. [xlo, xhi, ylo, yhi[, zlo, zhi]]. None entries cooresponds to the min/max limits, e.g.
+[None, None, 0.5, None, None, None] means upper half of the domain in the y-direction.
+For node selection: list of nodes.</p></li>
+<li><p><strong>vector</strong> (<em>array-like</em>) – Vector of length 3 and 6 for 2D and 3D systems, respectively. None means the corresponding DOF is
+not affected.
+In 2D: [ux, uy, tz] (Dircihlet) or [Fx, Fy, Mz] (Neumann)
+In 3D: [ux, uy, uz, tx, ty, tz] (Dircihlet) or [Fx, Fy, Fz, Mx, My, Mz] (Neumann)</p></li>
+<li><p><strong>num_per_point</strong> (<em>int</em>) – For point selection only, maximum number of closest nodes to select. The default is 1.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beam_networks.problem.BeamNetwork.assemble_BCs">
+<span class="sig-name descname"><span class="pre">assemble_BCs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.problem.BeamNetwork.assemble_BCs" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beam_networks.problem.BeamNetwork.compute_equivalent_stress">
+<span class="sig-name descname"><span class="pre">compute_equivalent_stress</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.problem.BeamNetwork.compute_equivalent_stress" title="Link to this definition">#</a></dt>
+<dd><p>Calculate von Mises stress and store it in self._sVM.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mode</strong> (<em>str</em>) – Either ‘max’ or ‘mean’, i.e. calculate maximum or mean stress per beam</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beam_networks.problem.BeamNetwork.compute_principal_stresses">
+<span class="sig-name descname"><span class="pre">compute_principal_stresses</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'max'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.problem.BeamNetwork.compute_principal_stresses" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beam_networks.problem.BeamNetwork.compute_ratio">
+<span class="sig-name descname"><span class="pre">compute_ratio</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.problem.BeamNetwork.compute_ratio" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beam_networks.problem.BeamNetwork.delete_BC">
+<span class="sig-name descname"><span class="pre">delete_BC</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.problem.BeamNetwork.delete_BC" title="Link to this definition">#</a></dt>
+<dd><p>Delete boundary condition.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – Name of the BC to be removed</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.problem.BeamNetwork.displaced_edge_vectors">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">displaced_edge_vectors</span></span><a class="headerlink" href="#beam_networks.problem.BeamNetwork.displaced_edge_vectors" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.problem.BeamNetwork.displaced_nodes">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">displaced_nodes</span></span><a class="headerlink" href="#beam_networks.problem.BeamNetwork.displaced_nodes" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.problem.BeamNetwork.displacement">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">displacement</span></span><a class="headerlink" href="#beam_networks.problem.BeamNetwork.displacement" title="Link to this definition">#</a></dt>
+<dd><p>Nodal displacements</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Shape (num_nodes, dim)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>numpy.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.problem.BeamNetwork.dof_per_node">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">dof_per_node</span></span><a class="headerlink" href="#beam_networks.problem.BeamNetwork.dof_per_node" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.problem.BeamNetwork.has_bc">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">has_bc</span></span><a class="headerlink" href="#beam_networks.problem.BeamNetwork.has_bc" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.problem.BeamNetwork.has_stiffness">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">has_stiffness</span></span><a class="headerlink" href="#beam_networks.problem.BeamNetwork.has_stiffness" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beam_networks.problem.BeamNetwork.load">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recompute</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.problem.BeamNetwork.load" title="Link to this definition">#</a></dt>
+<dd><p>Create a class instance from a tar archive.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filename</strong> (<em>str</em>) – Name of the archive</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A new class instance</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#beam_networks.problem.BeamNetwork" title="beam_networks.problem.BeamNetwork">BeamNetwork</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beam_networks.problem.BeamNetwork.modify_BC">
+<span class="sig-name descname"><span class="pre">modify_BC</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.problem.BeamNetwork.modify_BC" title="Link to this definition">#</a></dt>
+<dd><p>Modify an existing BC by changing its vector.
+This does not change the constraint DOFs, i.e. vector needs to have ‘None’ in the same place as before.
+Useful for stepwise change of a load/displacement</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – Name of the BC to be removed</p></li>
+<li><p><strong>vector</strong> (<em>array-like</em>) – Vector of length 3 and 6 for 2D and 3D systems, respectively. None means the corresponding DOF is
+not affected.
+In 2D: [ux, uy, tz] (Dircihlet) or [Fx, Fy, Mz] (Neumann)
+In 3D: [ux, uy, uz, tx, ty, tz] (Dircihlet) or [Fx, Fy, Fz, Mx, My, Mz] (Neumann)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.problem.BeamNetwork.num_dof">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">num_dof</span></span><a class="headerlink" href="#beam_networks.problem.BeamNetwork.num_dof" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beam_networks.problem.BeamNetwork.plot">
+<span class="sig-name descname"><span class="pre">plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contour</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aspect</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.problem.BeamNetwork.plot" title="Link to this definition">#</a></dt>
+<dd><p>Generate 2D plot of the deformed network structure.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ax</strong> (<em>matplotlib.pyplot.axis object</em>) – Axis to plot into</p></li>
+<li><p><strong>node_ids</strong> (<em>bool</em><em>, </em><em>optional</em>) – Print node numbers nect to undeformed structure (the default is False)</p></li>
+<li><p><strong>contour</strong> (<em>numpy.ndarray</em><em>, </em><em>optional</em>) – Scalar field to plot as color on edges (the default is None, which means no coloring)</p></li>
+<li><p><strong>cax</strong> (<em>matplotlib.pyplot.axis object</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Axis to plot colorbar into if contour is not None (the default is None, which takes space from ax)</p></li>
+<li><p><strong>aspect</strong> (<em>float</em><em>, </em><em>optional</em>) – Aspect ratio (the default is 1.)</p></li>
+<li><p><strong>lim</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Colorbar limits (the default is None, which takes the limits of contour)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The plotted axis</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>matplotlib.pyplot.axis object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.problem.BeamNetwork.rotation">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">rotation</span></span><a class="headerlink" href="#beam_networks.problem.BeamNetwork.rotation" title="Link to this definition">#</a></dt>
+<dd><p>Nodal rotations</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Shape (num_nodes, 3) for 3D; (num_nodes, 1) for 2D</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>numpy.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beam_networks.problem.BeamNetwork.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.problem.BeamNetwork.save" title="Link to this definition">#</a></dt>
+<dd><p>Save the current state of the solver as gzipped tar archive</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filename</strong> (<em>str</em>) – Name of the archive</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beam_networks.problem.BeamNetwork.scale_BC">
+<span class="sig-name descname"><span class="pre">scale_BC</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factor</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.problem.BeamNetwork.scale_BC" title="Link to this definition">#</a></dt>
+<dd><p>Scale all BCs of a certain type by a given factor</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>type</strong> (<em>str</em>) – BC type (either ‘D’ or ‘N’)</p></li>
+<li><p><strong>factor</strong> (<em>float</em>) – factor</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beam_networks.problem.BeamNetwork.scale_solution">
+<span class="sig-name descname"><span class="pre">scale_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale_factor</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.problem.BeamNetwork.scale_solution" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beam_networks.problem.BeamNetwork.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stress_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preconditioner</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbosity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.problem.BeamNetwork.solve" title="Link to this definition">#</a></dt>
+<dd><p>Solve the linear system.</p>
+<p>Stores the solution for all DOFs and computes the reaction forces at constraint DOFs</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solver</strong> (<em>str</em><em>, </em><em>optional</em>) – Type of solver to use, currently ‘direct’ and ‘cg’ available (the default is ‘direct’)</p></li>
+<li><p><strong>stress_mode</strong> (<em>str</em>) – Either ‘max’ or ‘mean’, i.e. calculate maximum or mean von Mises
+stress per beam</p></li>
+<li><p><strong>preconditioner</strong> (<em>str</em><em>, </em><em>optional</em>) – Type of preconditioner, ‘diagonal’ or None (the default is None)</p></li>
+<li><p><strong>verbosity</strong> (<em>int</em><em>, </em><em>optional</em>) – level of verbosity, if between 25/50 print information about
+displacements and reaction forces, if between 50/100 print
+information about stiffness matrix, if greater equal 100 print
+condition number (default is 0). Only active for sparse matrices.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>RuntimeError</strong> – System can only be solved if boundary conditions are given.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="beam_networks.problem.BeamNetwork.stiffness">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">stiffness</span></span><a class="headerlink" href="#beam_networks.problem.BeamNetwork.stiffness" title="Link to this definition">#</a></dt>
+<dd><p>Global stiffness matrix</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray or scipy.sparse.csr_array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beam_networks.problem.BeamNetwork.to_stl">
+<span class="sig-name descname"><span class="pre">to_stl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.problem.BeamNetwork.to_stl" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="beam_networks.problem.BeamNetwork.to_vtk">
+<span class="sig-name descname"><span class="pre">to_vtk</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'foo.vtk'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.problem.BeamNetwork.to_vtk" title="Link to this definition">#</a></dt>
+<dd><p>Write structure and possibly solution to VTK file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>file</strong> (<em>str</em><em>, </em><em>optional</em>) – Output filename (the default is “foo.vtk”)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-beam_networks.solve">
+<span id="beam-networks-solve-module"></span><h2>beam_networks.solve module<a class="headerlink" href="#module-beam_networks.solve" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="beam_networks.solve.solve">
+<span class="sig-prename descclassname"><span class="pre">beam_networks.solve.</span></span><span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">K</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bc_D</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d_D</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bc_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">F_N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'direct'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preconditioner</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbosity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.solve.solve" title="Link to this definition">#</a></dt>
+<dd><p>Solve the linear system.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>K</strong> (<em>np.ndarry</em><em> or </em><em>scipy.sparse.csr_matrix</em>) – Stiffness matrix</p></li>
+<li><p><strong>bc_D</strong> (<em>iterable</em>) – List of constraint DOFs (Dirichlet BCs)</p></li>
+<li><p><strong>d_D</strong> (<em>iterable</em>) – List of constraint DOF values (Dirichlet BCs)</p></li>
+<li><p><strong>bc_N</strong> (<em>iterable</em>) – List of DOFs with nonzero loads (Neumann BCs)</p></li>
+<li><p><strong>F_N</strong> (<em>iterable</em>) – List of DOF values with nonzero loads (Neumann BCs)</p></li>
+<li><p><strong>solver</strong> (<em>str</em><em>, </em><em>optional</em>) – Type of solver, ‘direct’ or ‘cg’ (the default is ‘direct’)</p></li>
+<li><p><strong>preconditioner</strong> (<em>str</em><em>, </em><em>optional</em>) – Type of preconditioner, ‘diagonal’ or None (the default is None). Only
+active for sparse matrices.</p></li>
+<li><p><strong>verbosity</strong> (<em>int</em><em>, </em><em>optional</em>) – level of verbosity, if between 25/50 print information about
+displacements and reaction forces, if between 50/100 print
+information about stiffness matrix, if greater equal 100 print
+condition number (default is 0). Only active for sparse matrices.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>d</strong> (<em>np.ndarray</em>) – Global solution vector</p></li>
+<li><p><strong>F</strong> (<em>np.ndarray</em>) – Global load vector</p></li>
+<li><p><strong>info</strong> (<em>int</em>) – Info about numerical solution, 0 if successful</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-beam_networks.stiffness">
+<span id="beam-networks-stiffness-module"></span><h2>beam_networks.stiffness module<a class="headerlink" href="#module-beam_networks.stiffness" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="beam_networks.stiffness.get_element_stiffness_global">
+<span class="sig-prename descclassname"><span class="pre">beam_networks.stiffness.</span></span><span class="sig-name descname"><span class="pre">get_element_stiffness_global</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beam_prop</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">derivative</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.stiffness.get_element_stiffness_global" title="Link to this definition">#</a></dt>
+<dd><p>Single element stiffness matrix in global frame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>beam_prop</strong> (<em>dict</em>) – Beam properties (cross section and elastic constants)</p></li>
+<li><p><strong>d</strong> (<em>np.ndarray</em>) – Vector pointing from one beam endpoint to the other</p></li>
+<li><p><strong>sparse</strong> (<em>bool</em><em>, </em><em>optional</em>) – Return as sparse matrix if true (the default is True)</p></li>
+<li><p><strong>derivative</strong> (<em>None</em><em> or </em><em>int</em>) – if not None returns the derivative with respect to a shape parameter.
+The shape parameter is determined by the value of derivative which
+depends on the shape of your beam.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Element stiffness matrix in global frame</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray or</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="beam_networks.stiffness.get_element_stiffness_global_vec">
+<span class="sig-prename descclassname"><span class="pre">beam_networks.stiffness.</span></span><span class="sig-name descname"><span class="pre">get_element_stiffness_global_vec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beam_prop</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d_vec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">derivative</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.stiffness.get_element_stiffness_global_vec" title="Link to this definition">#</a></dt>
+<dd><p>Get all element stiffness matrices in the global frame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>beam_prop</strong> (<em>dict</em>) – Beam properties (cross section and elastic constants)</p></li>
+<li><p><strong>d</strong> (<em>np.ndarray</em>) – Vectors pointing from one beam endpoint to the other</p></li>
+<li><p><strong>derivative</strong> (<em>None</em><em> or </em><em>int</em>) – if not None returns the derivative with respect to a shape parameter.
+The shape parameter is determined by the value of derivative which
+depends on the shape of your beam.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Array with shape (num_elements, num_elem_dof, num_elem_dof)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="beam_networks.stiffness.get_element_stiffness_local_vec">
+<span class="sig-prename descclassname"><span class="pre">beam_networks.stiffness.</span></span><span class="sig-name descname"><span class="pre">get_element_stiffness_local_vec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beam_prop</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ndim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">derivative</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.stiffness.get_element_stiffness_local_vec" title="Link to this definition">#</a></dt>
+<dd><p>Get all element stiffness matrices in the local frame (w.o. transformation)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>beam_prop</strong> (<em>dict</em>) – Beam properties (cross section and elastic constants)</p></li>
+<li><p><strong>d</strong> (<em>np.ndarray</em>) – Edge lengths</p></li>
+<li><p><strong>ndim</strong> (<em>int</em>) – Dimension of the problem</p></li>
+<li><p><strong>derivative</strong> (<em>None</em><em> or </em><em>int</em>) – if not None returns the derivative with respect to a shape parameter.
+The shape parameter is determined by the value of derivative which
+depends on the shape of your beam.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Array with shape (num_elements, num_elem_dof, num_elem_dof)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-beam_networks.stress">
+<span id="beam-networks-stress-module"></span><h2>beam_networks.stress module<a class="headerlink" href="#module-beam_networks.stress" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="beam_networks.stress.get_element_mises_stress">
+<span class="sig-prename descclassname"><span class="pre">beam_networks.stress.</span></span><span class="sig-name descname"><span class="pre">get_element_mises_stress</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d_vec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beam_prop</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'max'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.stress.get_element_mises_stress" title="Link to this definition">#</a></dt>
+<dd><p>Compute the von Mises stress for all beam elements</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>coords</strong> (<em>np.ndarray</em>) – Nodal positions</p></li>
+<li><p><strong>adj</strong> (<em>np.ndarray</em>) – Edges indices</p></li>
+<li><p><strong>d_vec</strong> (<em>np.ndarray</em>) – Edge vectors</p></li>
+<li><p><strong>sol</strong> (<em>np.ndarray</em>) – Global solution vector</p></li>
+<li><p><strong>beam_prop</strong> (<em>dict</em>) – Beam properties</p></li>
+<li><p><strong>rot</strong> (<em>np.ndarray</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – If all elements have the same orientation, rot is the transformation matrix
+from the global to the local frame (the default is None).</p></li>
+<li><p><strong>mode</strong> (<em>str</em><em>, </em><em>optional</em>) – Either ‘max’ or ‘mean’, i.e. calculate maximum or mean stress per beam
+(the default is ‘max’).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Von Mises stress</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="beam_networks.stress.get_element_principal_stress">
+<span class="sig-prename descclassname"><span class="pre">beam_networks.stress.</span></span><span class="sig-name descname"><span class="pre">get_element_principal_stress</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d_vec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sol</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beam_prop</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'max'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.stress.get_element_principal_stress" title="Link to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>coords</strong> (<em>np.ndarray</em>) – Nodal positions</p></li>
+<li><p><strong>adj</strong> (<em>np.ndarray</em>) – Edges indices</p></li>
+<li><p><strong>d_vec</strong> (<em>np.ndarray</em>) – Edge vectors</p></li>
+<li><p><strong>sol</strong> (<em>np.ndarray</em>) – Global solution vector</p></li>
+<li><p><strong>beam_prop</strong> (<em>dict</em>) – Beam properties</p></li>
+<li><p><strong>rot</strong> (<em>np.ndarray</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – If all elements have the same orientation, rot is the transformation matrix
+from the global to the local frame (the default is None).</p></li>
+<li><p><strong>mode</strong> (<em>str</em><em>, </em><em>optional</em>) – Either ‘max’ or ‘mean’, i.e. calculate maximum or mean stress per beam
+(the default is ‘max’).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="beam_networks.stress.principal_stress">
+<span class="sig-prename descclassname"><span class="pre">beam_networks.stress.</span></span><span class="sig-name descname"><span class="pre">principal_stress</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rhs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beam_prop</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.stress.principal_stress" title="Link to this definition">#</a></dt>
+<dd><p>Compute element-wise principal stress.</p>
+<p>Principal stress values are sorted in decreasing order along the second axis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rhs</strong> (<em>np.ndarray</em>) – Element-wise right-hand side in local frame</p></li>
+<li><p><strong>beam_prop</strong> (<em>dict</em>) – Beam properties</p></li>
+<li><p><strong>mode</strong> (<em>str</em>) – Either ‘max’ or ‘mean’, i.e. calculate maximum or mean stress per beam</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Principal stresses per beam (shape: (n_beams, 3))</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarry</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="beam_networks.stress.stretch_bend_ratio">
+<span class="sig-prename descclassname"><span class="pre">beam_networks.stress.</span></span><span class="sig-name descname"><span class="pre">stretch_bend_ratio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rhs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beam_prop</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.stress.stretch_bend_ratio" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="beam_networks.stress.vmises_stress">
+<span class="sig-prename descclassname"><span class="pre">beam_networks.stress.</span></span><span class="sig-name descname"><span class="pre">vmises_stress</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rhs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beam_prop</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.stress.vmises_stress" title="Link to this definition">#</a></dt>
+<dd><p>Wrapper for von Mises stress calculation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rhs</strong> (<em>np.ndarray</em>) – Element-wise right-hand side in local frame</p></li>
+<li><p><strong>beam_prop</strong> (<em>dict</em>) – Beam properties</p></li>
+<li><p><strong>mode</strong> (<em>str</em>) – Either ‘max’ or ‘mean’, i.e. calculate maximum or mean stress per beam</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Von Mises stress, shape=(num_elements,)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-beam_networks.tesselate">
+<span id="beam-networks-tesselate-module"></span><h2>beam_networks.tesselate module<a class="headerlink" href="#module-beam_networks.tesselate" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="beam_networks.tesselate.renumber_adjacency">
+<span class="sig-prename descclassname"><span class="pre">beam_networks.tesselate.</span></span><span class="sig-name descname"><span class="pre">renumber_adjacency</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices_delete</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.tesselate.renumber_adjacency" title="Link to this definition">#</a></dt>
+<dd><p>Renumber the indices by adjusting the counting for deleted nodes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>adj</strong> (<em>np.array</em>) – adjacency matrix.</p></li>
+<li><p><strong>indices_delete</strong> (<em>np.array</em>) – indices to be deleted.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>adj</strong> – updated adjacency.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="beam_networks.tesselate.sanity_checks">
+<span class="sig-prename descclassname"><span class="pre">beam_networks.tesselate.</span></span><span class="sig-name descname"><span class="pre">sanity_checks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlap_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connected</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duplicate_bonds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.tesselate.sanity_checks" title="Link to this definition">#</a></dt>
+<dd><p>Check a given network of nodes for consistency.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>coords</strong> (<em>np.ndarray</em>) – coordinates of shape (n_nodes,ndim).</p></li>
+<li><p><strong>adj</strong> (<em>np.ndarray</em>) – adjacency list of shape (n_bonds,2).</p></li>
+<li><p><strong>cell</strong> (<em>None</em><em> or </em><em>np.ndarray</em><em>, </em><em>optional</em>) – cell lengths of shape (ndim). If None infer from coordinates (max-min).</p></li>
+<li><p><strong>overlap</strong> (<em>bool</em><em>, </em><em>optional</em>) – check for overlapping nodes via cKDTree.</p></li>
+<li><p><strong>overlap_tol</strong> (<em>float</em><em>, </em><em>optional</em>) – tolerance for detecting overlaps.</p></li>
+<li><p><strong>connected</strong> (<em>bool</em><em>, </em><em>optional</em>) – check whether all nodes are connected.</p></li>
+<li><p><strong>duplicate_bonds</strong> (<em>bool</em><em>, </em><em>optional</em>) – check for duplicate bonds.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>AssertionError</strong> – if any discrepancies (overlapping nodes, disconnected network,
+    duplicate bonds) detected.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="beam_networks.tesselate.tesselate">
+<span class="sig-prename descclassname"><span class="pre">beam_networks.tesselate.</span></span><span class="sig-name descname"><span class="pre">tesselate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pbc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlap_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.tesselate.tesselate" title="Link to this definition">#</a></dt>
+<dd><p>Repeat unit cell in each direction. Currently implemented by copying
+coordinates and adjacency cell repeatedly and then detecting overlapping
+nodes via a cKDTree. The overlapping nodes are reduced to one node which
+overtakes all the connections from the overlapping nodes. Then the
+overlapping nodes are deleted and the adjacency matrix renumbered to
+account for deleted nodes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>coords</strong> (<em>np.ndarray</em>) – coordinates of shape (n_nodes,ndim).</p></li>
+<li><p><strong>adj</strong> (<em>np.ndarray</em>) – adjacency list of shape (n_bonds,2).</p></li>
+<li><p><strong>rep</strong> (<em>list</em><em> or </em><em>np.ndarray</em>) – number of repetitions in each direction</p></li>
+<li><p><strong>cell</strong> (<em>None</em><em> or </em><em>np.ndarray</em><em>, </em><em>optional</em>) – cell lengths of shape (ndim). If None infer from coordinates (max-min).</p></li>
+<li><p><strong>pbc</strong> (<em>bool</em><em> or </em><em>list</em><em>, </em><em>optional</em>) – Collect all element stiffness matrices in a large array before assembly.
+Faster, but may cause memory issues for very large systems (the default is True).</p></li>
+<li><p><strong>overlap_tol</strong> (<em>float</em><em>, </em><em>optional</em>) – tolerance for detecting overlaps.</p></li>
+<li><p><strong>debug</strong> (<em>bool</em><em>, </em><em>optional</em>) – print out information for debugging.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>coords</strong> (<em>np.ndarray</em>) – coordinates of shape (n_nodes_tesselate,ndim).</p></li>
+<li><p><strong>adj</strong> (<em>np.ndarray</em>) – adjacency list of shape (n_bonds_tesselate,2).</p></li>
+<li><p><strong>cell</strong> (<em>np.ndarray</em>) – cell lengths of shape (ndim).</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-beam_networks.utils">
+<span id="beam-networks-utils-module"></span><h2>beam_networks.utils module<a class="headerlink" href="#module-beam_networks.utils" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="beam_networks.utils.box_selection">
+<span class="sig-prename descclassname"><span class="pre">beam_networks.utils.</span></span><span class="sig-name descname"><span class="pre">box_selection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nodes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lim</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.utils.box_selection" title="Link to this definition">#</a></dt>
+<dd><p>Select nodes which are within a cuboid.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nodes</strong> (<em>np.ndarray</em>) – Nodal coordinates</p></li>
+<li><p><strong>lim</strong> (<em>iterable</em>) – Lower and upper bounds of the cuboid</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Masking array for nodes</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="beam_networks.utils.check_input_dict">
+<span class="sig-prename descclassname"><span class="pre">beam_networks.utils.</span></span><span class="sig-name descname"><span class="pre">check_input_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">container</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defaults</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allowed</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.utils.check_input_dict" title="Link to this definition">#</a></dt>
+<dd><p>Sanitize output settings</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>options</strong> (<em>dict</em>) – Output settings</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Sanitized output settings</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="beam_networks.utils.get_edges_from_disks">
+<span class="sig-prename descclassname"><span class="pre">beam_networks.utils.</span></span><span class="sig-name descname"><span class="pre">get_edges_from_disks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-05</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.utils.get_edges_from_disks" title="Link to this definition">#</a></dt>
+<dd><p>Get adjacency matrix from a collextion of hard disks in 2D</p>
+<p>The input file has the format:</p>
+<p>L
+n_1, x_1, y_1, r_1
+n_2, x_2, y_2, r_2
+…
+n_n, x_n, y_n, r_n</p>
+<p>where n_* denotes the disk index (1 based, will be shifted to zero),
+x_*, y_* are the coordinates,
+and r_* the radius of the disk</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>file</strong> (<em>str</em>) – Filename</p></li>
+<li><p><strong>cutoff</strong> (<em>float</em><em>, </em><em>optional</em>) – Distance cutoff to check for possible neighbors (the default is 3.)</p></li>
+<li><p><strong>atol</strong> (<em>float</em><em>, </em><em>optional</em>) – Absoulte tolerance for comparison between distance and
+composite radius of possibly neighboring disks (the default is 1e-5)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>np.ndarray</em> – Nodes</p></li>
+<li><p><em>np.ndarray</em> – Edges</p></li>
+<li><p><em>float</em> – Lx</p></li>
+<li><p><em>float</em> – Ly</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="beam_networks.utils.point_selection">
+<span class="sig-prename descclassname"><span class="pre">beam_networks.utils.</span></span><span class="sig-name descname"><span class="pre">point_selection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nodes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.utils.point_selection" title="Link to this definition">#</a></dt>
+<dd><p>Select nodes which are closest to a given point.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nodes</strong> (<em>np.ndarray</em>) – Nodal coordinates</p></li>
+<li><p><strong>point</strong> (<em>array-like</em>) – Coordinates of the point</p></li>
+<li><p><strong>num</strong> (<em>int</em>) – Number of points. The default is 1.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Masking array for nodes</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="beam_networks.utils.zero_pad_2d_array">
+<span class="sig-prename descclassname"><span class="pre">beam_networks.utils.</span></span><span class="sig-name descname"><span class="pre">zero_pad_2d_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arr</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.utils.zero_pad_2d_array" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-beam_networks.viz">
+<span id="beam-networks-viz-module"></span><h2>beam_networks.viz module<a class="headerlink" href="#module-beam_networks.viz" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="beam_networks.viz.plot_solution_1D">
+<span class="sig-prename descclassname"><span class="pre">beam_networks.viz.</span></span><span class="sig-name descname"><span class="pre">plot_solution_1D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.viz.plot_solution_1D" title="Link to this definition">#</a></dt>
+<dd><p>Plot a 1D solution along a 1D beam (composed of more than one element)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ax</strong> (<em>matplotlib.pyplot.axis object</em>) – Axis to plot into</p></li>
+<li><p><strong>d</strong> (<em>np.ndarray</em>) – Solution (ux[0], uy[0], theta_z[0], …)</p></li>
+<li><p><strong>s</strong> (<em>np.ndarray</em>) – Von Mises stress per element</p></li>
+<li><p><strong>length</strong> (<em>float</em><em>, </em><em>optional</em>) – Length of the beam (the default is 1.)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="beam_networks.viz.vtk2img">
+<span class="sig-prename descclassname"><span class="pre">beam_networks.viz.</span></span><span class="sig-name descname"><span class="pre">vtk2img</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wdir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dpi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">300</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cbar_global_lim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ftype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'png'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#beam_networks.viz.vtk2img" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-beam_networks">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-beam_networks" title="Link to this heading">#</a></h2>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="modules.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">API Reference</p>
+      </div>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-beam_networks.assembly">beam_networks.assembly module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.assembly.assemble_global_system"><code class="docutils literal notranslate"><span class="pre">assemble_global_system()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-beam_networks.bc">beam_networks.bc module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-beam_networks.fracture">beam_networks.fracture module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.fracture.FractureProblem"><code class="docutils literal notranslate"><span class="pre">FractureProblem</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.fracture.FractureProblem.failure_criterion"><code class="docutils literal notranslate"><span class="pre">FractureProblem.failure_criterion()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.fracture.FractureProblem.removed_edges"><code class="docutils literal notranslate"><span class="pre">FractureProblem.removed_edges</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.fracture.FractureProblem.run"><code class="docutils literal notranslate"><span class="pre">FractureProblem.run()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.fracture.FractureProblem.write"><code class="docutils literal notranslate"><span class="pre">FractureProblem.write()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-beam_networks.geo">beam_networks.geo module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.geo.get_geometric_props"><code class="docutils literal notranslate"><span class="pre">get_geometric_props()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.geo.get_geometric_props_derivative"><code class="docutils literal notranslate"><span class="pre">get_geometric_props_derivative()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-beam_networks.io">beam_networks.io module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-beam_networks.network">beam_networks.network module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network"><code class="docutils literal notranslate"><span class="pre">Network</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.Lx"><code class="docutils literal notranslate"><span class="pre">Network.Lx</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.Ly"><code class="docutils literal notranslate"><span class="pre">Network.Ly</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.Lz"><code class="docutils literal notranslate"><span class="pre">Network.Lz</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.bondlengths"><code class="docutils literal notranslate"><span class="pre">Network.bondlengths</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.bounds"><code class="docutils literal notranslate"><span class="pre">Network.bounds</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.boxsize"><code class="docutils literal notranslate"><span class="pre">Network.boxsize</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.coordination"><code class="docutils literal notranslate"><span class="pre">Network.coordination</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.edge_vectors"><code class="docutils literal notranslate"><span class="pre">Network.edge_vectors</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.edges"><code class="docutils literal notranslate"><span class="pre">Network.edges</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.generate_bowtie_lattice"><code class="docutils literal notranslate"><span class="pre">Network.generate_bowtie_lattice()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.generate_cubic_lattice"><code class="docutils literal notranslate"><span class="pre">Network.generate_cubic_lattice()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.generate_square_lattice"><code class="docutils literal notranslate"><span class="pre">Network.generate_square_lattice()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.is_connected"><code class="docutils literal notranslate"><span class="pre">Network.is_connected</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.nodes"><code class="docutils literal notranslate"><span class="pre">Network.nodes</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.num_edges"><code class="docutils literal notranslate"><span class="pre">Network.num_edges</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.num_nodes"><code class="docutils literal notranslate"><span class="pre">Network.num_nodes</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.pbc_edges"><code class="docutils literal notranslate"><span class="pre">Network.pbc_edges</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.pbc_nodes"><code class="docutils literal notranslate"><span class="pre">Network.pbc_nodes</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.volume"><code class="docutils literal notranslate"><span class="pre">Network.volume</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.xhi"><code class="docutils literal notranslate"><span class="pre">Network.xhi</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.xlo"><code class="docutils literal notranslate"><span class="pre">Network.xlo</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.yhi"><code class="docutils literal notranslate"><span class="pre">Network.yhi</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.ylo"><code class="docutils literal notranslate"><span class="pre">Network.ylo</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.zhi"><code class="docutils literal notranslate"><span class="pre">Network.zhi</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.network.Network.zlo"><code class="docutils literal notranslate"><span class="pre">Network.zlo</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-beam_networks.problem">beam_networks.problem module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork"><code class="docutils literal notranslate"><span class="pre">BeamNetwork</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.add_BC"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.add_BC()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.assemble_BCs"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.assemble_BCs()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.compute_equivalent_stress"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.compute_equivalent_stress()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.compute_principal_stresses"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.compute_principal_stresses()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.compute_ratio"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.compute_ratio()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.delete_BC"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.delete_BC()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.displaced_edge_vectors"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.displaced_edge_vectors</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.displaced_nodes"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.displaced_nodes</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.displacement"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.displacement</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.dof_per_node"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.dof_per_node</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.has_bc"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.has_bc</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.has_stiffness"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.has_stiffness</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.load"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.load()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.modify_BC"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.modify_BC()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.num_dof"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.num_dof</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.plot"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.plot()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.rotation"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.rotation</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.save"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.save()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.scale_BC"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.scale_BC()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.scale_solution"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.scale_solution()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.solve"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.solve()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.stiffness"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.stiffness</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.to_stl"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.to_stl()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.problem.BeamNetwork.to_vtk"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.to_vtk()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-beam_networks.solve">beam_networks.solve module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.solve.solve"><code class="docutils literal notranslate"><span class="pre">solve()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-beam_networks.stiffness">beam_networks.stiffness module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.stiffness.get_element_stiffness_global"><code class="docutils literal notranslate"><span class="pre">get_element_stiffness_global()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.stiffness.get_element_stiffness_global_vec"><code class="docutils literal notranslate"><span class="pre">get_element_stiffness_global_vec()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.stiffness.get_element_stiffness_local_vec"><code class="docutils literal notranslate"><span class="pre">get_element_stiffness_local_vec()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-beam_networks.stress">beam_networks.stress module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.stress.get_element_mises_stress"><code class="docutils literal notranslate"><span class="pre">get_element_mises_stress()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.stress.get_element_principal_stress"><code class="docutils literal notranslate"><span class="pre">get_element_principal_stress()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.stress.principal_stress"><code class="docutils literal notranslate"><span class="pre">principal_stress()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.stress.stretch_bend_ratio"><code class="docutils literal notranslate"><span class="pre">stretch_bend_ratio()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.stress.vmises_stress"><code class="docutils literal notranslate"><span class="pre">vmises_stress()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-beam_networks.tesselate">beam_networks.tesselate module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.tesselate.renumber_adjacency"><code class="docutils literal notranslate"><span class="pre">renumber_adjacency()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.tesselate.sanity_checks"><code class="docutils literal notranslate"><span class="pre">sanity_checks()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.tesselate.tesselate"><code class="docutils literal notranslate"><span class="pre">tesselate()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-beam_networks.utils">beam_networks.utils module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.utils.box_selection"><code class="docutils literal notranslate"><span class="pre">box_selection()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.utils.check_input_dict"><code class="docutils literal notranslate"><span class="pre">check_input_dict()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.utils.get_edges_from_disks"><code class="docutils literal notranslate"><span class="pre">get_edges_from_disks()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.utils.point_selection"><code class="docutils literal notranslate"><span class="pre">point_selection()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.utils.zero_pad_2d_array"><code class="docutils literal notranslate"><span class="pre">zero_pad_2d_array()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-beam_networks.viz">beam_networks.viz module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.viz.plot_solution_1D"><code class="docutils literal notranslate"><span class="pre">plot_solution_1D()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#beam_networks.viz.vtk2img"><code class="docutils literal notranslate"><span class="pre">vtk2img()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-beam_networks">Module contents</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Hannes Holey
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2025, Hannes Holey.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

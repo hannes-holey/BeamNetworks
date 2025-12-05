@@ -1,0 +1,526 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>API Reference &#8212; beam_networks  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=eba8b062" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'modules';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="beam_networks package" href="beam_networks.html" />
+    <link rel="prev" title="BeamNetworks" href="index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">beam_networks  documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="index.html">BeamNetworks</a></li>
+<li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="beam_networks.html">beam_networks package</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/hannes-holey/BeamNetworks">Github repository</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/modules.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>API Reference</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="api-reference">
+<h1>API Reference<a class="headerlink" href="#api-reference" title="Link to this heading">#</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="beam_networks.html">beam_networks package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="beam_networks.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="beam_networks.html#module-beam_networks.assembly">beam_networks.assembly module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="beam_networks.html#beam_networks.assembly.assemble_global_system"><code class="docutils literal notranslate"><span class="pre">assemble_global_system()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="beam_networks.html#module-beam_networks.bc">beam_networks.bc module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="beam_networks.html#module-beam_networks.fracture">beam_networks.fracture module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="beam_networks.html#beam_networks.fracture.FractureProblem"><code class="docutils literal notranslate"><span class="pre">FractureProblem</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.fracture.FractureProblem.failure_criterion"><code class="docutils literal notranslate"><span class="pre">FractureProblem.failure_criterion()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.fracture.FractureProblem.removed_edges"><code class="docutils literal notranslate"><span class="pre">FractureProblem.removed_edges</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.fracture.FractureProblem.run"><code class="docutils literal notranslate"><span class="pre">FractureProblem.run()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.fracture.FractureProblem.write"><code class="docutils literal notranslate"><span class="pre">FractureProblem.write()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="beam_networks.html#module-beam_networks.geo">beam_networks.geo module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="beam_networks.html#beam_networks.geo.get_geometric_props"><code class="docutils literal notranslate"><span class="pre">get_geometric_props()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="beam_networks.html#beam_networks.geo.get_geometric_props_derivative"><code class="docutils literal notranslate"><span class="pre">get_geometric_props_derivative()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="beam_networks.html#module-beam_networks.io">beam_networks.io module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="beam_networks.html#module-beam_networks.network">beam_networks.network module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="beam_networks.html#beam_networks.network.Network"><code class="docutils literal notranslate"><span class="pre">Network</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.network.Network.Lx"><code class="docutils literal notranslate"><span class="pre">Network.Lx</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.network.Network.Ly"><code class="docutils literal notranslate"><span class="pre">Network.Ly</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.network.Network.Lz"><code class="docutils literal notranslate"><span class="pre">Network.Lz</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.network.Network.bondlengths"><code class="docutils literal notranslate"><span class="pre">Network.bondlengths</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.network.Network.bounds"><code class="docutils literal notranslate"><span class="pre">Network.bounds</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.network.Network.boxsize"><code class="docutils literal notranslate"><span class="pre">Network.boxsize</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.network.Network.coordination"><code class="docutils literal notranslate"><span class="pre">Network.coordination</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.network.Network.edge_vectors"><code class="docutils literal notranslate"><span class="pre">Network.edge_vectors</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.network.Network.edges"><code class="docutils literal notranslate"><span class="pre">Network.edges</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.network.Network.generate_bowtie_lattice"><code class="docutils literal notranslate"><span class="pre">Network.generate_bowtie_lattice()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.network.Network.generate_cubic_lattice"><code class="docutils literal notranslate"><span class="pre">Network.generate_cubic_lattice()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.network.Network.generate_square_lattice"><code class="docutils literal notranslate"><span class="pre">Network.generate_square_lattice()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.network.Network.is_connected"><code class="docutils literal notranslate"><span class="pre">Network.is_connected</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.network.Network.nodes"><code class="docutils literal notranslate"><span class="pre">Network.nodes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.network.Network.num_edges"><code class="docutils literal notranslate"><span class="pre">Network.num_edges</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.network.Network.num_nodes"><code class="docutils literal notranslate"><span class="pre">Network.num_nodes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.network.Network.pbc_edges"><code class="docutils literal notranslate"><span class="pre">Network.pbc_edges</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.network.Network.pbc_nodes"><code class="docutils literal notranslate"><span class="pre">Network.pbc_nodes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.network.Network.volume"><code class="docutils literal notranslate"><span class="pre">Network.volume</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.network.Network.xhi"><code class="docutils literal notranslate"><span class="pre">Network.xhi</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.network.Network.xlo"><code class="docutils literal notranslate"><span class="pre">Network.xlo</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.network.Network.yhi"><code class="docutils literal notranslate"><span class="pre">Network.yhi</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.network.Network.ylo"><code class="docutils literal notranslate"><span class="pre">Network.ylo</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.network.Network.zhi"><code class="docutils literal notranslate"><span class="pre">Network.zhi</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.network.Network.zlo"><code class="docutils literal notranslate"><span class="pre">Network.zlo</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="beam_networks.html#module-beam_networks.problem">beam_networks.problem module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="beam_networks.html#beam_networks.problem.BeamNetwork"><code class="docutils literal notranslate"><span class="pre">BeamNetwork</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.problem.BeamNetwork.add_BC"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.add_BC()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.problem.BeamNetwork.assemble_BCs"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.assemble_BCs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.problem.BeamNetwork.compute_equivalent_stress"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.compute_equivalent_stress()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.problem.BeamNetwork.compute_principal_stresses"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.compute_principal_stresses()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.problem.BeamNetwork.compute_ratio"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.compute_ratio()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.problem.BeamNetwork.delete_BC"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.delete_BC()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.problem.BeamNetwork.displaced_edge_vectors"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.displaced_edge_vectors</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.problem.BeamNetwork.displaced_nodes"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.displaced_nodes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.problem.BeamNetwork.displacement"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.displacement</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.problem.BeamNetwork.dof_per_node"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.dof_per_node</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.problem.BeamNetwork.has_bc"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.has_bc</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.problem.BeamNetwork.has_stiffness"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.has_stiffness</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.problem.BeamNetwork.load"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.load()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.problem.BeamNetwork.modify_BC"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.modify_BC()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.problem.BeamNetwork.num_dof"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.num_dof</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.problem.BeamNetwork.plot"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.problem.BeamNetwork.rotation"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.rotation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.problem.BeamNetwork.save"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.save()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.problem.BeamNetwork.scale_BC"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.scale_BC()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.problem.BeamNetwork.scale_solution"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.scale_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.problem.BeamNetwork.solve"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.solve()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.problem.BeamNetwork.stiffness"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.stiffness</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.problem.BeamNetwork.to_stl"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.to_stl()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="beam_networks.html#beam_networks.problem.BeamNetwork.to_vtk"><code class="docutils literal notranslate"><span class="pre">BeamNetwork.to_vtk()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="beam_networks.html#module-beam_networks.solve">beam_networks.solve module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="beam_networks.html#beam_networks.solve.solve"><code class="docutils literal notranslate"><span class="pre">solve()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="beam_networks.html#module-beam_networks.stiffness">beam_networks.stiffness module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="beam_networks.html#beam_networks.stiffness.get_element_stiffness_global"><code class="docutils literal notranslate"><span class="pre">get_element_stiffness_global()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="beam_networks.html#beam_networks.stiffness.get_element_stiffness_global_vec"><code class="docutils literal notranslate"><span class="pre">get_element_stiffness_global_vec()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="beam_networks.html#beam_networks.stiffness.get_element_stiffness_local_vec"><code class="docutils literal notranslate"><span class="pre">get_element_stiffness_local_vec()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="beam_networks.html#module-beam_networks.stress">beam_networks.stress module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="beam_networks.html#beam_networks.stress.get_element_mises_stress"><code class="docutils literal notranslate"><span class="pre">get_element_mises_stress()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="beam_networks.html#beam_networks.stress.get_element_principal_stress"><code class="docutils literal notranslate"><span class="pre">get_element_principal_stress()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="beam_networks.html#beam_networks.stress.principal_stress"><code class="docutils literal notranslate"><span class="pre">principal_stress()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="beam_networks.html#beam_networks.stress.stretch_bend_ratio"><code class="docutils literal notranslate"><span class="pre">stretch_bend_ratio()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="beam_networks.html#beam_networks.stress.vmises_stress"><code class="docutils literal notranslate"><span class="pre">vmises_stress()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="beam_networks.html#module-beam_networks.tesselate">beam_networks.tesselate module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="beam_networks.html#beam_networks.tesselate.renumber_adjacency"><code class="docutils literal notranslate"><span class="pre">renumber_adjacency()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="beam_networks.html#beam_networks.tesselate.sanity_checks"><code class="docutils literal notranslate"><span class="pre">sanity_checks()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="beam_networks.html#beam_networks.tesselate.tesselate"><code class="docutils literal notranslate"><span class="pre">tesselate()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="beam_networks.html#module-beam_networks.utils">beam_networks.utils module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="beam_networks.html#beam_networks.utils.box_selection"><code class="docutils literal notranslate"><span class="pre">box_selection()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="beam_networks.html#beam_networks.utils.check_input_dict"><code class="docutils literal notranslate"><span class="pre">check_input_dict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="beam_networks.html#beam_networks.utils.get_edges_from_disks"><code class="docutils literal notranslate"><span class="pre">get_edges_from_disks()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="beam_networks.html#beam_networks.utils.point_selection"><code class="docutils literal notranslate"><span class="pre">point_selection()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="beam_networks.html#beam_networks.utils.zero_pad_2d_array"><code class="docutils literal notranslate"><span class="pre">zero_pad_2d_array()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="beam_networks.html#module-beam_networks.viz">beam_networks.viz module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="beam_networks.html#beam_networks.viz.plot_solution_1D"><code class="docutils literal notranslate"><span class="pre">plot_solution_1D()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="beam_networks.html#beam_networks.viz.vtk2img"><code class="docutils literal notranslate"><span class="pre">vtk2img()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="beam_networks.html#module-beam_networks">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">BeamNetworks</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="beam_networks.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">beam_networks package</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Hannes Holey
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2025, Hannes Holey.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
