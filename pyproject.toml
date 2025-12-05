@@ -15,7 +15,7 @@ classifiers = [
     "License :: OSI Approved :: GNU GPLv3"
 ]
 
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 dynamic = ["version"]
 dependencies = [
     "DiscoverVersion",
@@ -29,10 +29,12 @@ dependencies = [
     "PyYAML"]
 
 [project.optional-dependencies]
-tests = ['pytest', 
-         'coverage']
-doc = ['sphinx', 
-       'sphinx_book_theme']
+tests = [
+    'pytest', 
+    'coverage']
+doc = [
+    'sphinx', 
+    'sphinx_book_theme']
 
 [project.scripts]
 vtk2img = "beam_networks.viz:vtk2img"
