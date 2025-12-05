@@ -51,7 +51,8 @@ plt.show()
 
 ```
 
-More examples can be found in the [examples](./examples) directory.
+More examples can be found in the [examples](./examples) directory, for instance for quasi-static problems
+of 2D and 3D lattice structures, for elastic-brittle fracture problems.
 
 ## Tests
 We test against analytic solutions for a 1D cantilever beam both in 2D and 3D space with
