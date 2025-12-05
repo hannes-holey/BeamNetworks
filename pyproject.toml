@@ -29,8 +29,10 @@ dependencies = [
     "PyYAML"]
 
 [project.optional-dependencies]
-tests = ['pytest', 'coverage']
-doc = ['sphinx', 'sphinx_rtd_theme']
+tests = ['pytest', 
+         'coverage']
+doc = ['sphinx', 
+       'sphinx_book_theme']
 
 [project.scripts]
 vtk2img = "beam_networks.viz:vtk2img"

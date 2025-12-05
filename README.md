@@ -3,7 +3,7 @@
 [![Tests](https://github.com/hannes-holey/BeamNetworks/actions/workflows/test.yaml/badge.svg)](https://github.com/hannes-holey/BeamNetworks/actions/workflows/test.yaml)
 [![Coverage](maintenance/coverage.svg)](maintenance/coverage.svg)
 
-Solver for the elastic deformation of beam networks.
+Solver for the elastic deformation of Timoshenko beam networks.
 
 ## Installation
 Install the package using pip.
@@ -14,7 +14,7 @@ pip install .[tests]
 ## Minimal example
 ```python
 import numpy as np
-from timoshenko_solver.problem import BeamNetwork
+from beam_networks.problem import BeamNetwork
 
 # Generate nodes and edges
 nodes = np.array([[0., 0., 0.],
@@ -58,13 +58,10 @@ We test against analytic solutions for a 1D cantilever beam both in 2D and 3D sp
 ```
 pytest
 ```
-Tests that check that the [examples](./examples) run without error are marked as slow.
-To test those run `pytest -m slow`.
 
-## Documentation
-A Sphinx-generated documentation can be build with
-```
-cd doc
-sphinx-apidoc -o . ../timoshenko_solver
-make html
-```
+## Funding
+This project received funding from the European Union’s Horizon Europe research and 
+innovation programme via the ARCHIBIOFOAM project under grant agreement No 101161052. 
+Views and opinions expressed are however those of the author(s) only and do not necessarily 
+reflect those of the European Union or European Innovation Council and SMEs Executive 
+Agency (EISMEA). Neither the European Union nor the granting authority can be held responsible for them.
