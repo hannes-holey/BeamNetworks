@@ -3,3 +3,4 @@ _build/
 .coverage
 .pytest_cache/
 data/
+examples/bench/*.txt
