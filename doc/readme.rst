@@ -69,7 +69,7 @@ Funding
 -------
 
 This project received funding from the European Union’s Horizon Europe research
-and innovation programme via the `ARCHIBIOFOAM <https://https://archibiofoam.eu/>`__
+and innovation programme via the `ARCHIBIOFOAM <https://archibiofoam.eu/>`__
 project under grant agreement No 101161052. Views and opinions expressed are however
 those of the author(s) only and do not necessarily reflect those of the European Union
 or European Innovation Council and SMEs Executive Agency(EISMEA). Neither the European
