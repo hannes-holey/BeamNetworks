@@ -52,7 +52,7 @@ plt.show()
 ```
 
 More examples can be found in the [examples](./examples) directory, for instance for quasi-static problems
-of 2D and 3D lattice structures, for elastic-brittle fracture problems.
+of 2D and 3D lattice structures, or for elastic-brittle fracture problems.
 
 ## Tests
 We test against analytic solutions for a 1D cantilever beam both in 2D and 3D space with
@@ -77,7 +77,10 @@ For post-processing and visualization:
 
 ## Funding
 This project received funding from the European Union’s Horizon Europe research and 
-innovation programme via the ARCHIBIOFOAM project under grant agreement No 101161052. 
-Views and opinions expressed are however those of the author(s) only and do not necessarily 
-reflect those of the European Union or European Innovation Council and SMEs Executive 
-Agency (EISMEA). Neither the European Union nor the granting authority can be held responsible for them.
+innovation programme via the [ARCHIBIOFOAM](https://https://archibiofoam.eu/) project 
+under grant agreement No 101161052. Views and opinions expressed are however those of 
+the author(s) only and do not necessarily reflect those of the European Union or European
+Innovation Council and SMEs Executive Agency (EISMEA). Neither the European Union nor 
+the granting authority can be held responsible for them.
+
+![EIC Logo](doc/assets/EIC-logo-FundedBy.png)
