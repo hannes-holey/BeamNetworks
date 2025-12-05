@@ -41,7 +41,7 @@ if __name__ == "__main__":
                ]:
         for vec in [0, 1]:
             if vv == 'bsr':
-                sizes = 2 * np.logspace(0, 2, 20)[:15]
+                sizes = 2 * np.logspace(0, 2, 20)[:12]
             else:
                 sizes = 2 * np.logspace(0, 2, 20)[:8]
 

@@ -17,23 +17,23 @@ def run(s, v, N=1):
     mean_time = 0.
 
     c = 0
+    lattice = Network.generate_cubic_lattice(a=1., bbox=(s, s, s), lattice_type=lt)
+
+    problem = BeamNetwork(lattice._nodes,
+                          lattice._edges,
+                          beam_prop=props,
+                          valid=True,
+                          options={'vectorize': True, 'matrix': 'bsr', 'verbose': False})
+
+    problem.add_BC('0', 'D', 'box',
+                   [None, 0.01, None, None, None, None],
+                   [0., 0., 0., 0., 0., 0.])
+
+    problem.add_BC('1', 'D', 'point',
+                   [s, s / 2., s / 2.],
+                   [None, 0.01 * s, None, None, None, None])
+
     for _ in range(N):
-        lattice = Network.generate_cubic_lattice(a=1., bbox=(s, s, s), lattice_type=lt)
-
-        problem = BeamNetwork(lattice._nodes,
-                              lattice._edges,
-                              beam_prop=props,
-                              valid=True,
-                              options={'vectorize': True, 'matrix': 'bsr', 'verbose': False})
-
-        problem.add_BC('0', 'D', 'box',
-                       [None, 0.01, None, None, None, None],
-                       [0., 0., 0., 0., 0., 0.])
-
-        problem.add_BC('1', 'D', 'point',
-                       [s, s / 2., s / 2.],
-                       [None, 0.01 * s, None, None, None, None])
-
         tic = time.time()
         problem.solve(solver=v)
         toc = time.time() - tic
@@ -59,11 +59,11 @@ if __name__ == "__main__":
             'pcg',
             'cg'
     ]:
-        sizes = 2 * np.logspace(0, 2, 20)[:10]
+        sizes = 2 * np.logspace(0, 2, 20)[:8]
 
         buffer = []
         for s in sizes:
-            n, t = run(s, vv)
+            n, t = run(s, vv, N=5)
             buffer.append([n, t])
 
         np.savetxt(f'time_{vv}.txt', np.array(buffer))
