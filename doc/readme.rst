@@ -53,7 +53,7 @@ Minimal example
    ax.scatter(*problem.displaced_nodes[:, :2].T)
    plt.show()
 
-More examples can be found in the `examples <./examples>`__ directory.
+More examples can be found in the `examples <https://github.com/hannes-holey/BeamNetworks/tree/main/examples>`__ directory.
 
 Tests
 -----
