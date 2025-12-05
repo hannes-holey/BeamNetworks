@@ -1,7 +1,8 @@
 import numpy as np
 import time
-from timoshenko_solver.network import Network
-from timoshenko_solver.problem import BeamNetwork
+
+from beam_networks.network import Network
+from beam_networks.problem import BeamNetwork
 
 
 def run(s, v, N=1):
