@@ -1,7 +1,5 @@
-API Reference
-=============
+:orphan:
 
-.. toctree::
-   :maxdepth: 4
+.. note::
 
-   beam_networks
+   This page has been superseded by :doc:`api_reference`.

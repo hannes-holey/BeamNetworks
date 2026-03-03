@@ -19,11 +19,21 @@ version = beam_networks.__version__
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.mathjax',
               'sphinx.ext.napoleon',
-              'sphinx.ext.autosummary']
+              'sphinx.ext.autosummary',
+              'sphinx.ext.viewcode']
 
+autosummary_generate = True
 
-# templates_path = ['_templates']
+templates_path = ['_templates']
 exclude_patterns = ['_build', 'conf.py']
+
+suppress_warnings = ['autosummary']
+
+autodoc_default_options = {
+    'members': True,
+    'undoc-members': True,
+    'show-inheritance': True,
+}
 
 
 # -- Options for HTML output -------------------------------------------------
