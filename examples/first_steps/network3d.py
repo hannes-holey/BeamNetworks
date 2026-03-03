@@ -1,6 +1,5 @@
 from argparse import ArgumentParser
 
-from beam_networks.network import Network
 from beam_networks.problem import BeamNetwork
 
 
@@ -25,13 +24,13 @@ if __name__ == "__main__":
     props = {'name': 'circle', 'radius': R, 'E': E, 'nu': nu}
 
     lt = 'bcc'
-    lattice = Network.generate_cubic_lattice(a=1., bbox=(20., 5., 5.), lattice_type=lt)
 
-    problem = BeamNetwork(lattice._nodes,
-                          lattice._edges,
-                          beam_prop=props,
-                          valid=True,
-                          outdir=args.outdir)
+    problem = BeamNetwork.from_cubic_lattice(a=1.,
+                                             pbc=None,
+                                             bbox=(20., 5., 5.),
+                                             lattice_type=lt,
+                                             beam_prop=props,
+                                             outdir=args.outdir)
 
     problem.add_BC('0', 'D', 'box',
                    [None, 0.01, None, None, None, None],

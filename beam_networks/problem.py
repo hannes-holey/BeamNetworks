@@ -151,6 +151,114 @@ class BeamNetwork(Network):
 
         return new
 
+    @classmethod
+    def from_network(cls,
+                     network: Network,
+                     beam_prop={'name': 'circle', 'radius': 1.,
+                                'E': 1., 'nu': 0.3},
+                     options={'vectorize': True, 'matrix': 'bsr', 'verbose': True},
+                     outdir='.',
+                     assemble_on_init=True):
+        """Create a beam network from an existing ``Network`` instance.
+
+        Parameters
+        ----------
+        network : beam_networks.network.Network
+            Underlying network providing nodes and edges.
+        beam_prop : dict, optional
+            Beam properties (cross section and elastic properties)
+        options : dict, optional
+            Solver options
+        outdir : str, optional
+            Directory where output is written into (the default is the current working directory)
+        assemble_on_init : bool, optional
+            Flag to activate the assembly of the stiffness matrix at initialization (the default is True)
+
+        Returns
+        -------
+        BeamNetwork
+            A new class instance sharing the topology of ``network``.
+        """
+
+        return cls(network._nodes,
+                   network._edges,
+                   beam_prop=beam_prop,
+                   periodic=network._periodic,
+                   boxsize=network.boxsize,
+                   valid=True,
+                   options=options,
+                   outdir=outdir,
+                   assemble_on_init=assemble_on_init)
+
+    @classmethod
+    def from_cubic_lattice(cls,
+                           a=1.,
+                           pbc=None,
+                           bbox=(1., 1., 1.),
+                           lattice_type='sc',
+                           beam_prop={'name': 'circle', 'radius': 1.,
+                                      'E': 1., 'nu': 0.3},
+                           options={'vectorize': True, 'matrix': 'bsr', 'verbose': True},
+                           outdir='.',
+                           assemble_on_init=True):
+        """Create a beam network from a 3D cubic lattice.
+
+        This is a thin wrapper around :meth:`beam_networks.network.Network.generate_cubic_lattice`
+        that directly returns a :class:`BeamNetwork` instance.
+        """
+
+        lattice = Network.generate_cubic_lattice(a=a,
+                                                 pbc=pbc,
+                                                 bbox=bbox,
+                                                 lattice_type=lattice_type)
+        return cls.from_network(lattice,
+                                beam_prop=beam_prop,
+                                options=options,
+                                outdir=outdir,
+                                assemble_on_init=assemble_on_init)
+
+    @classmethod
+    def from_square_lattice(cls,
+                            a=1.,
+                            bbox=(1., 1.),
+                            lattice_type='sc',
+                            beam_prop={'name': 'circle', 'radius': 1.,
+                                       'E': 1., 'nu': 0.3},
+                            options={'vectorize': True, 'matrix': 'bsr', 'verbose': True},
+                            outdir='.',
+                            assemble_on_init=True):
+        """Create a beam network from a 2D square lattice."""
+
+        lattice = Network.generate_square_lattice(a=a,
+                                                  bbox=bbox,
+                                                  lattice_type=lattice_type)
+        return cls.from_network(lattice,
+                                beam_prop=beam_prop,
+                                options=options,
+                                outdir=outdir,
+                                assemble_on_init=assemble_on_init)
+
+    @classmethod
+    def from_bowtie_lattice(cls,
+                            a=1.,
+                            w=0.1,
+                            bbox=(1., 1.),
+                            beam_prop={'name': 'circle', 'radius': 1.,
+                                       'E': 1., 'nu': 0.3},
+                            options={'vectorize': True, 'matrix': 'bsr', 'verbose': True},
+                            outdir='.',
+                            assemble_on_init=True):
+        """Create a beam network from a 2D bowtie lattice."""
+
+        lattice = Network.generate_bowtie_lattice(a=a,
+                                                  w=w,
+                                                  bbox=bbox)
+        return cls.from_network(lattice,
+                                beam_prop=beam_prop,
+                                options=options,
+                                outdir=outdir,
+                                assemble_on_init=assemble_on_init)
+
     @property
     def has_bc(self):
         return len(self._bc) > 0

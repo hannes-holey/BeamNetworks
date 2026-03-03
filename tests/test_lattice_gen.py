@@ -17,7 +17,6 @@ import numpy as np
 from beam_networks.network import Network
 
 
-@pytest.mark.skip(reason="")
 def test_sc():
 
     bbox = (1., 1., 1.)

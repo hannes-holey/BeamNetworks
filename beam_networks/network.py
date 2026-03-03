@@ -15,9 +15,10 @@
 import numpy as np
 import scipy.sparse as sp
 from itertools import combinations
-from scipy.spatial import cKDTree, ConvexHull
+from scipy.spatial import ConvexHull
 
 from beam_networks.utils import _remove_isolated_nodes_edges, _mic
+from beam_networks.lattice import generate_cubic_lattice, generate_square_lattice, generate_bowtie_lattice
 
 
 class Network:
@@ -69,14 +70,15 @@ class Network:
         r1 = nodes_positions[e1]
         dr = np.sqrt((r1 - r0)**2)
 
-        # In nonperiodic directions, keep only edges that do not cross boundaries
-        keep = np.all(dr[:, ~self._periodic] <= self._boxsize[~self._periodic] / 2., axis=-1).reshape(-1)
-        edges_indices = edges_indices[keep]
 
         if valid:
             self._nodes = nodes_positions
             self._edges = edges_indices
         else:
+            # In nonperiodic directions, keep only edges that do not cross boundaries
+            keep = np.all(dr[:, ~self._periodic] <= self._boxsize[~self._periodic] / 2., axis=-1).reshape(-1)
+            edges_indices = edges_indices[keep]
+
             # Pre-process network // generate possible nodes and edges
             self._nodes, self._edges = self._preprocessing(nodes_positions, edges_indices)
 
@@ -427,83 +429,11 @@ class Network:
             Class instance with nodes and edges given by the prescribed lattice
         """
 
-        if pbc is None:
-            # set all directions to False
-            pbc = np.zeros(3, dtype=bool)
-        else:
-            pbc = np.array(pbc).astype(bool)
+        lattice_coords, connections, pbc, bbox, valid = generate_cubic_lattice(a=a,
+                                                                               pbc=pbc,
+                                                                               bbox=bbox,
+                                                                               lattice_type=lattice_type)
 
-        a0 = a
-
-        if lattice_type == 'sc':
-            basis = np.array([
-                [0, 0, 0],            # Corner of the cube
-            ]) * a
-        elif lattice_type == 'fcc':
-            basis = np.array([
-                [0, 0, 0],            # Corner of the cube
-                [0.5, 0.5, 0],        # Face centers
-                [0.5, 0, 0.5],
-                [0, 0.5, 0.5]
-            ]) * a
-            a0 = a * np.sqrt(2) / 2
-        elif lattice_type == 'bcc':
-            basis = np.array([
-                [0, 0, 0],       # Corner of the cube
-                [0.5, 0.5, 0.5]  # Center of the cube
-            ]) * a
-            a0 = a * np.sqrt(3) / 2
-        else:
-            raise RuntimeError("Lattice must be one of ['sc', 'fcc', 'bcc']")
-
-        nx, ny, nz = (np.array(bbox) / np.maximum(np.ones(3) * a,
-                                                  np.amax(basis, axis=0))).astype(int) + 1
-
-        # Generate the grid of unit cells
-        grid_x, grid_y, grid_z = np.meshgrid(
-            np.arange(nx), np.arange(ny), np.arange(nz), indexing='ij'
-        )
-
-        # Stack the grid into vectors of unit cell origins and scale by a
-        grid_coords = np.stack((grid_x, grid_y, grid_z), axis=-1).reshape(-1, 3) * a
-
-        # Add the basis atoms to the grid
-        lattice_coords = grid_coords[:, None, :] + basis
-        lattice_coords = lattice_coords.reshape(-1, 3)  # Reshape into list of 3D coordinates
-
-        # Select only nodes within the box
-        mask = np.logical_and(np.all(lattice_coords <= bbox, axis=-1),
-                              np.all(lattice_coords >= 0., axis=-1))
-        lattice_coords = lattice_coords[mask]
-
-        # Now we find connections between neighboring atoms using a KD-Tree
-        kdtree = cKDTree(lattice_coords)
-        connections = kdtree.query_pairs(r=a0 + 1e-5, output_type='ndarray')  # Neighbors within a0
-
-        for d in np.arange(3)[pbc]:
-
-            pbcx_mask_left = np.isclose(lattice_coords[:, d], 0.)
-            pbcx_mask_right = np.isclose(lattice_coords[:, d], bbox[d])
-
-            pbcx_nodes_left = np.arange(lattice_coords.shape[0])[pbcx_mask_left]
-            pbcx_nodes_right = np.arange(lattice_coords.shape[0])[pbcx_mask_right]
-
-            new_connections = np.copy(connections)
-
-            for pl, pr in zip(pbcx_nodes_left, pbcx_nodes_right):
-
-                new_connections[connections[:, 0] == pl, 0] = pr
-                new_connections[connections[:, 1] == pl, 1] = pr
-
-            connections = new_connections
-
-        connections = np.unique(connections, axis=0)
-
-        # Need to delete obsolete nodes for pbc, thus set valid to false
-        if np.any(pbc):
-            valid = False
-        else:
-            valid = True
 
         return cls(lattice_coords, connections, valid=valid, periodic=pbc, boxsize=bbox)
 
@@ -529,50 +459,9 @@ class Network:
             Class instance with nodes and edges given by the prescribed lattice
         """
 
-        a0 = a
-
-        if lattice_type == 'sc':
-            basis = np.array([
-                [0, 0],            # Corner of the cube
-            ]) * a
-        elif lattice_type == 'fcc':
-            basis = np.array([
-                [0, 0],            # Corner of the cube
-                [0.5, 0],             # Face centers
-                [0, 0.5]
-            ]) * a
-            a0 = a * np.sqrt(2) / 2
-        elif lattice_type == 'bcc':
-            basis = np.array([
-                [0, 0],       # Corner of the cube
-                [0.5, 0.5]  # Center of the cube
-            ]) * a
-            a0 = a * np.sqrt(3) / 2
-        else:
-            raise RuntimeError("Lattice must be one of ['sc', 'fcc', 'bcc']")
-
-        nx, ny = (np.array(bbox) / np.maximum(np.ones(2) * a,
-                                              np.amax(basis, axis=0))).astype(int) + 1
-
-        # Generate the grid of unit cells
-        grid_x, grid_y = np.meshgrid(
-            np.arange(nx), np.arange(ny), indexing='ij')
-
-        # Stack the grid into vectors of unit cell origins and scale by a
-        grid_coords = np.stack((grid_x, grid_y), axis=-1).reshape(-1, 2) * a
-
-        # Add the basis atoms to the grid
-        lattice_coords = grid_coords[:, None, :] + basis
-        lattice_coords = lattice_coords.reshape(-1, 2)  # Reshape into list of 3D coordinates
-
-        # Select only nodes within the box
-        mask = np.logical_and(np.all(lattice_coords <= bbox, axis=-1),
-                              np.all(lattice_coords >= 0., axis=-1))
-        lattice_coords = lattice_coords[mask]
-
-        # Now we find connections between neighboring atoms using a KD-Tree
-        kdtree = cKDTree(lattice_coords)
-        connections = kdtree.query_pairs(r=a0 + 1e-5, output_type='ndarray')  # Neighbors within a0
+        lattice_coords, connections = generate_square_lattice(a=a,
+                                                              bbox=bbox,
+                                                              lattice_type=lattice_type)
 
         return cls(lattice_coords, connections)
 
@@ -596,58 +485,10 @@ class Network:
             Class instance with nodes and edges given by the prescribed lattice
         """
 
-        basis = np.array([
-            [w, 0.0],
-            [1. - w, 0.0],
-            [0.5 - w, 0.5],
-            [0.5 + w, 0.5]
-        ]) * a
-
-        nx, ny = (np.array(bbox) / np.maximum(np.ones(2) * a,
-                                              np.amax(basis, axis=0))).astype(int) + 1
-
-        # Generate the grid of unit cells
-        grid_x, grid_y = np.meshgrid(
-            np.arange(nx), np.arange(ny), indexing='ij')
-
-        # Stack the grid into vectors of unit cell origins and scale by a
-        grid_coords = np.stack((grid_x, grid_y), axis=-1).reshape(-1, 2) * a
-
-        # Add the basis atoms to the grid
-        lattice_coords = grid_coords[:, None, :] + basis
-        lattice_coords = lattice_coords.reshape(-1, 2)  # Reshape into list of 3D coordinates
-
-        # Select only nodes within the box
-        mask = np.logical_and(np.all(lattice_coords <= bbox, axis=-1),
-                              np.all(lattice_coords >= 0., axis=-1))
-        lattice_coords = lattice_coords[mask]
-
-        d0 = np.linalg.norm(basis[1] - basis[0])
-        d1 = np.linalg.norm(basis[2] - basis[0])
-
-        connections_1 = _get_connections(lattice_coords * np.array([1., 1.]), d0)
-        connections_2 = _get_connections(lattice_coords * np.array([1., 1.]), d1)
-
-        connections = np.vstack([
-            connections_1,
-            connections_2,
-        ])
+        lattice_coords, connections = generate_bowtie_lattice(a=a,
+                                                              w=w,
+                                                              bbox=bbox,
+                                                              lattice_type=lattice_type)
 
         return cls(lattice_coords, connections)
 
-
-def _get_connections(coords, d):
-
-    hi = d + 1e-8
-    lo = d - 1e-8
-
-    kdtree = cKDTree(coords)
-    connections_hi = kdtree.query_pairs(r=hi, output_type='ndarray')  # Neighbors within a0
-
-    connections = []
-    for e0, e1 in connections_hi:
-        d = np.linalg.norm(coords[e1] - coords[e0])
-        if d > lo:
-            connections.append([e0, e1])
-
-    return np.array(connections)
