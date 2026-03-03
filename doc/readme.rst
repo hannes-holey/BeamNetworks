@@ -1,8 +1,3 @@
-BeamNetworks
-============
-
-Solver for the elastic deformation of Timoshenko beam networks.
-
 Installation
 ------------
 
