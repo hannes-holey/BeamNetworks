@@ -146,8 +146,6 @@ def generate_cubic_lattice(a=1.,
     else:
         valid = True
 
-    print(valid)
-
     return lattice_coords, connections, pbc, bbox, valid
 
 
