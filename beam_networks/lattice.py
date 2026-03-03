@@ -162,7 +162,7 @@ def generate_square_lattice(a=1.0,
     bbox : array-like
         Size of the bounding box, filled with repeated unit cells
     lattice_type : str, optional
-        Name of the lattice type ['sc', 'bcc', 'fcc'] (the default is 'sc')
+        Name of the lattice type ['sc', 'fcc'] (the default is 'sc')
 
     Returns
     -------
@@ -181,26 +181,14 @@ def generate_square_lattice(a=1.0,
             np.array(
                 [
                     [0, 0],  # Corner of the cube
-                    [0.5, 0],  # Face centers
-                    [0, 0.5],
-                ]
-            )
-            * a
-        )
-        a0 = a * np.sqrt(2) / 2
-    elif lattice_type == "bcc":
-        basis = (
-            np.array(
-                [
-                    [0, 0],  # Corner of the cube
                     [0.5, 0.5],  # Center of the cube
                 ]
             )
             * a
         )
-        a0 = a * np.sqrt(3) / 2
+        a0 = a * np.sqrt(2) / 2
     else:
-        raise RuntimeError("Lattice must be one of ['sc', 'bcc', 'fcc']")
+        raise RuntimeError("Lattice must be one of ['sc', 'fcc']")
 
     bbox = tuple(bbox)
 

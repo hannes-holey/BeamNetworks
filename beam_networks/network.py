@@ -19,7 +19,7 @@ from scipy.spatial import ConvexHull
 
 from beam_networks.utils import _remove_isolated_nodes_edges, _mic
 from beam_networks.lattice import generate_cubic_lattice, generate_square_lattice, generate_bowtie_lattice
-
+from beam_networks.viz import _plot_network
 
 class Network:
     """Base class for network structure.
@@ -491,4 +491,39 @@ class Network:
                                                               lattice_type=lattice_type)
 
         return cls(lattice_coords, connections)
+
+    def plot(self, ax, node_ids=False, cax=None, aspect=1., lim=None, lw=2.,
+             scale=1.):
+        """Generate 2D plot of the network.
+
+        Parameters
+        ----------
+        ax : matplotlib.pyplot.axis object
+            Axis to plot into
+        node_ids : bool, optional
+            Print node numbers nect to undeformed structure (the default is False)
+        cax : matplotlib.pyplot.axis object or None, optional
+            Axis to plot colorbar into if contour is not None (the default is None, which takes space from ax)
+        aspect : float, optional
+            Aspect ratio (the default is 1.)
+        lim : tuple, optional
+            Colorbar limits (the default is None, which takes the limits of contour)
+
+        Returns
+        -------
+        matplotlib.pyplot.axis object
+            The plotted axis
+        """
+
+        # undeformed
+        ax = _plot_network(ax, self.nodes, self.edges, self.edge_vectors, color='0.7',
+                           node_ids=node_ids, lw=lw)
+
+
+        ax.set_xlabel(r'$x$')
+        ax.set_ylabel(r'$y$')
+
+        ax.set_aspect(aspect)
+
+        return ax
 

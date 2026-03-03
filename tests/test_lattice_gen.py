@@ -45,3 +45,22 @@ def test_fcc():
     assert lattice.num_nodes == 14
     assert lattice.num_edges == 36
     assert np.all(np.amax(lattice.nodes, axis=0) <= bbox)
+
+
+def test_sc_2d():
+    bbox = (1., 1.)
+    lattice = Network.generate_square_lattice(a=1., bbox=bbox, lattice_type='sc')
+
+    assert lattice.num_nodes == 4
+    assert lattice.num_edges == 4
+    assert np.all(np.amax(lattice.nodes, axis=0) <= bbox)
+
+
+def test_fcc_2d():
+    bbox = (1., 1.)
+    lattice = Network.generate_square_lattice(a=1., bbox=bbox, lattice_type='fcc')
+
+    assert lattice.num_nodes == 5
+    assert lattice.num_edges == 4
+    assert np.all(np.amax(lattice.nodes, axis=0) <= bbox)
+
