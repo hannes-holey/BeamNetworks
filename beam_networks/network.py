@@ -93,57 +93,54 @@ class Network:
         self._active_edges = np.ones(len(self._edges), dtype=bool)
 
     @property
-    def nodes(self):
-        """Exposes only activated nodes.
+    def nodes(self) -> np.ndarray:
+        """Coordinates of active nodes.
 
         Returns
         -------
         np.ndarray
-
+            Shape (num_nodes, dim).
         """
         return self._nodes[self._active_nodes]
 
     @property
-    def num_nodes(self):
-        """Number of active nodes
+    def num_nodes(self) -> int:
+        """Number of active nodes.
 
         Returns
         -------
         int
-
         """
         return self.nodes.shape[0]
 
     @property
-    def edges(self):
-        """Exposes only active edges.
+    def edges(self) -> np.ndarray:
+        """Index pairs of active edges.
 
         Returns
         -------
         np.ndarray
-
+            Integer array of shape (num_edges, 2).
         """
         return self._edges[self._active_edges]
 
     @property
-    def num_edges(self):
-        """Number of active edges
+    def num_edges(self) -> int:
+        """Number of active edges.
 
         Returns
         -------
         int
-
         """
         return self.edges.shape[0]
 
     @property
-    def Lx(self):
-        """Boxlength (x)
+    def Lx(self) -> float:
+        """Box length in the x direction.
 
         Returns
         -------
         float
-
         """
         if self._boxsize[0] is None:
             return self.xhi - self.xlo
@@ -151,13 +148,12 @@ class Network:
             return self._boxsize[0]
 
     @property
-    def Ly(self):
-        """Boxlength (y)
+    def Ly(self) -> float:
+        """Box length in the y direction.
 
         Returns
         -------
         float
-
         """
         if self._boxsize[1] is None:
             return self.yhi - self.ylo
@@ -165,13 +161,12 @@ class Network:
             return self._boxsize[1]
 
     @property
-    def Lz(self):
-        """Boxlength (z)
+    def Lz(self) -> float:
+        """Box length in the z direction.
 
         Returns
         -------
         float
-
         """
         if self._boxsize[2] is None:
             return self.zhi - self.zlo
@@ -179,13 +174,12 @@ class Network:
             return self._boxsize[2]
 
     @property
-    def is_connected(self):
-        """Check if structure is fully connected
+    def is_connected(self) -> bool:
+        """Whether the active network forms a single connected component.
 
         Returns
         -------
         bool
-
         """
         graph = sp.csr_array((np.ones(self.num_edges, dtype=int), (self.edges[:, 0], self.edges[:, 1])),
                              shape=(self.num_nodes, self.num_nodes))
@@ -195,13 +189,14 @@ class Network:
         return n_comp == 1
 
     @property
-    def bounds(self):
-        """Lower and upper bounds of the nodal coordinates
+    def bounds(self) -> list:
+        """Lower and upper bounds of the active nodal coordinates.
 
         Returns
         -------
         list
-           xlo, xhi, ylo, yhi[, zlo, zhi]
+            ``[xlo, xhi, ylo, yhi]`` for 2D or
+            ``[xlo, xhi, ylo, yhi, zlo, zhi]`` for 3D.
         """
         bounds = [self.xlo, self.xhi, self.ylo, self.yhi]
         if self.dim > 2:
@@ -210,38 +205,62 @@ class Network:
         return bounds
 
     @property
-    def boxsize(self):
+    def boxsize(self) -> tuple:
+        """Box dimensions as a tuple ``(Lx, Ly)`` or ``(Lx, Ly, Lz)``."""
         if self.dim == 2:
             return self.Lx, self.Ly
         elif self.dim == 3:
             return self.Lx, self.Ly, self.Lz
 
     @property
-    def xlo(self):
+    def xlo(self) -> float:
+        """Minimum x-coordinate of all active nodes."""
         return np.amin(self._nodes[self._active_nodes, 0])
 
     @property
-    def xhi(self):
+    def xhi(self) -> float:
+        """Maximum x-coordinate of all active nodes."""
         return np.amax(self._nodes[self._active_nodes, 0])
 
     @property
-    def ylo(self):
+    def ylo(self) -> float:
+        """Minimum y-coordinate of all active nodes."""
         return np.amin(self._nodes[self._active_nodes, 1])
 
     @property
-    def yhi(self):
+    def yhi(self) -> float:
+        """Maximum y-coordinate of all active nodes."""
         return np.amax(self._nodes[self._active_nodes, 1])
 
     @property
-    def zlo(self):
+    def zlo(self) -> float:
+        """Minimum z-coordinate of all active nodes.
+
+        .. note::
+            Only valid for 3D networks. Raises ``IndexError`` for 2D networks.
+        """
         return np.amin(self._nodes[self._active_nodes, 2])
 
     @property
-    def zhi(self):
+    def zhi(self) -> float:
+        """Maximum z-coordinate of all active nodes.
+
+        .. note::
+            Only valid for 3D networks. Raises ``IndexError`` for 2D networks.
+        """
         return np.amax(self._nodes[self._active_nodes, 2])
 
     @property
-    def bondlengths(self):
+    def bondlengths(self) -> np.ndarray:
+        """Lengths of all active edges.
+
+        Applies the minimum image convention for periodic boxes.
+
+        Returns
+        -------
+        np.ndarray
+            Array of edge lengths, shape (num_edges,).
+        """
         return self._bondlengths[self._active_edges]
 
     @property
@@ -267,16 +286,26 @@ class Network:
         return dr
 
     @property
-    def edge_vectors(self):
-        return self._edge_vectors[self._active_edges]
+    def edge_vectors(self) -> np.ndarray:
+        """Vectors along all active edges (tail → head).
 
-    @property
-    def pbc_edges(self):
-        """Mask for edges that cross periodic boundary conditions.
+        Applies the minimum image convention for periodic boxes.
 
         Returns
         -------
         np.ndarray
+            Shape (num_edges, dim).
+        """
+        return self._edge_vectors[self._active_edges]
+
+    @property
+    def pbc_edges(self) -> np.ndarray:
+        """Boolean mask of active edges that cross periodic boundaries.
+
+        Returns
+        -------
+        np.ndarray
+            Boolean array of shape (num_edges,).
         """
 
         dr = self._nodes[self.edges[:, 1]] - self._nodes[self.edges[:, 0]]
@@ -285,26 +314,28 @@ class Network:
         return pbc_edges
 
     @property
-    def volume(self):
-        """Compute volume of network as convex hull.
+    def volume(self) -> float:
+        """Volume of the convex hull enclosing all active nodes.
 
         Returns
         -------
         float
-
         """
 
         return ConvexHull(self.nodes).volume
 
     @property
-    def pbc_nodes(self):
-        """Nodal positions for edges that cross periodic boundary conditions.
-        Nodes are shifted to the neighboring periodic images for visualization purposes.
+    def pbc_nodes(self) -> np.ndarray:
+        """Ghost node coordinates for edges crossing periodic boundaries.
+
+        For each boundary-crossing edge, one endpoint is translated into the
+        neighbouring periodic image so the edge can be drawn without wrapping.
+        Intended for visualisation (e.g. VTK output).
 
         Returns
         -------
         np.ndarray
-            Nodal coordinates
+            Stacked array of shifted node pairs, shape (2 * n_pbc_edges, dim).
         """
 
         r0 = self._nodes[self.edges[:, 0]].copy()
@@ -342,13 +373,12 @@ class Network:
         return np.vstack([r0, r1])
 
     @property
-    def coordination(self):
-        """Mean coordination number.
+    def coordination(self) -> float:
+        """Mean coordination number (average number of edges per node).
 
         Returns
         -------
         float
-
         """
         _, c = np.unique(self.edges, return_counts=True)
         return np.mean(c)
@@ -404,29 +434,31 @@ class Network:
         return _remove_isolated_nodes_edges(nodes, edges)
 
     @classmethod
-    def generate_cubic_lattice(cls, a=1.,
-                               pbc=None,
-                               bbox=[1., 1., 1.], lattice_type='sc'):
-        """
-
-        Generates a cubic lattice.
+    def generate_cubic_lattice(cls, a: float = 1.,
+                               pbc: list | None = None,
+                               bbox: list = [1., 1., 1.],
+                               lattice_type: str = 'sc') -> "Network":
+        """Generate a 3D cubic lattice.
 
         Parameters
         ----------
         a : float, optional
-            Lattice constant (distance between nearest neighbors)
-        pbc: iterable, optional
-            Periodic boundary conditions (the default is None, which means no periodic BCs).
-        bbox : array-like
-            Size of the bounding box, filled with repeated unit cells
-            (the default is [1., 1., 1.])
+            Lattice constant (nearest-neighbour distance). The default is 1.
+        pbc : iterable of bool, optional
+            Periodic boundary condition flags per direction. The default is
+            None (no periodic BCs). Example: ``[True, False, False]`` enables
+            PBC in x only.
+        bbox : array-like, optional
+            Bounding box dimensions ``[Lx, Ly, Lz]``. The default is
+            ``[1., 1., 1.]``.
         lattice_type : str, optional
-            Name of the lattice type ['sc', 'bcc', 'fcc'] (the default is 'sc')
+            Name of the lattice type: ``'sc'``, ``'bcc'``, or ``'fcc'``.
+            The default is ``'sc'``.
 
         Returns
         -------
-        beam_networks.network.Network
-            Class instance with nodes and edges given by the prescribed lattice
+        Network
+            Instance with nodes and edges of the specified lattice.
         """
 
         lattice_coords, connections, pbc, bbox, valid = generate_cubic_lattice(a=a,
@@ -438,25 +470,25 @@ class Network:
         return cls(lattice_coords, connections, valid=valid, periodic=pbc, boxsize=bbox)
 
     @classmethod
-    def generate_square_lattice(cls, a=1., bbox=[1., 1.], lattice_type='sc'):
-        """
-
-        Generates a cubic lattice.
+    def generate_square_lattice(cls, a: float = 1., bbox: list = [1., 1.],
+                                lattice_type: str = 'sc') -> "Network":
+        """Generate a 2D square (or triangular) lattice.
 
         Parameters
         ----------
         a : float, optional
-            Lattice constant (distance between nearest neighbors)
-        bbox : array-like
-            Size of the bounding box, filled with repeated unit cells
-            (the default is [1., 1., 1.])
+            Lattice constant (nearest-neighbour distance). The default is 1.
+        bbox : array-like, optional
+            Bounding box dimensions ``[Lx, Ly]``. The default is ``[1., 1.]``.
         lattice_type : str, optional
-            Name of the lattice type ['sc', 'bcc', 'fcc'] (the default is 'sc')
+            Name of the lattice type: ``'sc'`` (simple square) or ``'fcc'``
+            (face-centred, equivalent to a triangular lattice).
+            The default is ``'sc'``.
 
         Returns
         -------
-        beam_networks.network.Network
-            Class instance with nodes and edges given by the prescribed lattice
+        Network
+            Instance with nodes and edges of the specified lattice.
         """
 
         lattice_coords, connections = generate_square_lattice(a=a,
@@ -466,53 +498,62 @@ class Network:
         return cls(lattice_coords, connections)
 
     @classmethod
-    def generate_bowtie_lattice(cls, a=1., w=0.1, bbox=[1., 1.]):
-        """
-
-        Generates a bowtie lattice.
+    def generate_bowtie_lattice(cls, a: float = 1., w: float = 0.1,
+                                bbox: list = [1., 1.]) -> "Network":
+        """Generate a 2D bowtie lattice.
 
         Parameters
         ----------
         a : float, optional
-            Lattice constant (distance between nearest neighbors)
-        bbox : array-like
-            Size of the bounding box, filled with repeated unit cells
-            (the default is [1., 1., 1.])
+            Lattice constant (unit cell size). The default is 1.
+        w : float, optional
+            Offset parameter controlling node positions within a unit cell.
+            Larger values move nodes further from the cell edges.
+            The default is 0.1.
+        bbox : array-like, optional
+            Bounding box dimensions ``[Lx, Ly]``. The default is ``[1., 1.]``.
 
         Returns
         -------
-        beam_networks.network.Network
-            Class instance with nodes and edges given by the prescribed lattice
+        Network
+            Instance with nodes and edges of the bowtie lattice.
         """
 
         lattice_coords, connections = generate_bowtie_lattice(a=a,
                                                               w=w,
-                                                              bbox=bbox,
-                                                              lattice_type=lattice_type)
+                                                              bbox=bbox)
 
         return cls(lattice_coords, connections)
 
-    def plot(self, ax, node_ids=False, cax=None, aspect=1., lim=None, lw=2.,
-             scale=1.):
-        """Generate 2D plot of the network.
+    def plot(self, ax, node_ids: bool = False, cax=None, aspect: float = 1.,
+             lim: tuple | None = None, lw: float = 2.,
+             scale: float = 1.) -> "matplotlib.axes.Axes":
+        """Generate a 2D plot of the undeformed network.
 
         Parameters
         ----------
-        ax : matplotlib.pyplot.axis object
-            Axis to plot into
+        ax : matplotlib.axes.Axes
+            Axes object to draw into.
         node_ids : bool, optional
-            Print node numbers nect to undeformed structure (the default is False)
-        cax : matplotlib.pyplot.axis object or None, optional
-            Axis to plot colorbar into if contour is not None (the default is None, which takes space from ax)
+            If True, print node indices next to each node. The default is False.
+        cax : matplotlib.axes.Axes or None, optional
+            Axes for the colourbar (unused here; retained for API consistency
+            with :meth:`~beam_networks.problem.BeamNetwork.plot`).
+            The default is None.
         aspect : float, optional
-            Aspect ratio (the default is 1.)
-        lim : tuple, optional
-            Colorbar limits (the default is None, which takes the limits of contour)
+            Aspect ratio of the axes. The default is 1.
+        lim : tuple or None, optional
+            Colourbar limits (unused here). The default is None.
+        lw : float, optional
+            Line width for the beam edges. The default is 2.
+        scale : float, optional
+            Scale factor applied to node positions (for visualisation only).
+            The default is 1.
 
         Returns
         -------
-        matplotlib.pyplot.axis object
-            The plotted axis
+        matplotlib.axes.Axes
+            The axes with the network drawn into it.
         """
 
         # undeformed

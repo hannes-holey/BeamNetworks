@@ -191,26 +191,30 @@ def _beam_stiffness_3d(beam_prop, L, derivative=None):
     return data, rows, cols
 
 
-def get_element_stiffness_global(beam_prop, d, derivative=None):
-    """Single element stiffness matrix in global frame.
+def get_element_stiffness_global(beam_prop: dict, d: np.ndarray,
+                                 derivative: int | None = None) -> np.ndarray:
+    """Element stiffness matrix for a single beam in the global frame.
 
     Parameters
     ----------
     beam_prop : dict
-        Beam properties (cross section and elastic constants)
+        Beam cross-section and elastic properties (see
+        :func:`~beam_networks.geo.get_geometric_props`).
     d : np.ndarray
-        Vector pointing from one beam endpoint to the other
-    sparse : bool, optional
-        Return as sparse matrix if true (the default is True)
-    derivative : None or int
-        if not None returns the derivative with respect to a shape parameter.
-        The shape parameter is determined by the value of derivative which
-        depends on the shape of your beam.
+        Vector pointing from one beam endpoint to the other, shape (dim,).
+        Its magnitude is the beam length.
+    derivative : int or None, optional
+        If not None, return the derivative of the stiffness matrix with
+        respect to a cross-section shape parameter instead of the matrix
+        itself. For rectangular cross-sections: ``0`` → derivative w.r.t.
+        height *h*, ``1`` → derivative w.r.t. width *b*. The default is None.
 
     Returns
     -------
-    np.ndarray or
-        Element stiffness matrix in global frame
+    np.ndarray
+        Element stiffness matrix in the global frame,
+        shape (num_elem_dof, num_elem_dof) where num_elem_dof is 6 (2D)
+        or 12 (3D).
     """
 
     ndim = len(d)
@@ -296,26 +300,32 @@ def _get_transformation_matrix(d):
     return T
 
 
-def get_element_stiffness_local_vec(beam_prop, d, ndim, derivative=None):
-    """Get all element stiffness matrices in the local frame (w.o. transformation)
+def get_element_stiffness_local_vec(beam_prop: dict, d: np.ndarray,
+                                    ndim: int,
+                                    derivative: int | None = None) -> np.ndarray:
+    """Element stiffness matrices for all beams in the local frame.
+
+    The local frame has the beam axis along its first coordinate direction.
+    No coordinate transformation to the global frame is applied.
 
     Parameters
     ----------
     beam_prop : dict
-        Beam properties (cross section and elastic constants)
+        Beam cross-section and elastic properties.
     d : np.ndarray
-        Edge lengths
+        Edge lengths, shape (num_elements,).
     ndim : int
-        Dimension of the problem
-    derivative : None or int
-        if not None returns the derivative with respect to a shape parameter.
-        The shape parameter is determined by the value of derivative which
-        depends on the shape of your beam.
+        Spatial dimension of the problem (2 or 3).
+    derivative : int or None, optional
+        If not None, return derivatives of the stiffness matrices with
+        respect to a cross-section shape parameter (see
+        :func:`get_element_stiffness_global`). The default is None.
 
     Returns
     -------
     np.ndarray
-        Array with shape (num_elements, num_elem_dof, num_elem_dof)
+        Array of local element stiffness matrices,
+        shape (num_elements, num_elem_dof, num_elem_dof).
     """
 
     num_e = len(d)
@@ -394,23 +404,29 @@ def _get_transformation_matrix_vec(d):
     return T
 
 
-def get_element_stiffness_global_vec(beam_prop, d_vec, derivative=None):
-    """Get all element stiffness matrices in the global frame.
+def get_element_stiffness_global_vec(beam_prop: dict, d_vec: np.ndarray,
+                                     derivative: int | None = None) -> np.ndarray:
+    """Element stiffness matrices for all beams in the global frame.
+
+    Vectorised counterpart of :func:`get_element_stiffness_global`.
 
     Parameters
     ----------
     beam_prop : dict
-        Beam properties (cross section and elastic constants)
-    d : np.ndarray
-        Vectors pointing from one beam endpoint to the other
-    derivative : None or int
-        if not None returns the derivative with respect to a shape parameter.
-        The shape parameter is determined by the value of derivative which
-        depends on the shape of your beam.
+        Beam cross-section and elastic properties.
+    d_vec : np.ndarray
+        Edge vectors (tail → head), shape (num_elements, dim). The Euclidean
+        norm of each row is the beam length.
+    derivative : int or None, optional
+        If not None, return derivatives of the stiffness matrices with
+        respect to a cross-section shape parameter (see
+        :func:`get_element_stiffness_global`). The default is None.
+
     Returns
     -------
     np.ndarray
-        Array with shape (num_elements, num_elem_dof, num_elem_dof)
+        Array of global element stiffness matrices,
+        shape (num_elements, num_elem_dof, num_elem_dof).
     """
 
     nelem, ndim = d_vec.shape

@@ -16,28 +16,31 @@ import numpy as np
 from beam_networks.utils import _dict_has_keys
 
 
-def get_geometric_props(beam_prop):
-    """Get geometric properties of the beam cross section.
+def get_geometric_props(beam_prop: dict) -> tuple[float, float, float, float, float, float]:
+    """Compute geometric properties of the beam cross-section.
 
     Parameters
     ----------
     beam_prop : dict
-        Beam properties (cross section and elastic properties)
+        Beam properties dict. Must contain ``'name'`` (``'circle'`` or
+        ``'rectangle'``), ``'E'``, and ``'nu'``. Circle additionally requires
+        ``'radius'``; rectangle requires ``'b'`` (width) and ``'h'`` (height).
 
     Returns
     -------
-    float
-        Second moment of area Iy
-    float
-        Second moment of area Iz
-    float
-        Second polar moment of area Ip
-    float
-        Area
-    float
-        Shear correction factor
-    float
-        Maximum distance from beam neutral axis to the surface
+    Iy : float
+        Second moment of area about the local y-axis.
+    Iz : float
+        Second moment of area about the local z-axis.
+    Ip : float
+        Second polar moment of area (Iy + Iz).
+    A : float
+        Cross-sectional area.
+    kappa : float
+        Timoshenko shear correction factor.
+    ymax : float
+        Maximum distance from the beam neutral axis to the outer surface
+        (used in stress recovery).
     """
 
     required_keys = ['name', 'E', 'nu']
@@ -78,33 +81,37 @@ def get_geometric_props(beam_prop):
         return Iy, Iz, Ip, A, kappa, ymax
 
 
-def get_geometric_props_derivative(beam_prop, derivative):
-    """Get derivative of geometric properties of the beam cross section with
-    respect to radius
+def get_geometric_props_derivative(beam_prop: dict,
+                                   derivative: int | None) -> tuple[float, float, float, float, float, float]:
+    """Derivatives of geometric cross-section properties w.r.t. a shape parameter.
+
+    For circular cross-sections the derivative is always taken with respect to
+    the radius (``derivative`` is ignored).
+    For rectangular cross-sections, *derivative* selects the parameter:
+    ``0`` → height *h*, ``1`` → width *b*.
 
     Parameters
     ----------
     beam_prop : dict
-        Beam properties (cross section and elastic properties)
-    derivative : bool
-        if not None returns the derivative with respect to a shape parameter.
-        The shape parameter is determined by the value of derivative which
-        depends on the shape of your beam.
+        Beam properties dict (see :func:`get_geometric_props`).
+    derivative : int or None
+        Shape-parameter selector. For circles: unused (pass any value or None).
+        For rectangles: ``0`` for *h*, ``1`` for *b*.
 
     Returns
     -------
-    float
-        Derivative of second moment of area Iy
-    float
-        Derivative of second moment of area Iz
-    float
-        Derivative of second polar moment of area Ip
-    float
-        Derivative of area
-    float
-        Derivative of shear correction factor
-    float
-        Derivative of maximum distance from beam neutral axis to the surface
+    dIy : float
+        Derivative of Iy w.r.t. the selected shape parameter.
+    dIz : float
+        Derivative of Iz w.r.t. the selected shape parameter.
+    dIp : float
+        Derivative of Ip w.r.t. the selected shape parameter.
+    dA : float
+        Derivative of cross-sectional area.
+    dkappa : float
+        Derivative of the shear correction factor (zero for both shapes).
+    dymax : float
+        Derivative of the maximum surface distance.
     """
 
     required_keys = ['name', 'E', 'nu']

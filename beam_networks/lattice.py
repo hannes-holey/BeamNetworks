@@ -160,9 +160,11 @@ def generate_square_lattice(a=1.0,
     a : float, optional
         Lattice constant (distance between nearest neighbors)
     bbox : array-like
-        Size of the bounding box, filled with repeated unit cells
+        Size of the bounding box ``(Lx, Ly)``, filled with repeated unit cells.
+        The default is ``(1.0, 1.0)``.
     lattice_type : str, optional
-        Name of the lattice type ['sc', 'fcc'] (the default is 'sc')
+        Name of the lattice type: ``'sc'`` (simple square) or ``'fcc'``
+        (face-centred, equivalent to triangular). The default is ``'sc'``.
 
     Returns
     -------
@@ -302,7 +304,20 @@ def generate_bowtie_lattice(a=1.0,
 
 
 def _get_connections(coords, d):
+    """Find all node pairs separated by distance *d* using a KD-tree.
 
+    Parameters
+    ----------
+    coords : np.ndarray
+        Node coordinates, shape (num_nodes, dim).
+    d : float
+        Target distance (nearest-neighbour distance for the lattice).
+
+    Returns
+    -------
+    np.ndarray
+        Edge connectivity array of shape (num_edges, 2).
+    """
     hi = d + 1e-8
     lo = d - 1e-8
 

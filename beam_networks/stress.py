@@ -17,22 +17,26 @@ from beam_networks.stiffness import get_element_stiffness_local_vec
 from beam_networks.geo import get_geometric_props
 
 
-def vmises_stress(rhs, beam_prop, mode):
-    """Wrapper for von Mises stress calculation
+def vmises_stress(rhs: np.ndarray, beam_prop: dict, mode: str) -> np.ndarray:
+    """Compute von Mises stress from element force/moment vectors.
+
+    Dispatches to the 2D or 3D implementation based on the shape of *rhs*.
 
     Parameters
     ----------
     rhs : np.ndarray
-        Element-wise right-hand side in local frame
+        Element-wise internal force/moment vector in the local frame,
+        shape (num_elements, 6) for 2D or (num_elements, 12) for 3D.
     beam_prop : dict
-        Beam properties
+        Beam cross-section and elastic properties.
     mode : str
-        Either 'max' or 'mean', i.e. calculate maximum or mean stress per beam
+        Stress aggregation along each beam: ``'max'`` takes the end-point
+        maximum, ``'mean'`` averages both ends.
 
     Returns
     -------
     np.ndarray
-        Von Mises stress, shape=(num_elements,)
+        Von Mises stress per element, shape (num_elements,).
     """
 
     if rhs.shape[1] == 6:
@@ -41,8 +45,33 @@ def vmises_stress(rhs, beam_prop, mode):
         return _vmises_stress_3d(rhs, beam_prop, mode)
 
 
-def stretch_bend_ratio(rhs, beam_prop):
+def stretch_bend_ratio(rhs: np.ndarray, beam_prop: dict) -> np.ndarray:
+    """Compute the bending-to-total stress ratio for each beam element.
 
+    The ratio is defined as the bending stress divided by the sum of the
+    bending and axial (stretching) stresses. A value of 1 indicates a
+    purely bending-dominated beam; 0 indicates purely axial loading.
+
+    Currently only implemented for 2D systems.
+
+    Parameters
+    ----------
+    rhs : np.ndarray
+        Element-wise internal force/moment vector in the local frame,
+        shape (num_elements, 6).
+    beam_prop : dict
+        Beam cross-section and elastic properties.
+
+    Returns
+    -------
+    np.ndarray
+        Bending ratio per element, shape (num_elements,), values in [0, 1].
+
+    Raises
+    ------
+    RuntimeError
+        If called for a 3D system (rhs.shape[1] == 12).
+    """
     if rhs.shape[1] == 6:
         return _stress_stretch_bend_ratio(rhs, beam_prop)
     else:
@@ -256,31 +285,47 @@ def _get_element_dof_3d(coords, adj, edge_vec, sol_global, rot=None):
     return dof_elem
 
 
-def get_element_mises_stress(coords, adj, d_vec, sol, beam_prop, rot=None, mode='max', return_ratio=False):
-    """Compute the von Mises stress for all beam elements
+def get_element_mises_stress(coords: np.ndarray, adj: np.ndarray,
+                             d_vec: np.ndarray, sol: np.ndarray,
+                             beam_prop: dict, rot: np.ndarray | None = None,
+                             mode: str = 'max',
+                             return_ratio: bool = False) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
+    """Compute the von Mises stress for all beam elements.
+
+    Transforms the global solution vector into element-local DOF vectors,
+    computes internal forces and moments via the local stiffness matrix, and
+    evaluates the von Mises stress.
 
     Parameters
     ----------
     coords : np.ndarray
-        Nodal positions
+        Nodal coordinates, shape (num_nodes, dim).
     adj : np.ndarray
-        Edges indices
+        Edge connectivity (node index pairs), shape (num_edges, 2).
     d_vec : np.ndarray
-        Edge vectors
+        Edge vectors (tail → head), shape (num_edges, dim).
     sol : np.ndarray
-        Global solution vector
+        Global displacement solution vector, shape (num_nodes * dof_per_node,).
     beam_prop : dict
-        Beam properties
+        Beam cross-section and elastic properties.
     rot : np.ndarray or None, optional
-        If all elements have the same orientation, rot is the transformation matrix
-        from the global to the local frame (the default is None).
+        If all elements share the same orientation, the rotation matrix from
+        the global to the local frame, shape (3, 3). The default is None,
+        which computes element-wise orientations from *d_vec*.
     mode : str, optional
-        Either 'max' or 'mean', i.e. calculate maximum or mean stress per beam
-        (the default is 'max').
+        Stress aggregation: ``'max'`` takes the end-point maximum, ``'mean'``
+        averages both ends. The default is ``'max'``.
+    return_ratio : bool, optional
+        If True, also return the bending-to-total stress ratio per element
+        (2D only). The default is False.
+
     Returns
     -------
-    np.ndarray
-        Von Mises stress
+    svM : np.ndarray
+        Von Mises stress per element, shape (num_edges,).
+    ratio : np.ndarray
+        Bending ratio per element, shape (num_edges,). Only returned when
+        *return_ratio* is True.
     """
     _, ndim = coords.shape
 
@@ -305,31 +350,37 @@ def get_element_mises_stress(coords, adj, d_vec, sol, beam_prop, rot=None, mode=
         return svM
 
 
-def get_element_principal_stress(coords, adj, d_vec, sol, beam_prop, rot=None, mode='max'):
-    """
+def get_element_principal_stress(coords: np.ndarray, adj: np.ndarray,
+                                 d_vec: np.ndarray, sol: np.ndarray,
+                                 beam_prop: dict,
+                                 rot: np.ndarray | None = None,
+                                 mode: str = 'max') -> np.ndarray:
+    """Compute principal stresses for all beam elements.
 
     Parameters
     ----------
     coords : np.ndarray
-        Nodal positions
+        Nodal coordinates, shape (num_nodes, dim).
     adj : np.ndarray
-        Edges indices
+        Edge connectivity (node index pairs), shape (num_edges, 2).
     d_vec : np.ndarray
-        Edge vectors
+        Edge vectors (tail → head), shape (num_edges, dim).
     sol : np.ndarray
-        Global solution vector
+        Global displacement solution vector, shape (num_nodes * dof_per_node,).
     beam_prop : dict
-        Beam properties
+        Beam cross-section and elastic properties.
     rot : np.ndarray or None, optional
-        If all elements have the same orientation, rot is the transformation matrix
-        from the global to the local frame (the default is None).
+        Rotation matrix from global to local frame, shape (3, 3), shared by
+        all elements. The default is None (element-wise orientations).
     mode : str, optional
-        Either 'max' or 'mean', i.e. calculate maximum or mean stress per beam
-        (the default is 'max').
+        Stress aggregation: ``'max'`` takes the end-point maximum, ``'mean'``
+        averages both ends. The default is ``'max'``.
+
     Returns
     -------
     np.ndarray
-
+        Principal stresses per element sorted in descending order,
+        shape (num_edges, 3).
     """
     _, ndim = coords.shape
 
@@ -347,24 +398,28 @@ def get_element_principal_stress(coords, adj, d_vec, sol, beam_prop, rot=None, m
     return principal_stress(rhs, beam_prop, mode)
 
 
-def principal_stress(rhs, beam_prop, mode):
-    """Compute element-wise principal stress.
+def principal_stress(rhs: np.ndarray, beam_prop: dict, mode: str) -> np.ndarray:
+    """Compute principal stresses from element force/moment vectors.
 
-    Principal stress values are sorted in decreasing order along the second axis.
+    Constructs the full stress tensor at the critical point of each beam
+    cross-section and returns its eigenvalues in descending order.
 
     Parameters
     ----------
     rhs : np.ndarray
-        Element-wise right-hand side in local frame
+        Element-wise internal force/moment vector in the local frame,
+        shape (num_elements, 6) for 2D or (num_elements, 12) for 3D.
     beam_prop : dict
-        Beam properties
+        Beam cross-section and elastic properties.
     mode : str
-        Either 'max' or 'mean', i.e. calculate maximum or mean stress per beam
+        Stress aggregation: ``'max'`` takes the end-point maximum, ``'mean'``
+        averages both ends.
 
     Returns
     -------
-    np.ndarry
-        Principal stresses per beam (shape: (n_beams, 3))
+    np.ndarray
+        Principal stresses per element sorted in descending order,
+        shape (num_elements, 3).
     """
 
     sxx, syy, szz, syz, sxz, sxy = _stress(rhs, beam_prop, mode)

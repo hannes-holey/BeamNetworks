@@ -35,16 +35,16 @@ class BeamNetwork(Network):
     """
 
     def __init__(self,
-                 nodes,
-                 edges,
-                 beam_prop={'name': 'circle', 'radius': 1.,
-                            'E': 1., 'nu': 0.3},
-                 periodic=None,
-                 boxsize=None,
-                 valid=True,
-                 options={'vectorize': True, 'matrix': 'bsr', 'verbose': True},
-                 outdir='.',
-                 assemble_on_init=True):
+                 nodes: np.ndarray,
+                 edges: np.ndarray,
+                 beam_prop: dict = {'name': 'circle', 'radius': 1.,
+                                    'E': 1., 'nu': 0.3},
+                 periodic: list | None = None,
+                 boxsize: np.ndarray | None = None,
+                 valid: bool = True,
+                 options: dict = {'vectorize': True, 'matrix': 'bsr', 'verbose': True},
+                 outdir: str = '.',
+                 assemble_on_init: bool = True) -> None:
         """Constructor.
 
         Initialize the network and assemble its global stiffness matrix.
@@ -52,24 +52,37 @@ class BeamNetwork(Network):
         Parameters
         ----------
         nodes : np.ndarray
-            Nodal coordinates
-        edges : np.ndarray (of ints)
-            Edge indices
+            Nodal coordinates, shape (N, 2) for 2D or (N, 3) for 3D.
+        edges : np.ndarray
+            Edge connectivity as integer node index pairs, shape (M, 2).
         beam_prop : dict, optional
-            Beam properties (cross section and elastic properties)
-            (the default is {'name': 'circle', 'radius', 'E', 'nu'})
-        periodic : bool, optional
-            Use periodic boundary conditions (the default is False)
+            Beam cross-section and elastic properties. Must contain 'name'
+            ('circle' or 'rectangle'), 'E' (Young's modulus), and 'nu'
+            (Poisson's ratio). 'circle' additionally requires 'radius';
+            'rectangle' requires 'b' (width) and 'h' (height).
+            Default: ``{'name': 'circle', 'radius': 1., 'E': 1., 'nu': 0.3}``.
+        periodic : list of bool, optional
+            Periodic boundary condition flags per spatial direction, e.g.
+            ``[True, False, False]`` enables PBC in x only.
+            The default is None (no periodic BCs).
         boxsize : np.ndarray, optional
-            Specify box dimensions (the default is None, which means that box dimensions are inferred from the nodes.)
+            Explicit box dimensions. The default is None, in which case
+            dimensions are inferred from the nodal coordinates.
         valid : bool, optional
-            Skip initial sanity checks (the default is True, which assumes that the structure is valid.)
+            If True, skip sanity checks on the input topology (isolated node
+            removal, etc.). Set to False when loading untrusted external data.
+            The default is True.
         options : dict, optional
-            Solver options
+            Assembly options: 'vectorize' (bool), 'matrix' ('bsr'|'lil'|'dense'),
+            'verbose' (bool). The default uses vectorized BSR assembly with
+            verbose output.
         outdir : str, optional
-            Directory where output is written into (the default is the current working directory)
+            Directory for output files. Created if it does not exist.
+            The default is the current working directory.
         assemble_on_init : bool, optional
-            Flag to activate the assembly of the stiffness matrix at initialization (the default is True)
+            If True, assemble the global stiffness matrix immediately.
+            Set to False to defer assembly (e.g. when restoring from a file).
+            The default is True.
         """
 
         super().__init__(nodes, edges,
@@ -98,29 +111,33 @@ class BeamNetwork(Network):
         self._bc_changed = True
         self.has_solution = False
 
-    def save(self, filename):
-        """Save the current state of the solver as gzipped tar archive
+    def save(self, filename: str) -> None:
+        """Save the current state of the solver as a gzipped tar archive.
 
         Parameters
         ----------
         filename : str
-            Name of the archive
+            Path to the output archive file.
         """
         _to_tar(filename, self)
 
     @classmethod
-    def load(cls, filename, recompute=True):
+    def load(cls, filename: str, recompute: bool = True) -> "BeamNetwork":
         """Create a class instance from a tar archive.
 
         Parameters
         ----------
         filename : str
-            Name of the archive
+            Path to the archive previously created with :meth:`save`.
+        recompute : bool, optional
+            If True, re-solve the linear system after loading. If False,
+            restore the archived solution (if present) without recomputing.
+            The default is True.
 
         Returns
         -------
         BeamNetwork
-            A new class instance
+            A new instance restored from the archive.
         """
 
         nodes, edges, active_edges, beam_prop, K, bc, sol, sVM, misc = _from_tar(filename)
@@ -154,30 +171,31 @@ class BeamNetwork(Network):
     @classmethod
     def from_network(cls,
                      network: Network,
-                     beam_prop={'name': 'circle', 'radius': 1.,
-                                'E': 1., 'nu': 0.3},
-                     options={'vectorize': True, 'matrix': 'bsr', 'verbose': True},
-                     outdir='.',
-                     assemble_on_init=True):
-        """Create a beam network from an existing ``Network`` instance.
+                     beam_prop: dict = {'name': 'circle', 'radius': 1.,
+                                        'E': 1., 'nu': 0.3},
+                     options: dict = {'vectorize': True, 'matrix': 'bsr', 'verbose': True},
+                     outdir: str = '.',
+                     assemble_on_init: bool = True) -> "BeamNetwork":
+        """Create a beam network from an existing :class:`~beam_networks.network.Network` instance.
 
         Parameters
         ----------
         network : beam_networks.network.Network
             Underlying network providing nodes and edges.
         beam_prop : dict, optional
-            Beam properties (cross section and elastic properties)
+            Beam cross-section and elastic properties (see :meth:`__init__`).
         options : dict, optional
-            Solver options
+            Assembly options (see :meth:`__init__`).
         outdir : str, optional
-            Directory where output is written into (the default is the current working directory)
+            Directory for output files. The default is the current working directory.
         assemble_on_init : bool, optional
-            Flag to activate the assembly of the stiffness matrix at initialization (the default is True)
+            If True, assemble the global stiffness matrix immediately.
+            The default is True.
 
         Returns
         -------
         BeamNetwork
-            A new class instance sharing the topology of ``network``.
+            A new instance sharing the topology of *network*.
         """
 
         return cls(network._nodes,
@@ -192,19 +210,46 @@ class BeamNetwork(Network):
 
     @classmethod
     def from_cubic_lattice(cls,
-                           a=1.,
-                           pbc=None,
-                           bbox=(1., 1., 1.),
-                           lattice_type='sc',
-                           beam_prop={'name': 'circle', 'radius': 1.,
-                                      'E': 1., 'nu': 0.3},
-                           options={'vectorize': True, 'matrix': 'bsr', 'verbose': True},
-                           outdir='.',
-                           assemble_on_init=True):
+                           a: float = 1.,
+                           pbc: list | None = None,
+                           bbox: tuple = (1., 1., 1.),
+                           lattice_type: str = 'sc',
+                           beam_prop: dict = {'name': 'circle', 'radius': 1.,
+                                              'E': 1., 'nu': 0.3},
+                           options: dict = {'vectorize': True, 'matrix': 'bsr', 'verbose': True},
+                           outdir: str = '.',
+                           assemble_on_init: bool = True) -> "BeamNetwork":
         """Create a beam network from a 3D cubic lattice.
 
-        This is a thin wrapper around :meth:`beam_networks.network.Network.generate_cubic_lattice`
+        Thin wrapper around :meth:`~beam_networks.network.Network.generate_cubic_lattice`
         that directly returns a :class:`BeamNetwork` instance.
+
+        Parameters
+        ----------
+        a : float, optional
+            Lattice constant (nearest-neighbour distance). The default is 1.
+        pbc : list of bool, optional
+            Periodic boundary condition flags per direction. The default is None
+            (no periodic BCs).
+        bbox : tuple of float, optional
+            Bounding box dimensions ``(Lx, Ly, Lz)``. The default is ``(1., 1., 1.)``.
+        lattice_type : str, optional
+            One of ``'sc'`` (simple cubic), ``'bcc'``, or ``'fcc'``.
+            The default is ``'sc'``.
+        beam_prop : dict, optional
+            Beam cross-section and elastic properties (see :meth:`__init__`).
+        options : dict, optional
+            Assembly options (see :meth:`__init__`).
+        outdir : str, optional
+            Directory for output files. The default is the current working directory.
+        assemble_on_init : bool, optional
+            If True, assemble the global stiffness matrix immediately.
+            The default is True.
+
+        Returns
+        -------
+        BeamNetwork
+            A new instance built on the specified cubic lattice.
         """
 
         lattice = Network.generate_cubic_lattice(a=a,
@@ -219,15 +264,40 @@ class BeamNetwork(Network):
 
     @classmethod
     def from_square_lattice(cls,
-                            a=1.,
-                            bbox=(1., 1.),
-                            lattice_type='sc',
-                            beam_prop={'name': 'circle', 'radius': 1.,
-                                       'E': 1., 'nu': 0.3},
-                            options={'vectorize': True, 'matrix': 'bsr', 'verbose': True},
-                            outdir='.',
-                            assemble_on_init=True):
-        """Create a beam network from a 2D square lattice."""
+                            a: float = 1.,
+                            bbox: tuple = (1., 1.),
+                            lattice_type: str = 'sc',
+                            beam_prop: dict = {'name': 'circle', 'radius': 1.,
+                                               'E': 1., 'nu': 0.3},
+                            options: dict = {'vectorize': True, 'matrix': 'bsr', 'verbose': True},
+                            outdir: str = '.',
+                            assemble_on_init: bool = True) -> "BeamNetwork":
+        """Create a beam network from a 2D square lattice.
+
+        Parameters
+        ----------
+        a : float, optional
+            Lattice constant (nearest-neighbour distance). The default is 1.
+        bbox : tuple of float, optional
+            Bounding box dimensions ``(Lx, Ly)``. The default is ``(1., 1.)``.
+        lattice_type : str, optional
+            One of ``'sc'`` (simple square) or ``'fcc'`` (face-centred, i.e.
+            triangular). The default is ``'sc'``.
+        beam_prop : dict, optional
+            Beam cross-section and elastic properties (see :meth:`__init__`).
+        options : dict, optional
+            Assembly options (see :meth:`__init__`).
+        outdir : str, optional
+            Directory for output files. The default is the current working directory.
+        assemble_on_init : bool, optional
+            If True, assemble the global stiffness matrix immediately.
+            The default is True.
+
+        Returns
+        -------
+        BeamNetwork
+            A new instance built on the specified square lattice.
+        """
 
         lattice = Network.generate_square_lattice(a=a,
                                                   bbox=bbox,
@@ -240,15 +310,40 @@ class BeamNetwork(Network):
 
     @classmethod
     def from_bowtie_lattice(cls,
-                            a=1.,
-                            w=0.1,
-                            bbox=(1., 1.),
-                            beam_prop={'name': 'circle', 'radius': 1.,
-                                       'E': 1., 'nu': 0.3},
-                            options={'vectorize': True, 'matrix': 'bsr', 'verbose': True},
-                            outdir='.',
-                            assemble_on_init=True):
-        """Create a beam network from a 2D bowtie lattice."""
+                            a: float = 1.,
+                            w: float = 0.1,
+                            bbox: tuple = (1., 1.),
+                            beam_prop: dict = {'name': 'circle', 'radius': 1.,
+                                               'E': 1., 'nu': 0.3},
+                            options: dict = {'vectorize': True, 'matrix': 'bsr', 'verbose': True},
+                            outdir: str = '.',
+                            assemble_on_init: bool = True) -> "BeamNetwork":
+        """Create a beam network from a 2D bowtie lattice.
+
+        Parameters
+        ----------
+        a : float, optional
+            Lattice constant (unit cell size). The default is 1.
+        w : float, optional
+            Offset parameter controlling the bowtie node positions within a
+            unit cell. The default is 0.1.
+        bbox : tuple of float, optional
+            Bounding box dimensions ``(Lx, Ly)``. The default is ``(1., 1.)``.
+        beam_prop : dict, optional
+            Beam cross-section and elastic properties (see :meth:`__init__`).
+        options : dict, optional
+            Assembly options (see :meth:`__init__`).
+        outdir : str, optional
+            Directory for output files. The default is the current working directory.
+        assemble_on_init : bool, optional
+            If True, assemble the global stiffness matrix immediately.
+            The default is True.
+
+        Returns
+        -------
+        BeamNetwork
+            A new instance built on the bowtie lattice.
+        """
 
         lattice = Network.generate_bowtie_lattice(a=a,
                                                   w=w,
@@ -260,16 +355,26 @@ class BeamNetwork(Network):
                                 assemble_on_init=assemble_on_init)
 
     @property
-    def has_bc(self):
+    def has_bc(self) -> bool:
+        """Whether at least one boundary condition has been added."""
         return len(self._bc) > 0
 
     @property
-    def dof_per_node(self):
+    def dof_per_node(self) -> int:
+        """Number of degrees of freedom per node.
+
+        3 for 2D problems (ux, uy, θz) and 6 for 3D problems
+        (ux, uy, uz, θx, θy, θz).
+        """
         return 3 * (self.dim - 1)
 
     @property
-    def num_dof(self):
+    def num_dof(self) -> int:
+        """Number of unconstrained (free) degrees of freedom.
 
+        Equal to ``num_nodes * dof_per_node`` minus the number of constrained
+        DOFs imposed by Dirichlet and Neumann boundary conditions.
+        """
         n_dof = self.num_nodes * self.dof_per_node
 
         if self.has_bc:
@@ -279,11 +384,28 @@ class BeamNetwork(Network):
         return n_dof
 
     @property
-    def displaced_nodes(self):
+    def displaced_nodes(self) -> np.ndarray:
+        """Nodal coordinates in the deformed configuration.
+
+        Returns
+        -------
+        np.ndarray
+            Shape (num_nodes, dim). Returns undeformed coordinates if no
+            solution is available.
+        """
         return self.nodes + self.displacement
 
     @property
-    def displaced_edge_vectors(self):
+    def displaced_edge_vectors(self) -> np.ndarray:
+        """Edge vectors in the deformed configuration.
+
+        Applies the minimum image convention for periodic systems.
+
+        Returns
+        -------
+        np.ndarray
+            Shape (num_edges, dim).
+        """
         r1 = self.displaced_nodes[self.edges[:, 1]]
         r0 = self.displaced_nodes[self.edges[:, 0]]
         dr = _mic(r1 - r0, self._boxsize, self._periodic)
@@ -291,13 +413,13 @@ class BeamNetwork(Network):
         return dr
 
     @property
-    def displacement(self):
-        """Nodal displacements
+    def displacement(self) -> np.ndarray:
+        """Nodal displacements extracted from the global solution vector.
 
         Returns
         -------
         numpy.ndarray
-            Shape (num_nodes, dim)
+            Shape (num_nodes, dim). Zero array if no solution is available.
         """
         if self.has_solution:
             u = self.sol.reshape(
@@ -307,13 +429,14 @@ class BeamNetwork(Network):
             return np.zeros((self.num_nodes, self.dof_per_node // self.dim + 1))
 
     @property
-    def rotation(self):
-        """Nodal rotations
+    def rotation(self) -> np.ndarray:
+        """Nodal rotations extracted from the global solution vector.
 
         Returns
         -------
         numpy.ndarray
-            Shape (num_nodes, 3) for 3D; (num_nodes, 1) for 2D
+            Shape (num_nodes, 1) for 2D (θz) or (num_nodes, 3) for 3D
+            (θx, θy, θz). Zero array if no solution is available.
         """
         if self.has_solution:
             u = self.sol.reshape(
@@ -323,17 +446,19 @@ class BeamNetwork(Network):
             return np.zeros((self.num_nodes, self.dof_per_node // self.dim + 1))
 
     @property
-    def stiffness(self):
-        """Global stiffness matrix
+    def stiffness(self) -> np.ndarray:
+        """Global stiffness matrix.
 
         Returns
         -------
-        numpy.ndarray or scipy.sparse.csr_array
+        numpy.ndarray or scipy.sparse.bsr_array
+            The assembled stiffness matrix, or None if not yet assembled.
         """
         return self._K
 
     @property
-    def has_stiffness(self):
+    def has_stiffness(self) -> bool:
+        """Whether the global stiffness matrix has been assembled."""
         return self._K is not None
 
     def _assemble_global_system(self):
@@ -353,29 +478,40 @@ class BeamNetwork(Network):
                                          verbose=self._verbose
                                          )
 
-    def add_BC(self, name, type, select, selection, vector, active=True, num_per_point=1):
-        """Add boundary condition.
+    def add_BC(self, name: str, type: str, select: str, selection,
+               vector, active: bool = True, num_per_point: int = 1) -> None:
+        """Add a boundary condition.
 
         Parameters
         ----------
         name : str
-            Name/Identifier of the BC
+            Unique identifier for this boundary condition. If a BC with this
+            name already exists it will be overridden with a warning.
         type : str
-            BC type, either 'D' for Dirichlet or 'N' for Neumann
+            BC type: ``'D'`` for Dirichlet (prescribed displacement/rotation)
+            or ``'N'`` for Neumann (prescribed force/moment).
         select : str
-            How to select nodes, either 'box', 'node', or 'point'
+            Node selection method: ``'box'``, ``'node'``, or ``'point'``.
         selection : array-like
-            For box selection: lower and upper limits of bounding box in relative units,
-            i.e. [xlo, xhi, ylo, yhi[, zlo, zhi]]. None entries cooresponds to the min/max limits, e.g.
-            [None, None, 0.5, None, None, None] means upper half of the domain in the y-direction.
-            For node selection: list of nodes.
+            For ``'box'``: relative limits ``[xlo, xhi, ylo, yhi[, zlo, zhi]]``
+            where each value is a fraction of the domain extent (0–1). ``None``
+            entries fall back to the domain minimum or maximum, e.g.
+            ``[None, None, 0.5, None]`` selects the upper half in y.
+            For ``'node'``: explicit list of node indices.
+            For ``'point'``: coordinates of the target point (see *num_per_point*).
         vector : array-like
-            Vector of length 3 and 6 for 2D and 3D systems, respectively. None means the corresponding DOF is
-            not affected.
-            In 2D: [ux, uy, tz] (Dircihlet) or [Fx, Fy, Mz] (Neumann)
-            In 3D: [ux, uy, uz, tx, ty, tz] (Dircihlet) or [Fx, Fy, Fz, Mx, My, Mz] (Neumann)
-        num_per_point : int
-            For point selection only, maximum number of closest nodes to select. The default is 1.
+            DOF values for the selected nodes. Length 3 for 2D, 6 for 3D.
+            ``None`` entries leave the corresponding DOF unaffected.
+
+            * 2D Dirichlet: ``[ux, uy, θz]``
+            * 2D Neumann:   ``[Fx, Fy, Mz]``
+            * 3D Dirichlet: ``[ux, uy, uz, θx, θy, θz]``
+            * 3D Neumann:   ``[Fx, Fy, Fz, Mx, My, Mz]``
+        active : bool, optional
+            Whether this BC participates in the next solve. The default is True.
+        num_per_point : int, optional
+            For ``'point'`` selection only: number of closest nodes to include.
+            The default is 1.
         """
 
         assert select in ['box', 'node', 'point']
@@ -390,26 +526,27 @@ class BeamNetwork(Network):
         self._bc[name].update(_get_bc_dof(self.nodes, select, selection, vector, num_per_point))
         self._bc_changed = True
 
-    def delete_BC(self, name):
-        """Delete boundary condition.
+    def delete_BC(self, name: str) -> None:
+        """Delete a boundary condition.
 
         Parameters
         ----------
         name : str
-            Name of the BC to be removed
+            Name of the BC to remove. No-op if the name does not exist.
         """
         self._bc.pop(name, None)
         self._bc_changed = True
 
-    def scale_BC(self, type, factor):
-        """Scale all BCs of a certain type by a given factor
+    def scale_BC(self, type: str, factor: float) -> None:
+        """Scale all boundary condition values of a given type by a scalar factor.
 
         Parameters
         ----------
         type : str
-            BC type (either 'D' or 'N')
+            BC type to scale: ``'D'`` for Dirichlet or ``'N'`` for Neumann.
         factor : float
-            factor
+            Multiplicative scaling factor applied to all DOF values of the
+            selected BC type.
         """
 
         if type == 'D':
@@ -417,20 +554,27 @@ class BeamNetwork(Network):
         elif type == 'N':
             self._val_N = list(np.array(self._val_N) * factor)
 
-    def modify_BC(self, name, vector):
-        """Modify an existing BC by changing its vector.
-        This does not change the constraint DOFs, i.e. vector needs to have 'None' in the same place as before.
-        Useful for stepwise change of a load/displacement
+    def modify_BC(self, name: str, vector) -> None:
+        """Modify the values of an existing boundary condition.
+
+        Changes the prescribed values without altering which DOFs are
+        constrained. ``None`` entries in *vector* must appear in the same
+        positions as in the original call to :meth:`add_BC`. Useful for
+        incrementally stepping a load or displacement.
 
         Parameters
         ----------
         name : str
-            Name of the BC to be removed
+            Name of the BC to modify.
         vector : array-like
-            Vector of length 3 and 6 for 2D and 3D systems, respectively. None means the corresponding DOF is
-            not affected.
-            In 2D: [ux, uy, tz] (Dircihlet) or [Fx, Fy, Mz] (Neumann)
-            In 3D: [ux, uy, uz, tx, ty, tz] (Dircihlet) or [Fx, Fy, Fz, Mx, My, Mz] (Neumann)
+            New DOF values. Length 3 for 2D, 6 for 3D. ``None`` entries
+            leave the corresponding DOF constraint unchanged (position must
+            match the original ``None`` pattern).
+
+            * 2D Dirichlet: ``[ux, uy, θz]``
+            * 2D Neumann:   ``[Fx, Fy, Mz]``
+            * 3D Dirichlet: ``[ux, uy, uz, θx, θy, θz]``
+            * 3D Neumann:   ``[Fx, Fy, Fz, Mx, My, Mz]``
         """
 
         assert name in self._bc.keys()
@@ -444,7 +588,14 @@ class BeamNetwork(Network):
         self._bc[name].update([('dof_val', dof_val)])
         self._bc_changed = True
 
-    def assemble_BCs(self):
+    def assemble_BCs(self) -> None:
+        """Assemble boundary conditions into DOF index lists.
+
+        Collects all active boundary conditions into the internal Dirichlet
+        (``_dof_D``, ``_val_D``) and Neumann (``_dof_N``, ``_val_N``) lists
+        consumed by :meth:`solve`. Called automatically by :meth:`solve` when
+        the BC state has changed since the last call.
+        """
 
         self._dof_D, self._val_D, self._dof_N, self._val_N = _assemble_BCs(self._bc)
         _excluded_nodes = [v for k, bc in self._bc.items() if not k.startswith('sym') for v in bc['nodes']]
@@ -453,31 +604,43 @@ class BeamNetwork(Network):
 
         self._bc_changed = False
 
-    def solve(self, solver=None, stress_mode='mean', preconditioner=None,
-              verbosity=0):
-        """Solve the linear system.
+    def solve(self, solver: str | None = None, stress_mode: str = 'mean',
+              preconditioner: str | None = None, verbosity: int = 0) -> None:
+        """Solve the linear elastic system.
 
-        Stores the solution for all DOFs and computes the reaction forces at constraint DOFs
+        Assembles boundary conditions if they have changed, solves the
+        reduced linear system, and stores the global displacement vector
+        (``sol``), reaction forces (``Freact``), and von Mises stress
+        (``_sVM``). Sets ``has_solution = True`` on success.
+
+        The solver is chosen automatically based on system size when *solver*
+        is None: ``'direct'`` for fewer than 20 000 free DOFs, ``'cg'``
+        otherwise.
 
         Parameters
         ----------
-        solver : str, optional
-            Type of solver to use, currently 'direct' and 'cg' available (the default is 'direct')
-        stress_mode : str
-            Either 'max' or 'mean', i.e. calculate maximum or mean von Mises
-            stress per beam
-        preconditioner : str, optional
-            Type of preconditioner, 'diagonal' or None (the default is None)
+        solver : str or None, optional
+            Linear solver: ``'direct'`` (sparse LU via ``spsolve``) or
+            ``'cg'`` (conjugate gradient). The default is None (auto-select).
+        stress_mode : str, optional
+            How to aggregate von Mises stress along each beam: ``'max'``
+            takes the end-point maximum, ``'mean'`` averages both ends.
+            The default is ``'mean'``.
+        preconditioner : str or None, optional
+            Preconditioner for the CG solver: ``'diagonal'`` or None.
+            The default is None. Only active for sparse matrices.
         verbosity : int, optional
-            level of verbosity, if between 25/50 print information about
-            displacements and reaction forces, if between 50/100 print
-            information about stiffness matrix, if greater equal 100 print
-            condition number (default is 0). Only active for sparse matrices.
+            Diagnostic output level (active for sparse solvers only):
+
+            * 0 — silent (default)
+            * 25–49 — print displacement and reaction force statistics
+            * 50–99 — additionally print stiffness matrix statistics
+            * ≥100 — additionally print the condition number
 
         Raises
         ------
         RuntimeError
-            System can only be solved if boundary conditions are given.
+            If no boundary conditions have been defined.
         """
 
         if not self.has_stiffness:
@@ -559,17 +722,18 @@ class BeamNetwork(Network):
 
         return out
 
-    def compute_equivalent_stress(self, mode='mean'):
-        """Calculate von Mises stress and store it in self._sVM.
+    def compute_equivalent_stress(self, mode: str = 'mean') -> None:
+        """Compute the von Mises stress for all beams and store it in ``_sVM``.
+
+        Called automatically by :meth:`solve`. Use this method directly to
+        recompute with a different aggregation mode after solving.
 
         Parameters
         ----------
-        mode : str
-            Either 'max' or 'mean', i.e. calculate maximum or mean stress per beam
-
-        Returns
-        -------
-        None
+        mode : str, optional
+            Stress aggregation along each beam: ``'max'`` takes the
+            end-point maximum, ``'mean'`` averages both ends.
+            The default is ``'mean'``.
         """
         self._sVM = get_element_mises_stress(self.nodes,
                                              self.edges,
@@ -578,7 +742,22 @@ class BeamNetwork(Network):
                                              self._beam_prop,
                                              rot=None, mode=mode)
 
-    def compute_principal_stresses(self, mode='max'):
+    def compute_principal_stresses(self, mode: str = 'max') -> np.ndarray:
+        """Compute the principal stresses for all beam elements.
+
+        Parameters
+        ----------
+        mode : str, optional
+            Stress aggregation along each beam: ``'max'`` takes the
+            end-point maximum, ``'mean'`` averages both ends.
+            The default is ``'max'``.
+
+        Returns
+        -------
+        np.ndarray
+            Principal stresses sorted in descending order,
+            shape (num_edges, 3).
+        """
         pS = get_element_principal_stress(self.nodes,
                                           self.edges,
                                           self.edge_vectors,
@@ -588,8 +767,18 @@ class BeamNetwork(Network):
 
         return pS
 
-    def compute_ratio(self):
+    def compute_ratio(self) -> np.ndarray:
+        """Compute the bending-to-total stress ratio for all beam elements.
 
+        The ratio is defined as the bending stress divided by the sum of
+        bending and axial stresses, giving a value in [0, 1] where 1 means
+        purely bending-dominated and 0 means purely axially dominated.
+
+        Returns
+        -------
+        np.ndarray
+            Bending ratio per beam, shape (num_edges,).
+        """
         _, ratio = get_element_mises_stress(self.nodes,
                                             self.edges,
                                             self.edge_vectors,
@@ -599,32 +788,54 @@ class BeamNetwork(Network):
 
         return ratio
 
-    def scale_solution(self, scale_factor):
-        self.sol *= scale_factor
+    def scale_solution(self, scale_factor: float) -> None:
+        """Scale the global displacement solution vector by a scalar factor.
 
-    def plot(self, ax, node_ids=False, contour=None, cax=None, aspect=1., lim=None, lw=2.,
-             scale=1.):
-        """Generate 2D plot of the deformed network structure.
+        Useful for superimposing solutions or converting between unit systems.
 
         Parameters
         ----------
-        ax : matplotlib.pyplot.axis object
-            Axis to plot into
+        scale_factor : float
+            Multiplicative factor applied to all displacement and rotation DOFs.
+        """
+        self.sol *= scale_factor
+
+    def plot(self, ax, node_ids: bool = False, contour: np.ndarray | None = None,
+             cax=None, aspect: float = 1., lim: tuple | None = None,
+             lw: float = 2., scale: float = 1.) -> "matplotlib.axes.Axes":
+        """Generate a 2D plot of the deformed network structure.
+
+        Draws the undeformed network in grey and, if a solution is available,
+        overlays the deformed network optionally coloured by a scalar field.
+
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes
+            Axes object to draw into.
         node_ids : bool, optional
-            Print node numbers nect to undeformed structure (the default is False)
-        contour : numpy.ndarray, optional
-            Scalar field to plot as color on edges (the default is None, which means no coloring)
-        cax : matplotlib.pyplot.axis object or None, optional
-            Axis to plot colorbar into if contour is not None (the default is None, which takes space from ax)
+            If True, print node indices next to each node in the undeformed
+            configuration. The default is False.
+        contour : numpy.ndarray or None, optional
+            Per-edge scalar field used to colour the deformed network
+            (e.g. von Mises stress). The default is None (no colouring).
+        cax : matplotlib.axes.Axes or None, optional
+            Axes for the colourbar when *contour* is given. The default is
+            None, which steals space from *ax*.
         aspect : float, optional
-            Aspect ratio (the default is 1.)
-        lim : tuple, optional
-            Colorbar limits (the default is None, which takes the limits of contour)
+            Aspect ratio of the axes. The default is 1.
+        lim : tuple or None, optional
+            Colourbar limits ``(vmin, vmax)``. The default is None, which
+            uses the range of *contour*.
+        lw : float, optional
+            Line width for the beam edges. The default is 2.
+        scale : float, optional
+            Scale factor applied to displacements before plotting (for
+            visualisation purposes only). The default is 1.
 
         Returns
         -------
-        matplotlib.pyplot.axis object
-            The plotted axis
+        matplotlib.axes.Axes
+            The axes with the network drawn into it.
         """
 
         # periodic_box = [L if p else p for (
@@ -645,13 +856,19 @@ class BeamNetwork(Network):
 
         return ax
 
-    def to_vtk(self, file="foo.vtk"):
-        """Write structure and possibly solution to VTK file
+    def to_vtk(self, file: str = "foo.vtk") -> None:
+        """Write the network structure and solution to a VTK file.
+
+        When a solution is available, nodal displacements, rotations, and
+        per-element von Mises stress are included. For periodic structures,
+        ghost copies of boundary-crossing edges are written for visualisation.
+        Output is placed in ``outdir`` (set at construction time).
 
         Parameters
         ----------
         file : str, optional
-            Output filename (the default is "foo.vtk")
+            Output filename relative to ``outdir``. The default is
+            ``"foo.vtk"``.
         """
 
         if np.any(self._periodic):
@@ -681,7 +898,22 @@ class BeamNetwork(Network):
                         f=None,
                         stress=self._sVM)
 
-    def to_stl(self, file, clean=False, tol=1e-6):
+    def to_stl(self, file: str, clean: bool = False, tol: float = 1e-6) -> None:
+        """Write the beam network geometry to an STL file.
+
+        Each beam is tessellated as a cylindrical or rectangular solid
+        (depending on the cross-section type in ``beam_prop``).
+
+        Parameters
+        ----------
+        file : str
+            Output filename relative to ``outdir``.
+        clean : bool, optional
+            If True, remove isolated nodes and dangling edges before export.
+            The default is False.
+        tol : float, optional
+            Geometric tolerance used during mesh cleaning. The default is 1e-6.
+        """
 
         if clean:
             # stress_tolerance = tol * self._beam_prop['E']

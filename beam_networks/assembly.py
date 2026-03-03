@@ -19,9 +19,11 @@ import scipy.sparse as sp
 from beam_networks.stiffness import get_element_stiffness_global, get_element_stiffness_global_vec
 
 
-def assemble_global_system(nodes_positions, edges_indices, dr, beam_prop, sorted_edges=True,
-                           vectorize=True, matrix='bsr', verbose=False):
-    """Assembly of the global stiffness matrix for a Timoshenko beam network (wrapper)
+def assemble_global_system(nodes_positions: np.ndarray, edges_indices: np.ndarray,
+                           dr: np.ndarray, beam_prop: dict,
+                           sorted_edges: bool = True, vectorize: bool = True,
+                           matrix: str = 'bsr', verbose: bool = False):
+    """Assemble the global stiffness matrix for a Timoshenko beam network.
 
     Parameters
     ----------

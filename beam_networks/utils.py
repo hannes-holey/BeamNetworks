@@ -69,20 +69,23 @@ def _dict_has_keys(d, required):
     return np.all([key in d.keys() for key in required])
 
 
-def box_selection(nodes, lim):
-    """Select nodes which are within a cuboid.
+def box_selection(nodes: np.ndarray, lim) -> np.ndarray:
+    """Return a boolean mask of nodes inside a box defined in relative coordinates.
 
     Parameters
     ----------
     nodes : np.ndarray
-        Nodal coordinates
+        Nodal coordinates, shape (num_nodes, dim).
     lim : iterable
-        Lower and upper bounds of the cuboid
+        Relative limits of the selection box as fractions of the domain
+        extent: ``[xlo, xhi, ylo, yhi]`` for 2D or
+        ``[xlo, xhi, ylo, yhi, zlo, zhi]`` for 3D. ``None`` entries default
+        to the domain minimum (for *lo*) or maximum (for *hi*).
 
     Returns
     -------
     np.ndarray
-        Masking array for nodes
+        Boolean mask of shape (num_nodes,); True for nodes inside the box.
     """
 
     if nodes.shape[1] == 2:
@@ -119,22 +122,22 @@ def box_selection(nodes, lim):
     return mask_nodes
 
 
-def point_selection(nodes, point, num=1):
-    """Select nodes which are closest to a given point.
+def point_selection(nodes: np.ndarray, point, num: int = 1) -> np.ndarray:
+    """Return a boolean mask of the *num* nodes closest to a given point.
 
     Parameters
     ----------
     nodes : np.ndarray
-        Nodal coordinates
+        Nodal coordinates, shape (num_nodes, dim).
     point : array-like
-        Coordinates of the point
-    num : int
-        Number of points. The default is 1.
+        Target coordinates, length dim.
+    num : int, optional
+        Number of nearest nodes to select. The default is 1.
 
     Returns
     -------
     np.ndarray
-        Masking array for nodes
+        Boolean mask of shape (num_nodes,); True for the *num* nearest nodes.
     """
 
     point = np.array(point)[None, :]
@@ -233,19 +236,32 @@ def _remove_isolated_nodes_edges(nodes, edges, max_depth=None):
     return new_nodes, new_edges
 
 
-def check_input_dict(container, keys, defaults, allowed):
-    """Sanitize output settings
+def check_input_dict(container: dict, keys: list, defaults: list,
+                     allowed: list) -> dict:
+    """Validate and sanitise a dictionary of settings against expected keys.
 
+    For each key in *keys*, the corresponding entry in *container* is checked
+    against the type of the default value and, if *allowed* is not None, against
+    the list of allowed values. Invalid or missing entries are replaced by the
+    default with a warning.
 
     Parameters
     ----------
-    options : dict
-        Output settings
+    container : dict
+        Dictionary of settings to validate (modified in-place).
+    keys : list of str
+        Expected keys in *container*.
+    defaults : list
+        Default value for each key. The type of each default is used to coerce
+        the stored value.
+    allowed : list
+        Allowed value list for each key, or None to accept any value of the
+        correct type.
 
     Returns
     -------
     dict
-        Sanitized output settings
+        The validated (and possibly corrected) settings dictionary.
     """
     types = [type(d) for d in defaults]
 
@@ -261,8 +277,13 @@ def check_input_dict(container, keys, defaults, allowed):
     return container
 
 
-def get_edges_from_disks(file, cutoff=3., atol=1e-5):
-    """Get adjacency matrix from a collextion of hard disks in 2D
+def get_edges_from_disks(file: str, cutoff: float = 3.,
+                         atol: float = 1e-5) -> tuple[np.ndarray, np.ndarray, float, float]:
+    """Build a network from a collection of hard disks in 2D.
+
+    Reads a file describing disk positions and radii, and connects pairs of
+    disks whose surfaces are in contact (within tolerance *atol*). Periodic
+    boundary conditions in both directions are assumed.
 
     The input file has the format:
 

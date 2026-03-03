@@ -16,42 +16,46 @@ import numpy as np
 import scipy.sparse as sp
 
 
-def solve(K, bc_D, d_D, bc_N, F_N,
-          solver='direct', preconditioner=None,
-          verbosity=0):
-    """Solve the linear system.
+def solve(K, bc_D: list, d_D: list, bc_N: list, F_N: list,
+          solver: str = 'direct', preconditioner: str | None = None,
+          verbosity: int = 0) -> tuple[np.ndarray, np.ndarray, int]:
+    """Solve the partitioned linear elastic system K·d = f.
+
+    Dispatches to a sparse or dense backend depending on the type of *K*.
 
     Parameters
     ----------
-    K : np.ndarry or scipy.sparse.csr_matrix
-        Stiffness matrix
-    bc_D : iterable
-        List of constraint DOFs (Dirichlet BCs)
-    d_D : iterable
-        List of constraint DOF values (Dirichlet BCs)
-    bc_N : iterable
-        List of DOFs with nonzero loads (Neumann BCs)
-    F_N : iterable
-        List of DOF values with nonzero loads (Neumann BCs)
+    K : np.ndarray or scipy.sparse matrix
+        Global stiffness matrix, shape (num_dof, num_dof).
+    bc_D : list of int
+        DOF indices with prescribed displacements (Dirichlet BCs).
+    d_D : list of float
+        Prescribed displacement values corresponding to *bc_D*.
+    bc_N : list of int
+        DOF indices with applied forces (Neumann BCs).
+    F_N : list of float
+        Applied force values corresponding to *bc_N*.
     solver : str, optional
-        Type of solver, 'direct' or 'cg' (the default is 'direct')
-    preconditioner : str, optional
-        Type of preconditioner, 'diagonal' or None (the default is None). Only
-        active for sparse matrices.
+        Linear solver: ``'direct'`` (sparse LU via ``spsolve``) or ``'cg'``
+        (conjugate gradient). The default is ``'direct'``.
+    preconditioner : str or None, optional
+        Preconditioner for the CG solver: ``'diagonal'`` or None.
+        Only active for sparse matrices. The default is None.
     verbosity : int, optional
-        level of verbosity, if between 25/50 print information about
-        displacements and reaction forces, if between 50/100 print
-        information about stiffness matrix, if greater equal 100 print
-        condition number (default is 0). Only active for sparse matrices.
+        Diagnostic output level (sparse solver only); see
+        :meth:`~beam_networks.problem.BeamNetwork.solve` for details.
+        The default is 0.
 
     Returns
     -------
     d : np.ndarray
-        Global solution vector
+        Global displacement solution vector, shape (num_dof,).
     F : np.ndarray
-        Global load vector
+        Global force vector (includes reaction forces at constrained DOFs),
+        shape (num_dof,).
     info : int
-        Info about numerical solution, 0 if successful
+        Solver status: 0 on success, non-zero on failure (e.g. singular matrix
+        for the direct solver or non-convergence for CG).
     """
 
     if sp.issparse(K):
