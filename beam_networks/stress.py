@@ -510,7 +510,7 @@ def _stress_3d(rhs, beam_prop, mode):
     np.ndarray
         Stress tensor elements, Voigt notation, shape=(6, num_elements,)
     """
-    Iy, Iz, Ip, A, kappa, ymax, zmax = get_geometric_props(beam_prop)
+    Iy, Iz, Ip, A, kappa, ymax = get_geometric_props(beam_prop)
 
     # normal force
     F = rhs[:, 6]
