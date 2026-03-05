@@ -16,13 +16,20 @@ from tqdm import tqdm
 import numpy as np
 import scipy.sparse as sp
 
-from beam_networks.stiffness import get_element_stiffness_global, get_element_stiffness_global_vec
+import warnings
+
+from beam_networks.stiffness import (get_element_stiffness_global,
+                                     get_element_stiffness_global_vec,
+                                     get_fem_element_stiffness_global)
 
 
 def assemble_global_system(nodes_positions: np.ndarray, edges_indices: np.ndarray,
                            dr: np.ndarray, beam_prop: dict,
                            sorted_edges: bool = True, vectorize: bool = True,
-                           matrix: str = 'bsr', verbose: bool = False):
+                           matrix: str = 'bsr', verbose: bool = False,
+                           n_elems: np.ndarray | None = None,
+                           fem_poly_order: int = 1,
+                           fem_n_gauss: int | None = None):
     """Assemble the global stiffness matrix for a Timoshenko beam network.
 
     Parameters
@@ -48,6 +55,22 @@ def assemble_global_system(nodes_positions: np.ndarray, edges_indices: np.ndarra
         'dense': Only for small matrices
     verbose : bool, optional
         Verbosity (the default is False which hides the progress bar)
+    n_elems : np.ndarray or None, optional
+        Per-edge number of FEM sub-elements, shape (num_edges,).
+        When None (default), uses the exact Timoshenko stiffness matrix.
+        When provided, each beam is discretized into the given number of
+        sub-elements and the interior DOFs are eliminated via static
+        condensation before assembly.  The ``vectorize`` flag is ignored
+        when ``n_elems`` is provided (FEM path is always non-vectorized).
+    fem_poly_order : int, optional
+        Polynomial degree of the Lagrange shape functions used in each
+        FEM sub-element (default 1 = linear).  Ignored when ``n_elems``
+        is None.
+    fem_n_gauss : int or None, optional
+        Number of Gauss-Legendre quadrature points per sub-element.
+        None (default) selects ``fem_poly_order`` (reduced integration),
+        which avoids shear locking for slender Timoshenko beams.
+        Ignored when ``n_elems`` is None.
 
     Returns
     -------
@@ -61,7 +84,24 @@ def assemble_global_system(nodes_positions: np.ndarray, edges_indices: np.ndarra
 
     edges_indices = np.array(edges_indices)
 
-    if vectorize:
+    if n_elems is not None:
+        if vectorize:
+            warnings.warn("vectorize=True is ignored when n_elems is provided (FEM path is non-vectorized).")
+        if matrix == 'bsr':
+            K_global = _assemble_sparse_bsr_fem(nodes_positions, edges_indices, dr, beam_prop, n_elems,
+                                                fem_poly_order=fem_poly_order, fem_n_gauss=fem_n_gauss,
+                                                verbose=verbose)
+        elif matrix == 'lil':
+            K_global = _assemble_sparse_lil_fem(nodes_positions, edges_indices, dr, beam_prop, n_elems,
+                                                fem_poly_order=fem_poly_order, fem_n_gauss=fem_n_gauss,
+                                                verbose=verbose)
+        elif matrix == 'dense':
+            K_global = _assemble_dense_fem(nodes_positions, edges_indices, dr, beam_prop, n_elems,
+                                           fem_poly_order=fem_poly_order, fem_n_gauss=fem_n_gauss,
+                                           verbose=verbose)
+        else:
+            raise ValueError
+    elif vectorize:
         if matrix == 'bsr':
             K_global = _assemble_sparse_bsr_vec(nodes_positions, edges_indices, dr, beam_prop, verbose=verbose)
         elif matrix == 'lil':
@@ -409,6 +449,118 @@ def _assemble_dense_vec(nodes, edges, dr, beam_prop, verbose=True):
         K_global[s1, s2] += Ke[i, :num_dof_per_node, num_dof_per_node:]
         K_global[s2, s1] += Ke[i, num_dof_per_node:, :num_dof_per_node]
         K_global[s2, s2] += Ke[i, num_dof_per_node:, num_dof_per_node:]
+        if verbose:
+            pbar.update(1)
+
+    return K_global
+
+
+def _assemble_sparse_bsr_fem(nodes, edges, dr, beam_prop, n_elems,
+                             fem_poly_order=1, fem_n_gauss=None, verbose=True):
+    """Assemble global stiffness matrix in BSR format using FEM sub-elements."""
+
+    if verbose:
+        pbar = tqdm(desc="Assemble BSR matrix (FEM)", total=edges.shape[0], ncols=100)
+
+    num_nodes, ndim = nodes.shape
+    num_dof_per_node = 3 * (ndim - 1)
+    num_dof = num_nodes * num_dof_per_node
+
+    aux = sp.csr_array((np.ones_like(edges[:, 0]),
+                        (edges[:, 0], edges[:, 1])), shape=(num_nodes, num_nodes))
+    aux = aux + sp.eye_array(num_nodes)
+
+    indices = aux.indices
+    indptr = aux.indptr
+    data = np.zeros((len(indices), num_dof_per_node, num_dof_per_node))
+
+    i = 0
+    n0s, c0s = np.unique(edges[:, 0], return_counts=True)
+
+    for n0, c0 in zip(n0s, c0s):
+        for k, n1 in enumerate(edges[i + np.arange(c0), 1]):
+            Ke = get_fem_element_stiffness_global(beam_prop, dr[i], n_elems[i],
+                                                  poly_order=fem_poly_order,
+                                                  n_gauss=fem_n_gauss)
+
+            Ke00 = Ke[:num_dof_per_node, :num_dof_per_node]
+            Ke01 = Ke[:num_dof_per_node, num_dof_per_node:]
+            Ke11 = Ke[num_dof_per_node:, num_dof_per_node:]
+
+            data[indptr[n0]] += Ke00 / 2.
+            data[indptr[n1]] += Ke11 / 2.
+            data[indptr[n0] + k + 1] += Ke01
+            i += 1
+            if verbose:
+                pbar.update(1)
+
+    K_global = sp.bsr_array((data, indices, indptr),
+                            shape=(num_dof, num_dof),
+                            blocksize=(num_dof_per_node, num_dof_per_node))
+    K_global = K_global + K_global.T
+
+    return K_global
+
+
+def _assemble_sparse_lil_fem(nodes, edges, dr, beam_prop, n_elems,
+                             fem_poly_order=1, fem_n_gauss=None, verbose=True):
+    """Assemble global stiffness matrix in LIL format using FEM sub-elements."""
+
+    if verbose:
+        pbar = tqdm(desc="Assemble LIL matrix (FEM)", total=edges.shape[0], ncols=100)
+
+    num_nodes, ndim = nodes.shape
+    num_dof_per_node = 3 * (ndim - 1)
+    num_dof = num_nodes * num_dof_per_node
+
+    K_global = sp.lil_array((num_dof, num_dof))
+
+    for i, element in enumerate(edges):
+        e0, e1 = element
+        s1 = slice(e0 * num_dof_per_node, (e0 + 1) * num_dof_per_node)
+        s2 = slice(e1 * num_dof_per_node, (e1 + 1) * num_dof_per_node)
+
+        Ke = get_fem_element_stiffness_global(beam_prop, dr[i], n_elems[i],
+                                              poly_order=fem_poly_order,
+                                              n_gauss=fem_n_gauss)
+
+        K_global[s1, s1] += Ke[:num_dof_per_node, :num_dof_per_node] / 2.
+        K_global[s1, s2] += Ke[:num_dof_per_node, num_dof_per_node:]
+        K_global[s2, s2] += Ke[num_dof_per_node:, num_dof_per_node:] / 2.
+        if verbose:
+            pbar.update(1)
+
+    K_global = K_global + K_global.T
+
+    return K_global.tobsr()
+
+
+def _assemble_dense_fem(nodes, edges, dr, beam_prop, n_elems,
+                        fem_poly_order=1, fem_n_gauss=None, verbose=True):
+    """Assemble global stiffness matrix as dense array using FEM sub-elements."""
+
+    if verbose:
+        pbar = tqdm(desc="Assemble dense matrix (FEM)", total=edges.shape[0], ncols=100)
+
+    num_nodes, ndim = nodes.shape
+    num_dof_per_node = 3 * (ndim - 1)
+    num_dof = num_nodes * num_dof_per_node
+
+    K_global = np.zeros((num_dof, num_dof))
+
+    for i, element in enumerate(edges):
+        e0, e1 = element
+        s1 = slice(e0 * num_dof_per_node, (e0 + 1) * num_dof_per_node)
+        s2 = slice(e1 * num_dof_per_node, (e1 + 1) * num_dof_per_node)
+
+        Ke = get_fem_element_stiffness_global(beam_prop, dr[i], n_elems[i],
+                                              poly_order=fem_poly_order,
+                                              n_gauss=fem_n_gauss)
+
+        K_global[s1, s1] += Ke[:num_dof_per_node, :num_dof_per_node]
+        K_global[s1, s2] += Ke[:num_dof_per_node, num_dof_per_node:]
+        K_global[s2, s1] += Ke[num_dof_per_node:, :num_dof_per_node]
+        K_global[s2, s2] += Ke[num_dof_per_node:, num_dof_per_node:]
         if verbose:
             pbar.update(1)
 

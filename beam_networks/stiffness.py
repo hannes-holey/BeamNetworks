@@ -15,6 +15,7 @@
 import numpy as np
 
 from beam_networks.geo import get_geometric_props, get_geometric_props_derivative
+from beam_networks.fem_utils import _gauss_legendre, _lagrange_basis
 
 
 def _beam_stiffness_2d(beam_prop, L, derivative=None):
@@ -189,6 +190,271 @@ def _beam_stiffness_3d(beam_prop, L, derivative=None):
     data = data_diag + data_offdiag + data_offdiag
 
     return data, rows, cols
+
+
+def _fem_element_stiffness_2d(beam_prop, l, n_nodes, n_gauss):
+    """2D Timoshenko beam element stiffness via Gauss quadrature.
+
+    Builds K = ∫₀ˡ (EA Bε^T Bε + EIz Bκ^T Bκ + κGA Bγ^T Bγ) dx using
+    *n_gauss* Gauss-Legendre points and Lagrange shape functions of degree
+    *n_nodes - 1*.
+
+    DOF ordering per node: [u, v, θ].  Total DOFs: 3 * n_nodes.
+
+    Parameters
+    ----------
+    beam_prop : dict
+        Beam properties.
+    l : float
+        Element length.
+    n_nodes : int
+        Nodes per element (= poly_order + 1).
+    n_gauss : int
+        Number of Gauss-Legendre integration points.
+
+    Returns
+    -------
+    np.ndarray, shape (3*n_nodes, 3*n_nodes)
+    """
+    E = beam_prop['E']
+    nu = beam_prop['nu']
+    G = E / (2. * (1. + nu))
+    _, Iz, _, A, kappa, _ = get_geometric_props(beam_prop)
+
+    EA = E * A
+    EI = E * Iz
+    kGA = kappa * G * A
+
+    n_dof = 3 * n_nodes
+    K = np.zeros((n_dof, n_dof))
+
+    xi_g, w_g = _gauss_legendre(n_gauss)
+    jac = l / 2.
+
+    for xi, w in zip(xi_g, w_g):
+        N, dN_dxi = _lagrange_basis(n_nodes, xi)
+        dN_dx = dN_dxi / jac        # chain rule: dN/dx = dN/dξ * dξ/dx = dN/dξ * 2/l
+
+        Be = np.zeros(n_dof)        # axial:   ε  = du/dx
+        Bk = np.zeros(n_dof)        # bending: κ  = dθ/dx
+        Bs = np.zeros(n_dof)        # shear:   γ  = dv/dx − θ
+
+        for i in range(n_nodes):
+            Be[3 * i] = dN_dx[i]
+            Bk[3 * i + 2] = dN_dx[i]
+            Bs[3 * i + 1] = dN_dx[i]
+            Bs[3 * i + 2] = -N[i]
+
+        fac = w * jac
+        K += fac * (EA * np.outer(Be, Be) + EI * np.outer(Bk, Bk) + kGA * np.outer(Bs, Bs))
+
+    return K
+
+
+def _fem_element_stiffness_3d(beam_prop, l, n_nodes, n_gauss):
+    """3D Timoshenko beam element stiffness via Gauss quadrature.
+
+    Builds K = ∫₀ˡ (EA Bε^T Bε + EIy Bκy^T Bκy + EIz Bκz^T Bκz
+                    + κGA Bγxy^T Bγxy + κGA Bγxz^T Bγxz + GJ Bτ^T Bτ) dx.
+
+    DOF ordering per node: [u, v, w, θx, θy, θz].  Total DOFs: 6 * n_nodes.
+
+    Sign conventions (Przemieniecki):
+      γ_xy = dv/dx − θz,   γ_xz = dw/dx + θy.
+
+    Parameters
+    ----------
+    beam_prop : dict
+        Beam properties.
+    l : float
+        Element length.
+    n_nodes : int
+        Nodes per element (= poly_order + 1).
+    n_gauss : int
+        Number of Gauss-Legendre integration points.
+
+    Returns
+    -------
+    np.ndarray, shape (6*n_nodes, 6*n_nodes)
+    """
+    E = beam_prop['E']
+    nu = beam_prop['nu']
+    G = E / (2. * (1. + nu))
+    Iy, Iz, J, A, kappa, _ = get_geometric_props(beam_prop)
+
+    EA = E * A
+    EIy = E * Iy
+    EIz = E * Iz
+    kGA = kappa * G * A
+    GJ = G * J
+
+    n_dof = 6 * n_nodes
+    K = np.zeros((n_dof, n_dof))
+
+    xi_g, w_g = _gauss_legendre(n_gauss)
+    jac = l / 2.
+
+    for xi, w in zip(xi_g, w_g):
+        N, dN_dxi = _lagrange_basis(n_nodes, xi)
+        dN_dx = dN_dxi / jac
+
+        Be = np.zeros(n_dof)   # axial:    ε    = du/dx
+        Bt = np.zeros(n_dof)   # torsion:  χ    = dθx/dx
+        Bky = np.zeros(n_dof)   # bending:  κy   = dθy/dx
+        Bkz = np.zeros(n_dof)   # bending:  κz   = dθz/dx
+        Bsy = np.zeros(n_dof)   # shear xy: γ_xy = dv/dx  − θz
+        Bsz = np.zeros(n_dof)   # shear xz: γ_xz = dw/dx  + θy
+
+        for i in range(n_nodes):
+            Be[6 * i] = dN_dx[i]   # u
+            Bt[6 * i + 3] = dN_dx[i]   # θx
+            Bky[6 * i + 4] = dN_dx[i]  # θy
+            Bkz[6 * i + 5] = dN_dx[i]  # θz
+            Bsy[6 * i + 1] = dN_dx[i]  # v
+            Bsy[6 * i + 5] = -N[i]     # −θz
+            Bsz[6 * i + 2] = dN_dx[i]  # w
+            Bsz[6 * i + 4] = N[i]      # +θy
+
+        fac = w * jac
+        K += fac * (EA * np.outer(Be, Be) + GJ * np.outer(Bt, Bt) +
+                    EIy * np.outer(Bky, Bky) + EIz * np.outer(Bkz, Bkz) +
+                    kGA * np.outer(Bsy, Bsy) + kGA * np.outer(Bsz, Bsz))
+
+    return K
+
+
+def _fem_condensed_stiffness_local(beam_prop: dict, L: float,
+                                   n_elem: int, ndim: int,
+                                   poly_order: int = 1,
+                                   n_gauss: int | None = None) -> np.ndarray:
+    """Assemble and statically condense a chain of FEM sub-elements.
+
+    Each sub-element is built via variational integration
+    (:func:`_fem_element_stiffness_2d` / :func:`_fem_element_stiffness_3d`)
+    using Lagrange shape functions of degree *poly_order* and *n_gauss*
+    Gauss-Legendre quadrature points.  The interior DOFs (all but the first
+    and last global nodes) are eliminated by Guyan (static) condensation so
+    that the result has the same (2·dof × 2·dof) shape as a single exact
+    element.
+
+    As *n_elem* → ∞ the condensed matrix converges to the exact Timoshenko
+    stiffness regardless of *poly_order* and *n_gauss* (as long as n_gauss ≥ 1).
+    The convergence rate and the behaviour for small *n_elem* depend on the
+    chosen integration rule.
+
+    Parameters
+    ----------
+    beam_prop : dict
+        Beam cross-section and elastic properties.
+    L : float
+        Total beam length.
+    n_elem : int
+        Number of sub-elements (>= 1).
+    ndim : int
+        Spatial dimension (2 or 3).
+    poly_order : int, optional
+        Polynomial degree of the Lagrange shape functions (default 1 = linear).
+        Each sub-element has poly_order + 1 nodes.
+    n_gauss : int or None, optional
+        Number of Gauss-Legendre integration points per sub-element.
+        If None (default) uses ``poly_order`` (reduced integration), which
+        under-integrates the shear term and thereby avoids shear locking
+        for slender Timoshenko beams.  Use ``poly_order + 1`` for full
+        integration (exact for all terms; note: can exhibit shear locking).
+
+    Returns
+    -------
+    np.ndarray
+        Condensed stiffness matrix, shape (2*dof, 2*dof), local frame.
+    """
+
+    if n_gauss is None:
+        n_gauss = poly_order     # reduced integration: avoids shear locking
+
+    dof = 3 * (ndim - 1)           # DOF per node
+    n_nodes_per_elem = poly_order + 1
+    l = L / n_elem                  # sub-element length
+
+    # Total global nodes along the chain: each element contributes poly_order
+    # new nodes, plus the single shared starting node.
+    n_total_nodes = n_elem * poly_order + 1
+    n_total = n_total_nodes * dof
+
+    K_loc = np.zeros((n_total, n_total))
+
+    for i in range(n_elem):
+        if ndim == 2:
+            Ke = _fem_element_stiffness_2d(beam_prop, l, n_nodes_per_elem, n_gauss)
+        else:
+            Ke = _fem_element_stiffness_3d(beam_prop, l, n_nodes_per_elem, n_gauss)
+
+        start = i * poly_order * dof
+        end = start + n_nodes_per_elem * dof
+        K_loc[start:end, start:end] += Ke
+
+    # Boundary DOFs: first node + last node
+    b_dof = list(range(dof)) + list(range(n_total - dof, n_total))
+    # Interior DOFs: all intermediate global nodes
+    i_dof = list(range(dof, n_total - dof))
+
+    if len(i_dof) == 0:
+        # n_elem == 1, poly_order == 1: no interior DOFs
+        return K_loc
+
+    K_bb = K_loc[np.ix_(b_dof, b_dof)]
+    K_bi = K_loc[np.ix_(b_dof, i_dof)]
+    K_ib = K_loc[np.ix_(i_dof, b_dof)]
+    K_ii = K_loc[np.ix_(i_dof, i_dof)]
+
+    return K_bb - K_bi @ np.linalg.solve(K_ii, K_ib)
+
+
+def get_fem_element_stiffness_global(beam_prop: dict, d: np.ndarray,
+                                     n_elem: int,
+                                     poly_order: int = 1,
+                                     n_gauss: int | None = None) -> np.ndarray:
+    """FEM element stiffness matrix for a single beam in the global frame.
+
+    Discretizes the beam into *n_elem* equal sub-elements using Lagrange
+    shape functions of degree *poly_order*, integrates with *n_gauss*
+    Gauss-Legendre points, performs static condensation to eliminate interior
+    DOFs, and rotates the result into the global coordinate frame.
+    The output has the same shape and contract as
+    :func:`get_element_stiffness_global`.  The result converges to the exact
+    Timoshenko stiffness as *n_elem* increases.
+
+    Parameters
+    ----------
+    beam_prop : dict
+        Beam cross-section and elastic properties.
+    d : np.ndarray
+        Vector from one beam endpoint to the other, shape (dim,).  Its
+        Euclidean norm is the beam length.
+    n_elem : int
+        Number of sub-elements (>= 1).
+    poly_order : int, optional
+        Polynomial degree of the Lagrange shape functions (default 1).
+    n_gauss : int or None, optional
+        Number of Gauss-Legendre integration points (default None → poly_order,
+        i.e. reduced integration to avoid shear locking).
+
+    Returns
+    -------
+    np.ndarray
+        Element stiffness matrix in the global frame,
+        shape (num_elem_dof, num_elem_dof) where num_elem_dof is 6 (2D)
+        or 12 (3D).
+    """
+
+    ndim = len(d)
+    L = np.linalg.norm(d)
+
+    K_cond_local = _fem_condensed_stiffness_local(beam_prop, L, n_elem, ndim,
+                                                  poly_order=poly_order,
+                                                  n_gauss=n_gauss)
+    T = _get_transformation_matrix(d)
+
+    return T.T @ K_cond_local @ T
 
 
 def get_element_stiffness_global(beam_prop: dict, d: np.ndarray,

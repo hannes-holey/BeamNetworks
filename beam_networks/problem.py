@@ -94,6 +94,11 @@ class BeamNetwork(Network):
                                          ['verbose', 'vectorize', 'matrix'],
                                          [True, True, 'bsr'],
                                          [None, None, ['bsr', 'lil', 'dense']])
+        # FEM options with None/int defaults (not handled by check_input_dict)
+        self._options['n_elem_per_length'] = options.get('n_elem_per_length', None)
+        self._options['min_element_length'] = options.get('min_element_length', None)
+        self._options['fem_poly_order'] = options.get('fem_poly_order', 1)
+        self._options['fem_n_gauss'] = options.get('fem_n_gauss', None)
 
         if not os.path.exists(outdir):
             os.makedirs(outdir)
@@ -461,6 +466,25 @@ class BeamNetwork(Network):
         """Whether the global stiffness matrix has been assembled."""
         return self._K is not None
 
+    def _compute_edge_discretization(self) -> np.ndarray | None:
+        """Return per-edge element count array, or None for exact mode.
+
+        Uses ``n_elem_per_length`` from options to compute the number of
+        FEM sub-elements per edge.  Returns None when ``n_elem_per_length``
+        is None, which activates the exact Timoshenko assembly path.
+        """
+        density = self._options['n_elem_per_length']
+        if density is None:
+            return None
+        min_len = self._options['min_element_length']
+        L = self.bondlengths
+        n = np.maximum(1, np.ceil(L * density).astype(int))
+        if min_len is not None:
+            # Reduce n where L/n < min_len, but never below 1
+            n_max = np.maximum(1, np.floor(L / min_len).astype(int))
+            n = np.minimum(n, n_max)
+        return n
+
     def _assemble_global_system(self):
         """
         Assemble the stiffness matrix in the global coordinate system using Timoshenko beam theory.
@@ -469,13 +493,18 @@ class BeamNetwork(Network):
         if self._verbose:
             print(f"Assemble beam network with {self.num_nodes} nodes and {self.num_edges} edges")
 
+        n_elems = self._compute_edge_discretization()
+
         self._K = assemble_global_system(self._nodes,
                                          self._edges,
                                          self._edge_vectors,
                                          self._beam_prop,
                                          vectorize=self._options['vectorize'],
                                          matrix=self._options['matrix'],
-                                         verbose=self._verbose
+                                         verbose=self._verbose,
+                                         n_elems=n_elems,
+                                         fem_poly_order=self._options['fem_poly_order'],
+                                         fem_n_gauss=self._options['fem_n_gauss'],
                                          )
 
     def add_BC(self, name: str, type: str, select: str, selection,
