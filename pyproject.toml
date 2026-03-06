@@ -23,7 +23,6 @@ dependencies = [
     "tqdm",
     "pandas[hdf5]",
     "trimesh[easy]",
-    "manifold3d",
     "meshio",
     "PyYAML"]
 
