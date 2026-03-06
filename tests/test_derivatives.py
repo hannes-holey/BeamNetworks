@@ -14,7 +14,7 @@
 #
 import numpy as np
 
-from beam_networks.fem.stiffness import global_element_stiffness_timoshenko_exact_loop
+from beam_networks.fem.stiffness import global_element_stiffness_timoshenko_exact_single
 
 
 def test_K_derivatives_2d():
@@ -26,18 +26,18 @@ def test_K_derivatives_2d():
     #
     d = np.array([1., 0.])
     # finite difference
-    Ke = global_element_stiffness_timoshenko_exact_loop(
+    Ke = global_element_stiffness_timoshenko_exact_single(
         beam_prop={'name': 'circle', 'radius': R, 'E': E, 'nu': nu},
         d=d,
         derivative=None)
 
     dr = 1e-10
-    dKe_fdiff = ((global_element_stiffness_timoshenko_exact_loop(
+    dKe_fdiff = ((global_element_stiffness_timoshenko_exact_single(
         beam_prop={'name': 'circle', 'radius': R + dr, 'E': E, 'nu': nu},
         d=d,
         derivative=None) - Ke) / dr)
 
-    dKe = global_element_stiffness_timoshenko_exact_loop(
+    dKe = global_element_stiffness_timoshenko_exact_single(
         beam_prop={'name': 'circle', 'radius': R, 'E': E, 'nu': nu},
         d=d,
         derivative=0)
@@ -54,18 +54,18 @@ def test_K_derivatives_3d():
     #
     d = np.array([1., 0., 0.])
     # finite difference
-    Ke = global_element_stiffness_timoshenko_exact_loop(
+    Ke = global_element_stiffness_timoshenko_exact_single(
         beam_prop={'name': 'circle', 'radius': R, 'E': E, 'nu': nu},
         d=d,
         derivative=None)
 
     dr = 1e-11
-    dKe_fdiff = ((global_element_stiffness_timoshenko_exact_loop(
+    dKe_fdiff = ((global_element_stiffness_timoshenko_exact_single(
         beam_prop={'name': 'circle', 'radius': R + dr, 'E': E, 'nu': nu},
         d=d,
         derivative=None) - Ke) / dr)
 
-    dKe = global_element_stiffness_timoshenko_exact_loop(
+    dKe = global_element_stiffness_timoshenko_exact_single(
         beam_prop={'name': 'circle', 'radius': R, 'E': E, 'nu': nu},
         d=d,
         derivative=0)

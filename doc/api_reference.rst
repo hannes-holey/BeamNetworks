@@ -64,21 +64,21 @@ Element stiffness
 
 Per-element stiffness matrices in the global frame.  Four families are
 provided — exact analytical or numerically integrated, for Timoshenko or
-Euler-Bernoulli beam theory — each in a single-element (loop) and a
-vectorised (all-elements-at-once) form.
+Euler-Bernoulli beam theory — each in a single-element (``_single``) and an
+all-elements-at-once (``_all``) form.
 
 .. autosummary::
    :nosignatures:
 
-   beam_networks.fem.stiffness.global_element_stiffness_timoshenko_exact_loop
-   beam_networks.fem.stiffness.global_element_stiffness_timoshenko_exact_vec
-   beam_networks.fem.stiffness.local_element_stiffness_timoshenko_exact_vec
-   beam_networks.fem.stiffness.global_element_stiffness_timoshenko_numeric_loop
-   beam_networks.fem.stiffness.global_element_stiffness_timoshenko_numeric_vec
-   beam_networks.fem.stiffness.global_element_stiffness_euler_exact_loop
-   beam_networks.fem.stiffness.global_element_stiffness_euler_exact_vec
-   beam_networks.fem.stiffness.global_element_stiffness_euler_numeric_loop
-   beam_networks.fem.stiffness.global_element_stiffness_euler_numeric_vec
+   beam_networks.fem.stiffness.global_element_stiffness_timoshenko_exact_single
+   beam_networks.fem.stiffness.global_element_stiffness_timoshenko_exact_all
+   beam_networks.fem.stiffness.local_element_stiffness_timoshenko_exact_all
+   beam_networks.fem.stiffness.global_element_stiffness_timoshenko_numeric_single
+   beam_networks.fem.stiffness.global_element_stiffness_timoshenko_numeric_all
+   beam_networks.fem.stiffness.global_element_stiffness_euler_exact_single
+   beam_networks.fem.stiffness.global_element_stiffness_euler_exact_all
+   beam_networks.fem.stiffness.global_element_stiffness_euler_numeric_single
+   beam_networks.fem.stiffness.global_element_stiffness_euler_numeric_all
 
 .. automodule:: beam_networks.fem.stiffness
    :members:

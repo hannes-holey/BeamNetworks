@@ -13,7 +13,7 @@
 # beam_networks. If not, see <https://www.gnu.org/licenses/>.
 #
 import numpy as np
-from beam_networks.fem.stiffness import local_element_stiffness_timoshenko_exact_vec
+from beam_networks.fem.stiffness import local_element_stiffness_timoshenko_exact_all
 from beam_networks.geometry.geo import get_geometric_props
 
 
@@ -336,7 +336,7 @@ def get_element_mises_stress(coords: np.ndarray, adj: np.ndarray,
     else:
         dof_elem = _get_element_dof_2d(coords, adj, d_vec / d[:, None], sol)
 
-    K_elem = local_element_stiffness_timoshenko_exact_vec(beam_prop, d, ndim)
+    K_elem = local_element_stiffness_timoshenko_exact_all(beam_prop, d, ndim)
 
     rhs = np.einsum('ijk,ik->ij', K_elem[:, :, :], dof_elem)
     svM = vmises_stress(rhs, beam_prop, mode)
@@ -391,7 +391,7 @@ def get_element_principal_stress(coords: np.ndarray, adj: np.ndarray,
     else:
         dof_elem = _get_element_dof_2d(coords, adj, d_vec / d[:, None], sol)
 
-    K_elem = local_element_stiffness_timoshenko_exact_vec(beam_prop, d, ndim)
+    K_elem = local_element_stiffness_timoshenko_exact_all(beam_prop, d, ndim)
 
     rhs = np.einsum('ijk,ik->ij', K_elem[:, :, :], dof_elem)
 
