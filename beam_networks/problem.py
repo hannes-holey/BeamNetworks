@@ -32,12 +32,13 @@ if TYPE_CHECKING:
     import matplotlib
 
 
-class BeamNetwork(Network):
-    """Beam Network structure. Derives from Network.
+class ElasticNetwork(Network):
+    """Elastic network of 1D structural elements. Derives from Network.
 
-    Adding a cross section and elastic properties to the edges of a network
-    makes it a beam network. Solves the elastic problem given appropriate
-    boundary conditions.
+    Adding cross-section and elastic properties to the edges of a network
+    turns it into an elastic network. Supports Timoshenko and Euler-Bernoulli
+    beam elements as well as pin-jointed truss (bar) elements. Solves the
+    linear elastic problem given appropriate boundary conditions.
     """
 
     def __init__(self,
@@ -153,7 +154,7 @@ class BeamNetwork(Network):
         _to_tar(filename, self)
 
     @classmethod
-    def load(cls, filename: str, recompute: bool = True) -> "BeamNetwork":
+    def load(cls, filename: str, recompute: bool = True) -> "ElasticNetwork":
         """Create a class instance from a tar archive.
 
         Parameters
@@ -167,7 +168,7 @@ class BeamNetwork(Network):
 
         Returns
         -------
-        BeamNetwork
+        ElasticNetwork
             A new instance restored from the archive.
         """
 
@@ -206,8 +207,8 @@ class BeamNetwork(Network):
                                         'E': 1., 'nu': 0.3},
                      options: dict = {'vectorize': True, 'matrix': 'bsr', 'verbose': True},
                      outdir: str = '.',
-                     assemble_on_init: bool = True) -> "BeamNetwork":
-        """Create a beam network from an existing :class:`~beam_networks.network.Network` instance.
+                     assemble_on_init: bool = True) -> "ElasticNetwork":
+        """Create an elastic network from an existing :class:`~beam_networks.network.Network` instance.
 
         Parameters
         ----------
@@ -225,7 +226,7 @@ class BeamNetwork(Network):
 
         Returns
         -------
-        BeamNetwork
+        ElasticNetwork
             A new instance sharing the topology of *network*.
         """
 
@@ -249,11 +250,11 @@ class BeamNetwork(Network):
                                               'E': 1., 'nu': 0.3},
                            options: dict = {'vectorize': True, 'matrix': 'bsr', 'verbose': True},
                            outdir: str = '.',
-                           assemble_on_init: bool = True) -> "BeamNetwork":
-        """Create a beam network from a 3D cubic lattice.
+                           assemble_on_init: bool = True) -> "ElasticNetwork":
+        """Create an elastic network from a 3D cubic lattice.
 
         Thin wrapper around :meth:`~beam_networks.network.Network.generate_cubic_lattice`
-        that directly returns a :class:`BeamNetwork` instance.
+        that directly returns a :class:`ElasticNetwork` instance.
 
         Parameters
         ----------
@@ -279,7 +280,7 @@ class BeamNetwork(Network):
 
         Returns
         -------
-        BeamNetwork
+        ElasticNetwork
             A new instance built on the specified cubic lattice.
         """
 
@@ -302,8 +303,8 @@ class BeamNetwork(Network):
                                                'E': 1., 'nu': 0.3},
                             options: dict = {'vectorize': True, 'matrix': 'bsr', 'verbose': True},
                             outdir: str = '.',
-                            assemble_on_init: bool = True) -> "BeamNetwork":
-        """Create a beam network from a 2D square lattice.
+                            assemble_on_init: bool = True) -> "ElasticNetwork":
+        """Create an elastic network from a 2D square lattice.
 
         Parameters
         ----------
@@ -326,7 +327,7 @@ class BeamNetwork(Network):
 
         Returns
         -------
-        BeamNetwork
+        ElasticNetwork
             A new instance built on the specified square lattice.
         """
 
@@ -348,8 +349,8 @@ class BeamNetwork(Network):
                                                'E': 1., 'nu': 0.3},
                             options: dict = {'vectorize': True, 'matrix': 'bsr', 'verbose': True},
                             outdir: str = '.',
-                            assemble_on_init: bool = True) -> "BeamNetwork":
-        """Create a beam network from a 2D bowtie lattice.
+                            assemble_on_init: bool = True) -> "ElasticNetwork":
+        """Create an elastic network from a 2D bowtie lattice.
 
         Parameters
         ----------
@@ -372,7 +373,7 @@ class BeamNetwork(Network):
 
         Returns
         -------
-        BeamNetwork
+        ElasticNetwork
             A new instance built on the bowtie lattice.
         """
 
@@ -519,7 +520,7 @@ class BeamNetwork(Network):
         """
 
         if self._verbose:
-            print(f"Assemble beam network with {self.num_nodes} nodes and {self.num_edges} edges")
+            print(f"Assemble elastic network with {self.num_nodes} nodes and {self.num_edges} edges")
 
         n_elems = self._compute_edge_discretization()
 
@@ -962,7 +963,7 @@ class BeamNetwork(Network):
                         dof_per_node=self.dof_per_node)
 
     def to_stl(self, file: str, clean: bool = False, tol: float = 1e-6) -> None:
-        """Write the beam network geometry to an STL file.
+        """Write the elastic network geometry to an STL file.
 
         Each beam is tessellated as a cylindrical or rectangular solid
         (depending on the cross-section type in ``beam_prop``).

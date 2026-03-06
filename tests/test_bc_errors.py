@@ -15,7 +15,7 @@
 
 import pytest
 import numpy as np
-from beam_networks.problem import BeamNetwork
+from beam_networks.problem import ElasticNetwork
 
 
 # ---------------------------------------------------------------------------
@@ -30,7 +30,7 @@ def _three_node_line():
     """Minimal 2D line: nodes 0–1–2, two edges."""
     nodes = np.array([[0., 0.], [1., 0.], [2., 0.]])
     edges = np.array([[0, 1], [1, 2]])
-    return BeamNetwork(nodes, edges, beam_prop=_PROPS, valid=True, options=_OPTS)
+    return ElasticNetwork(nodes, edges, beam_prop=_PROPS, valid=True, options=_OPTS)
 
 
 def _valid_problem():

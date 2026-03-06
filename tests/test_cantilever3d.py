@@ -17,7 +17,7 @@ import pytest
 import numpy as np
 from scipy.spatial.transform import Rotation
 
-from beam_networks.problem import BeamNetwork
+from beam_networks.problem import ElasticNetwork
 from beam_networks.geometry.geo import get_geometric_props
 from beam_networks.reference_solutions.cantilever import cantilever_analytic
 
@@ -80,11 +80,10 @@ def test_cantilever_rot(phi_deg_z, phi_deg_y, a, num_nodes, assembly, vectorized
     dist_n = np.sqrt(np.sum(nodes_positions[node]**2)) / length
 
     # System setup
-    problem = BeamNetwork(nodes_positions,
-                          edges_indices,
-                          beam_prop=props,
-                          valid=True,
-                          options={'matrix': assembly, 'vectorize': vectorized, 'verbose': False})
+    problem = ElasticNetwork(
+        nodes_positions, edges_indices,
+        beam_prop=props, valid=True,
+        options={'matrix': assembly, 'vectorize': vectorized, 'verbose': False})
 
     # Add BCs
     problem.add_BC('0', 'D', 'node', [0], [0., 0., 0., 0., 0., 0.])

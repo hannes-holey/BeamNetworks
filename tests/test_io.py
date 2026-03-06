@@ -17,7 +17,7 @@ import pytest
 import numpy as np
 from scipy.sparse import issparse
 
-from beam_networks.problem import BeamNetwork
+from beam_networks.problem import ElasticNetwork
 
 
 @pytest.mark.parametrize('a0', ['bsr', 'dense'])
@@ -33,17 +33,15 @@ def test_K_io(tmp_path, a0):
     nodes = np.loadtxt(os.path.join(test_path, 'triangular.nodes'))
     edges = np.loadtxt(os.path.join(test_path, 'triangular.edges')).astype(int)
 
-    p1 = BeamNetwork(nodes,
-                     edges,
-                     beam_prop=props,
-                     valid=False,
-                     outdir='data',
-                     options={'matrix': a0, 'vectorize': True, 'verbose': True})
+    p1 = ElasticNetwork(
+        nodes, edges,
+        beam_prop=props, valid=False, outdir='data',
+        options={'matrix': a0, 'vectorize': True, 'verbose': True})
 
     tarfile = os.path.join(tmp_path, 'p1.tar.gz')
 
     p1.save(tarfile)
-    p2 = BeamNetwork.load(tarfile, recompute=False)
+    p2 = ElasticNetwork.load(tarfile, recompute=False)
 
     # check that stiffness matrix is the same
     if issparse(p1._K):

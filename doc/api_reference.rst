@@ -13,14 +13,14 @@ top level of the package and are the primary entry points for users:
    coordination number) and lattice-generation factory methods for common 2D
    and 3D lattice types.
 
-:class:`~beam_networks.problem.BeamNetwork`
+:class:`~beam_networks.problem.ElasticNetwork`
    Extends :class:`~beam_networks.network.Network` with the full FEM problem
    setup: cross-section and material parameters, Dirichlet and Neumann boundary
    conditions, stiffness assembly, linear solve, stress recovery, and VTK/STL
    file output.
 
 :class:`~beam_networks.fracture.FractureProblem`
-   Extends :class:`~beam_networks.problem.BeamNetwork` with progressive element
+   Extends :class:`~beam_networks.problem.ElasticNetwork` with progressive element
    removal to simulate fracture.
 
 .. autosummary::
@@ -29,7 +29,7 @@ top level of the package and are the primary entry points for users:
    :template: class.rst
 
    beam_networks.network.Network
-   beam_networks.problem.BeamNetwork
+   beam_networks.problem.ElasticNetwork
    beam_networks.fracture.FractureProblem
 
 

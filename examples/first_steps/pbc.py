@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from argparse import ArgumentParser
 
-from beam_networks.problem import BeamNetwork
+from beam_networks.problem import ElasticNetwork
 from beam_networks.postprocess.viz import _plot_network, _array_to_colors
 from beam_networks.geometry.selection import get_edges_from_disks
 
@@ -25,7 +25,7 @@ def get_problem(pbcx, pbcy):
     resources = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'resources')
     nodes, edges, Lx, Ly = get_edges_from_disks(os.path.join(resources, 'hard_disks.txt'))
 
-    problem = BeamNetwork(nodes,
+    problem = ElasticNetwork(nodes,
                           edges,
                           valid=False,
                           periodic=[pbcx, pbcy],

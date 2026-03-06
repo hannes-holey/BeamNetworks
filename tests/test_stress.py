@@ -15,7 +15,7 @@
 
 import pytest
 import numpy as np
-from beam_networks.problem import BeamNetwork
+from beam_networks.problem import ElasticNetwork
 
 
 # ---------------------------------------------------------------------------
@@ -31,7 +31,7 @@ def _make_2d_cantilever(n=11, length=10.0):
     x = np.linspace(0., length, n)
     nodes = np.column_stack([x, np.zeros(n)])
     edges = np.column_stack([np.arange(n - 1), np.arange(1, n)])
-    p = BeamNetwork(nodes, edges, beam_prop=_PROPS_CIRCLE, valid=True, options=_OPTS)
+    p = ElasticNetwork(nodes, edges, beam_prop=_PROPS_CIRCLE, valid=True, options=_OPTS)
     p.add_BC('0', 'D', 'node', [0], [0., 0., 0.])
     p.add_BC('1', 'N', 'node', [n - 1], [0., 1e-3, 0.])
     return p
@@ -42,7 +42,7 @@ def _make_3d_cantilever(n=11, length=10.0):
     x = np.linspace(0., length, n)
     nodes = np.column_stack([x, np.zeros(n), np.zeros(n)])
     edges = np.column_stack([np.arange(n - 1), np.arange(1, n)])
-    p = BeamNetwork(nodes, edges, beam_prop=_PROPS_CIRCLE, valid=True, options=_OPTS)
+    p = ElasticNetwork(nodes, edges, beam_prop=_PROPS_CIRCLE, valid=True, options=_OPTS)
     p.add_BC('0', 'D', 'node', [0], [0., 0., 0., 0., 0., 0.])
     p.add_BC('1', 'N', 'node', [n - 1], [0., 1e-3, 0., 0., 0., 0.])
     return p

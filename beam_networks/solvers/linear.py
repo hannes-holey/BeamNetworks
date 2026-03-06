@@ -43,7 +43,7 @@ def solve(K, bc_D: list, d_D: list, bc_N: list, F_N: list,
         Only active for sparse matrices. The default is None.
     verbosity : int, optional
         Diagnostic output level (sparse solver only); see
-        :meth:`~beam_networks.problem.BeamNetwork.solve` for details.
+        :meth:`~beam_networks.problem.ElasticNetwork.solve` for details.
         The default is 0.
 
     Returns

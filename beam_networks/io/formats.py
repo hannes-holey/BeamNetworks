@@ -27,13 +27,13 @@ from beam_networks.postprocess.stress import get_element_mises_stress
 
 
 def _to_tar(filename, problem):
-    """Create gzipped tar archive from an instance of the BeamNetwork class.
+    """Create gzipped tar archive from an instance of the ElasticNetwork class.
 
     Parameters
     ----------
     filename : str
         Name of the archive to write into
-    problem : BeamNetwork
+    problem : ElasticNetwork
         Class instance
     """
 

@@ -18,7 +18,7 @@ import numpy as np
 from beam_networks.fem.stiffness import (
     global_element_stiffness_truss_exact_single,
     global_element_stiffness_truss_exact_all)
-from beam_networks.problem import BeamNetwork
+from beam_networks.problem import ElasticNetwork
 
 
 BEAM_PROP = {'name': 'circle', 'radius': 0.1, 'E': 1e6, 'nu': 0.3, 'truss': True}
@@ -76,15 +76,15 @@ class TestTrussStiffness:
 
 
 class TestTrussDofPerNode:
-    """Tests for DOF count in BeamNetwork with truss flag."""
+    """Tests for DOF count in ElasticNetwork with truss flag."""
 
     def _make_simple_truss(self):
         nodes = np.array([[0., 0.], [1., 0.]])
         edges = np.array([[0, 1]])
-        return BeamNetwork(nodes, edges, beam_prop=BEAM_PROP,
-                           options={'vectorize': True, 'matrix': 'bsr',
-                                    'verbose': False},
-                           outdir='/tmp')
+        return ElasticNetwork(
+            nodes, edges, beam_prop=BEAM_PROP,
+            options={'vectorize': True, 'matrix': 'bsr', 'verbose': False},
+            outdir='/tmp')
 
     def test_dof_per_node_2d(self):
         bn = self._make_simple_truss()
@@ -94,10 +94,10 @@ class TestTrussDofPerNode:
         nodes = np.array([[0., 0., 0.], [1., 0., 0.]])
         edges = np.array([[0, 1]])
         beam_prop = dict(BEAM_PROP)
-        bn = BeamNetwork(nodes, edges, beam_prop=beam_prop,
-                         options={'vectorize': True, 'matrix': 'bsr',
-                                  'verbose': False},
-                         outdir='/tmp')
+        bn = ElasticNetwork(
+            nodes, edges, beam_prop=beam_prop,
+            options={'vectorize': True, 'matrix': 'bsr', 'verbose': False},
+            outdir='/tmp')
         assert bn.dof_per_node == 3
 
     def test_stiffness_size_2d(self):
@@ -133,10 +133,10 @@ class TestTrussAnalytical:
         edges = np.array([[0, 1]])
         beam_prop = {'name': 'circle', 'radius': 0.05, 'E': 1e6,
                      'nu': 0.3, 'truss': True}
-        bn = BeamNetwork(nodes, edges, beam_prop=beam_prop,
-                         options={'vectorize': True, 'matrix': 'bsr',
-                                  'verbose': False},
-                         outdir='/tmp')
+        bn = ElasticNetwork(
+            nodes, edges, beam_prop=beam_prop,
+            options={'vectorize': True, 'matrix': 'bsr', 'verbose': False},
+            outdir='/tmp')
         # Fix node 0 fully; fix transverse of node 1; apply axial force
         bn.add_BC('fix', 'D', 'node', [0], [0., 0.])
         bn.add_BC('fix_t', 'D', 'node', [1], [None, 0.])
@@ -158,10 +158,10 @@ class TestTrussAnalytical:
         edges = np.array([[0, 1]])
         beam_prop = {'name': 'circle', 'radius': 0.05, 'E': 1e6,
                      'nu': 0.3, 'truss': True}
-        bn = BeamNetwork(nodes, edges, beam_prop=beam_prop,
-                         options={'vectorize': True, 'matrix': 'bsr',
-                                  'verbose': False},
-                         outdir='/tmp')
+        bn = ElasticNetwork(
+            nodes, edges, beam_prop=beam_prop,
+            options={'vectorize': True, 'matrix': 'bsr', 'verbose': False},
+            outdir='/tmp')
         bn.add_BC('fix', 'D', 'node', [0], [0., 0.])
         bn.add_BC('fix_t', 'D', 'node', [1], [None, 0.])
         bn.add_BC('load', 'N', 'node', [1], [F, None])
@@ -180,10 +180,10 @@ class TestTrussAnalytical:
         edges = np.array([[0, 1], [1, 2]])
         beam_prop = {'name': 'circle', 'radius': 0.05, 'E': 1e6,
                      'nu': 0.3, 'truss': True}
-        bn = BeamNetwork(nodes, edges, beam_prop=beam_prop,
-                         options={'vectorize': True, 'matrix': 'bsr',
-                                  'verbose': False},
-                         outdir='/tmp')
+        bn = ElasticNetwork(
+            nodes, edges, beam_prop=beam_prop,
+            options={'vectorize': True, 'matrix': 'bsr', 'verbose': False},
+            outdir='/tmp')
         bn.add_BC('fix', 'D', 'node', [0], [0., 0.])
         bn.add_BC('fix_t1', 'D', 'node', [1], [None, 0.])
         bn.add_BC('fix_t2', 'D', 'node', [2], [None, 0.])
@@ -204,10 +204,10 @@ class TestTrussAnalytical:
         edges = np.array([[0, 1]])
         beam_prop = {'name': 'circle', 'radius': 0.05, 'E': 1e6,
                      'nu': 0.3, 'truss': True}
-        bn = BeamNetwork(nodes, edges, beam_prop=beam_prop,
-                         options={'vectorize': True, 'matrix': 'bsr',
-                                  'verbose': False},
-                         outdir='/tmp')
+        bn = ElasticNetwork(
+            nodes, edges, beam_prop=beam_prop,
+            options={'vectorize': True, 'matrix': 'bsr', 'verbose': False},
+            outdir='/tmp')
         # Fix node 0 fully; fix transverse DOFs at node 1; apply axial (z) force
         bn.add_BC('fix', 'D', 'node', [0], [0., 0., 0.])
         bn.add_BC('fix_t', 'D', 'node', [1], [0., 0., None])
@@ -229,10 +229,10 @@ class TestTrussBCVector:
         """2D truss BC vector should have length 2, not 3."""
         nodes = np.array([[0., 0.], [1., 0.]])
         edges = np.array([[0, 1]])
-        bn = BeamNetwork(nodes, edges, beam_prop=BEAM_PROP,
-                         options={'vectorize': True, 'matrix': 'bsr',
-                                  'verbose': False},
-                         outdir='/tmp')
+        bn = ElasticNetwork(
+            nodes, edges, beam_prop=BEAM_PROP,
+            options={'vectorize': True, 'matrix': 'bsr', 'verbose': False},
+            outdir='/tmp')
         # vector of length 2 (no rotation DOF)
         bn.add_BC('fix', 'D', 'node', [0], [0., 0.])
         bn.add_BC('fix_t', 'D', 'node', [1], [None, 0.])
@@ -245,10 +245,10 @@ class TestTrussBCVector:
         beam_prop = {'name': 'circle', 'radius': 0.1, 'E': 1e6, 'nu': 0.3}
         nodes = np.array([[0., 0.], [1., 0.]])
         edges = np.array([[0, 1]])
-        bn = BeamNetwork(nodes, edges, beam_prop=beam_prop,
-                         options={'vectorize': True, 'matrix': 'bsr',
-                                  'verbose': False},
-                         outdir='/tmp')
+        bn = ElasticNetwork(
+            nodes, edges, beam_prop=beam_prop,
+            options={'vectorize': True, 'matrix': 'bsr', 'verbose': False},
+            outdir='/tmp')
         bn.add_BC('fix', 'D', 'node', [0], [0., 0., 0.])
         bn.add_BC('load', 'N', 'node', [1], [1., 0., None])
         bn.solve()

@@ -13,7 +13,7 @@ Minimal example
 .. code:: python
 
    import numpy as np
-   from beam_networks.problem import BeamNetwork
+   from beam_networks.problem import ElasticNetwork
 
    # Generate nodes and edges
    nodes = np.array([[0., 0., 0.],
@@ -28,7 +28,7 @@ Minimal example
    beam = {'name': 'circle', 'radius': 0.1, 'E': 2.1e11, 'nu': 0.3}
 
    # Setup problem
-   problem = BeamNetwork(nodes, edges, beam_prop=beam)
+   problem = ElasticNetwork(nodes, edges, beam_prop=beam)
 
    # Add boundary conditions
    problem.add_BC('0', 'D', 'node', [0, ], [0., 0., 0., 0., 0., 0.])
@@ -48,7 +48,7 @@ Minimal example
    ax.scatter(*problem.displaced_nodes[:, :2].T)
    plt.show()
 
-More examples can be found in the `examples <https://github.com/hannes-holey/BeamNetworks/tree/main/examples>`__ directory.
+More examples can be found in the `examples <https://github.com/hannes-holey/ElasticNetworks/tree/main/examples>`__ directory.
 
 Tests
 -----

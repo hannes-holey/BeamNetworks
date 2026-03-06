@@ -1,4 +1,4 @@
-BeamNetworks
+ElasticNetworks
 ============
 
 A Python package for the elastic deformation of Timoshenko beam networks in 2D
@@ -12,7 +12,7 @@ structures, and fibre composites.
 
    self
    api_reference
-   Github repository <https://github.com/hannes-holey/BeamNetworks>
+   Github repository <https://github.com/hannes-holey/ElasticNetworks>
 
 .. include:: readme.rst
 

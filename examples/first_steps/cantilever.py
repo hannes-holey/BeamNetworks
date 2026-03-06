@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.spatial.transform import Rotation
 from argparse import ArgumentParser
 
-from beam_networks.problem import BeamNetwork
+from beam_networks.problem import ElasticNetwork
 from beam_networks.geometry.geo import get_geometric_props
 from beam_networks.postprocess.viz import plot_solution_1D
 from beam_networks.reference_solutions.cantilever import cantilever_analytic
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     dist_n = np.sqrt(np.sum(nodes_positions[node]**2)) / length
 
     # System setup
-    problem = BeamNetwork(nodes_positions,
+    problem = ElasticNetwork(nodes_positions,
                           edges_indices,
                           beam_prop=props,
                           # boxsize=(length, length),

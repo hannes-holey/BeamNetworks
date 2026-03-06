@@ -17,7 +17,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from beam_networks.problem import BeamNetwork
+from beam_networks.problem import ElasticNetwork
 from beam_networks.geometry.geo import get_geometric_props
 from beam_networks.reference_solutions.cantilever import cantilever_analytic
 
@@ -29,7 +29,7 @@ def _cantilever_2d(num_nodes, length, options):
     x = np.linspace(0., length, num_nodes)
     nodes = np.column_stack([x, np.zeros(num_nodes)])
     edges = np.column_stack([np.arange(num_nodes - 1), np.arange(1, num_nodes)])
-    return BeamNetwork(nodes, edges, beam_prop=PROPS, valid=True, options=options)
+    return ElasticNetwork(nodes, edges, beam_prop=PROPS, valid=True, options=options)
 
 
 def _disp_fem(length, num_nodes, density, fem_poly_order, fem_n_gauss):

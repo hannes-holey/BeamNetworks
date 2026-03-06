@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 
-from beam_networks.problem import BeamNetwork
+from beam_networks.problem import ElasticNetwork
 
 
 def get_parser():
@@ -25,7 +25,7 @@ if __name__ == "__main__":
 
     lt = 'fcc'
 
-    problem = BeamNetwork.from_square_lattice(a=0.25,
+    problem = ElasticNetwork.from_square_lattice(a=0.25,
                                               bbox=(20., 5.),
                                               lattice_type=lt,
                                               beam_prop=props,

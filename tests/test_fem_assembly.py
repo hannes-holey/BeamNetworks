@@ -16,7 +16,7 @@
 import numpy as np
 import pytest
 
-from beam_networks.problem import BeamNetwork
+from beam_networks.problem import ElasticNetwork
 from beam_networks.geometry.geo import get_geometric_props
 from beam_networks.fem.stiffness import (
     _local_element_stiffness_timoshenko_numeric_2d_single,
@@ -36,7 +36,7 @@ def _cantilever_2d(num_nodes, length, options):
     x = np.linspace(0., length, num_nodes)
     nodes = np.column_stack([x, np.zeros(num_nodes)])
     edges = np.column_stack([np.arange(num_nodes - 1), np.arange(1, num_nodes)])
-    return BeamNetwork(nodes, edges, beam_prop=PROPS, valid=True, options=options)
+    return ElasticNetwork(nodes, edges, beam_prop=PROPS, valid=True, options=options)
 
 
 def _tip_disp_fem(length, density, poly_order=1, n_gauss=None):
@@ -50,7 +50,7 @@ def _tip_disp_fem(length, density, poly_order=1, n_gauss=None):
             'n_elem_per_length': density,
             'fem_poly_order': poly_order,
             'fem_n_gauss': n_gauss}
-    net = BeamNetwork(nodes, edges, beam_prop=PROPS, valid=True, options=opts)
+    net = ElasticNetwork(nodes, edges, beam_prop=PROPS, valid=True, options=opts)
     net.add_BC('fix', 'D', 'node', [0], [0., 0., 0.])
     net.add_BC('load', 'N', 'node', [1], [0., P, 0.])
     net.solve()
@@ -220,7 +220,7 @@ def test_min_element_length():
     edges = np.array([[0, 1], [1, 2]])
     opts = {'vectorize': False, 'matrix': 'dense', 'verbose': False,
             'n_elem_per_length': density, 'min_element_length': min_len}
-    net = BeamNetwork(nodes, edges, beam_prop=PROPS, valid=True, options=opts)
+    net = ElasticNetwork(nodes, edges, beam_prop=PROPS, valid=True, options=opts)
 
     n_elems = net._compute_edge_discretization()
     assert n_elems is not None

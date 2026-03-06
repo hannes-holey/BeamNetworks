@@ -3,7 +3,7 @@ import os
 import numpy as np
 from argparse import ArgumentParser
 
-from beam_networks.problem import BeamNetwork
+from beam_networks.problem import ElasticNetwork
 
 
 def get_parser():
@@ -34,7 +34,7 @@ if __name__ == "__main__":
         nodes_positions = np.loadtxt(os.path.join(resources, f'{name}.nodes'))
         edges_indices = np.loadtxt(os.path.join(resources, f'{name}.edges')).astype(int)
 
-        actuator = BeamNetwork(nodes_positions,
+        actuator = ElasticNetwork(nodes_positions,
                                edges_indices,
                                beam_prop=props,
                                outdir=args.outdir,
@@ -44,9 +44,9 @@ if __name__ == "__main__":
 
     elif args.dim == 3:
         props = {'name': 'circle', 'radius': R, 'E': E, 'nu': nu}
-        lattice = BeamNetwork.generate_cubic_lattice(a=1., bbox=(3., 3., 3.), lattice_type='fcc')
+        lattice = ElasticNetwork.generate_cubic_lattice(a=1., bbox=(3., 3., 3.), lattice_type='fcc')
 
-        actuator = BeamNetwork(lattice.nodes,
+        actuator = ElasticNetwork(lattice.nodes,
                                lattice.edges,
                                beam_prop=props,
                                outdir=args.outdir,

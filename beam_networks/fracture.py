@@ -16,11 +16,11 @@ import os
 import numpy as np
 import pandas as pd
 
-from .problem import BeamNetwork
+from .problem import ElasticNetwork
 from beam_networks.fem.assembly import assemble_global_system
 
 
-class FractureProblem(BeamNetwork):
+class FractureProblem(ElasticNetwork):
 
     def __init__(self, *args, save_trajectory=False, no_output=False, **kwargs):
         super().__init__(*args, **kwargs)

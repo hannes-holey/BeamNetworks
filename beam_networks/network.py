@@ -542,7 +542,7 @@ class Network:
             If True, print node indices next to each node. The default is False.
         cax : matplotlib.axes.Axes or None, optional
             Axes for the colourbar (unused here; retained for API consistency
-            with :meth:`~beam_networks.problem.BeamNetwork.plot`).
+            with :meth:`~beam_networks.problem.ElasticNetwork.plot`).
             The default is None.
         aspect : float, optional
             Aspect ratio of the axes. The default is 1.

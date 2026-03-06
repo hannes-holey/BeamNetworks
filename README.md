@@ -1,6 +1,6 @@
-# BeamNetworks
+# ElasticNetworks
 
-[![Tests](https://github.com/hannes-holey/BeamNetworks/actions/workflows/test.yaml/badge.svg)](https://github.com/hannes-holey/BeamNetworks/actions/workflows/test.yaml)
+[![Tests](https://github.com/hannes-holey/ElasticNetworks/actions/workflows/test.yaml/badge.svg)](https://github.com/hannes-holey/ElasticNetworks/actions/workflows/test.yaml)
 [![Coverage](maintenance/coverage.svg)](maintenance/coverage.svg)
 
 Solver for the elastic deformation of Timoshenko beam networks.
@@ -14,7 +14,7 @@ pip install .[tests]
 ## Minimal example
 ```python
 import numpy as np
-from beam_networks.problem import BeamNetwork
+from beam_networks.problem import ElasticNetwork
 
 # Generate nodes and edges
 nodes = np.array([[0., 0., 0.],
@@ -29,7 +29,7 @@ edges = np.array([[0, 1],
 beam = {'name': 'circle', 'radius': 0.1, 'E': 2.1e11, 'nu': 0.3}
 
 # Setup problem
-problem = BeamNetwork(nodes, edges, beam_prop=beam)
+problem = ElasticNetwork(nodes, edges, beam_prop=beam)
 
 # Add boundary conditions
 problem.add_BC('0', 'D', 'node', [0, ], [0., 0., 0., 0., 0., 0.])

@@ -17,7 +17,7 @@ import pytest
 import numpy as np
 from scipy.sparse import issparse
 
-from beam_networks.problem import BeamNetwork
+from beam_networks.problem import ElasticNetwork
 from beam_networks.geometry.selection import get_edges_from_disks
 
 
@@ -38,19 +38,15 @@ def test_K_assembly(a0, a1, v):
     nodes = np.loadtxt(os.path.join(test_path, 'triangular.nodes'))
     edges = np.loadtxt(os.path.join(test_path, 'triangular.edges')).astype(int)
 
-    p1 = BeamNetwork(nodes,
-                     edges,
-                     beam_prop=props,
-                     valid=False,
-                     outdir='data',
-                     options={'matrix': a0, 'vectorize': v, 'verbose': True})
+    p1 = ElasticNetwork(
+        nodes, edges,
+        beam_prop=props, valid=False, outdir='data',
+        options={'matrix': a0, 'vectorize': v, 'verbose': True})
 
-    p2 = BeamNetwork(nodes,
-                     edges,
-                     beam_prop=props,
-                     valid=False,
-                     outdir='data',
-                     options={'matrix': a1, 'vectorize': v, 'verbose': True})
+    p2 = ElasticNetwork(
+        nodes, edges,
+        beam_prop=props, valid=False, outdir='data',
+        options={'matrix': a1, 'vectorize': v, 'verbose': True})
 
     if issparse(p1._K):
         K1 = p1._K.todense()
@@ -86,23 +82,17 @@ def test_K_assembly_pbc(system, a0, a1, v):
 
     nodes, edges, Lx, Ly = system
 
-    p1 = BeamNetwork(nodes,
-                     edges,
-                     beam_prop=props,
-                     valid=False,
-                     outdir='data',
-                     periodic=[True, True],
-                     boxsize=(Lx, Ly),
-                     options={'matrix': a0, 'vectorize': v, 'verbose': True})
+    p1 = ElasticNetwork(
+        nodes, edges,
+        beam_prop=props, valid=False, outdir='data',
+        periodic=[True, True], boxsize=(Lx, Ly),
+        options={'matrix': a0, 'vectorize': v, 'verbose': True})
 
-    p2 = BeamNetwork(nodes,
-                     edges,
-                     beam_prop=props,
-                     valid=False,
-                     outdir='data',
-                     periodic=[True, True],
-                     boxsize=(Lx, Ly),
-                     options={'matrix': a1, 'vectorize': v, 'verbose': True})
+    p2 = ElasticNetwork(
+        nodes, edges,
+        beam_prop=props, valid=False, outdir='data',
+        periodic=[True, True], boxsize=(Lx, Ly),
+        options={'matrix': a1, 'vectorize': v, 'verbose': True})
 
     if issparse(p1._K):
         K1 = p1._K.todense()

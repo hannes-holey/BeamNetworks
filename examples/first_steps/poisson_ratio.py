@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from argparse import ArgumentParser
 
-from beam_networks.problem import BeamNetwork
+from beam_networks.problem import ElasticNetwork
 from beam_networks.geometry.selection import box_selection
 
 
@@ -83,7 +83,7 @@ if __name__ == "__main__":
 
     props = {'name': 'circle', 'radius': R, 'E': E, 'nu': nu}
 
-    actuator = BeamNetwork(nodes_positions,
+    actuator = ElasticNetwork(nodes_positions,
                            edges_indices,
                            beam_prop=props,
                            valid=True)
