@@ -1,5 +1,5 @@
 #
-# Copyright 2025 Hannes Holey
+# Copyright 2025-2026 Hannes Holey
 #
 # This file is part of beam_networks. beam_networks is free software: you can
 # redistribute it and/or modify it under the terms of the GNU General Public
@@ -12,12 +12,15 @@
 # You should have received a copy of the GNU General Public License along with
 # beam_networks. If not, see <https://www.gnu.org/licenses/>.
 #
-from DiscoverVersion import get_version
+from importlib.metadata import version, PackageNotFoundError
 
 from .network import Network
 from .problem import ElasticNetwork
 from .fracture import FractureProblem
 
-__version__ = get_version("beam_networks", __file__)
+try:
+    __version__ = version("beam_networks")
+except PackageNotFoundError:
+    __version__ = "unknown"
 
 __all__ = ["Network", "ElasticNetwork", "FractureProblem"]

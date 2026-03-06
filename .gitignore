@@ -1,6 +1,8 @@
 __pycache__/
-_build/
-.coverage
+.claude/
 .pytest_cache/
+build/
 data/
+*.egg-info/
+.coverage
 examples/bench/*.txt

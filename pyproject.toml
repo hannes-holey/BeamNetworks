@@ -1,6 +1,6 @@
 [build-system]
-requires = ["flit_core>=3.2", "DiscoverVersion"]
-build-backend = "flit_core.buildapi"
+requires = ["setuptools>=64", "setuptools_scm>=8"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "beam_networks"
@@ -14,11 +14,9 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: GNU GPLv3"
 ]
-
 requires-python = ">=3.10"
 dynamic = ["version"]
 dependencies = [
-    "DiscoverVersion",
     "numpy",
     "matplotlib",
     "scipy",
@@ -30,14 +28,22 @@ dependencies = [
 
 [project.optional-dependencies]
 tests = [
-    'pytest', 
+    'pytest',
     'pytest-cov']
 doc = [
-    'sphinx', 
+    'sphinx',
     'sphinx_book_theme']
 
 [project.scripts]
 vtk2img = "beam_networks.viz:vtk2img"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["beam_networks*"]
+
+[tool.setuptools_scm]
+version_scheme = "guess-next-dev"
+local_scheme = "dirty-tag"
 
 [tool.pytest.ini_options]
 addopts = "-v"
