@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from argparse import ArgumentParser
 
-from beam_networks.problem import ElasticNetwork
+from beam_networks import ElasticNetwork
 from beam_networks.geometry.selection import _reflect
 from beam_networks.postprocess.viz import _plot_network
 
@@ -32,10 +32,11 @@ if __name__ == "__main__":
 
     props = {'name': 'circle', 'radius': R, 'E': E, 'nu': nu}
 
-    actuator = ElasticNetwork(nodes,
-                           edges,
-                           beam_prop=props,
-                           valid=False)
+    actuator = ElasticNetwork(
+        nodes,
+        edges,
+        beam_prop=props,
+        valid=False)
 
     actuator.add_BC('0',                        # just a name
                     'D',                        # 'D': Dirichlet, 'N': Neumann

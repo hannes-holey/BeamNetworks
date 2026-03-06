@@ -4,7 +4,7 @@ from datetime import datetime
 from argparse import ArgumentParser
 import matplotlib.pyplot as plt
 
-from beam_networks.fracture import FractureProblem
+from beam_networks import FractureProblem
 
 
 def get_parser():

@@ -16,7 +16,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from argparse import ArgumentParser
 
-from beam_networks.problem import ElasticNetwork
+from beam_networks import ElasticNetwork
 from beam_networks.geometry.geo import get_geometric_props
 from beam_networks.reference_solutions.cantilever import cantilever_analytic
 
@@ -40,15 +40,16 @@ def _solve_cantilever(length, euler_bernoulli=False):
     nodes = np.column_stack([x, np.zeros(NUM_NODES)])
     edges = np.column_stack([np.arange(NUM_NODES - 1), np.arange(1, NUM_NODES)])
 
-    problem = ElasticNetwork(nodes,
-                          edges,
-                          beam_prop=PROPS,
-                          valid=True,
-                          options={'verbose': False,
-                                   'vectorize': True,
-                                   'matrix': 'bsr',
-                                   'euler_bernoulli': euler_bernoulli}
-                          )
+    problem = ElasticNetwork(
+        nodes,
+        edges,
+        beam_prop=PROPS,
+        valid=True,
+        options={'verbose': False,
+                 'vectorize': True,
+                 'matrix': 'bsr',
+                 'euler_bernoulli': euler_bernoulli}
+    )
 
     problem.add_BC('fixed', 'D', 'node', [0], [0., 0., 0.])
     problem.add_BC('tip',   'N', 'node', [NUM_NODES - 1], [0., P, 0.])

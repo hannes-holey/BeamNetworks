@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.spatial.transform import Rotation
 from argparse import ArgumentParser
 
-from beam_networks.problem import ElasticNetwork
+from beam_networks import ElasticNetwork
 from beam_networks.geometry.geo import get_geometric_props
 from beam_networks.postprocess.viz import plot_solution_1D
 from beam_networks.reference_solutions.cantilever import cantilever_analytic
@@ -77,9 +77,9 @@ if __name__ == "__main__":
 
     # System setup
     problem = ElasticNetwork(nodes_positions,
-                          edges_indices,
-                          beam_prop=props,
-                          valid=True)
+                             edges_indices,
+                             beam_prop=props,
+                             valid=True)
 
     # Add BCs
     problem.add_BC('0', 'D', 'node', [0], [0., 0., 0., 0., 0., 0.])

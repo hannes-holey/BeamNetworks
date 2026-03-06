@@ -1,7 +1,7 @@
 import numpy as np
 import time
-from beam_networks.network import Network
-from beam_networks.problem import ElasticNetwork
+from beam_networks import Network
+from beam_networks import ElasticNetwork
 
 
 PROPS = {'name': 'circle', 'radius': 0.05, 'E': 2.1e11, 'nu': 0.3}
@@ -10,11 +10,12 @@ PROPS = {'name': 'circle', 'radius': 0.05, 'E': 2.1e11, 'nu': 0.3}
 def run(s, matrix, vectorize):
     lattice = Network.generate_cubic_lattice(a=1., bbox=(s, s, s), lattice_type='bcc')
     tic = time.time()
-    problem = ElasticNetwork(lattice._nodes, lattice._edges,
-                          beam_prop=PROPS, valid=True,
-                          options={'vectorize': bool(vectorize),
-                                   'matrix': matrix,
-                                   'verbose': True})
+    problem = ElasticNetwork(
+        lattice._nodes, lattice._edges,
+        beam_prop=PROPS, valid=True,
+        options={'vectorize': bool(vectorize),
+                 'matrix': matrix,
+                 'verbose': True})
     return problem.num_dof, time.time() - tic
 
 

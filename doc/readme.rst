@@ -13,7 +13,7 @@ Minimal example
 .. code:: python
 
    import numpy as np
-   from beam_networks.problem import ElasticNetwork
+   from beam_networks import ElasticNetwork
 
    # Generate nodes and edges
    nodes = np.array([[0., 0., 0.],

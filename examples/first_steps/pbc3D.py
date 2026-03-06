@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from argparse import ArgumentParser
 
-from beam_networks.problem import ElasticNetwork
+from beam_networks import ElasticNetwork
 from beam_networks.postprocess.viz import _plot_network, _array_to_colors
 from beam_networks.geometry.selection import get_edges_from_disks
 
@@ -27,14 +27,15 @@ def get_problem(pbcx, pbcy):
 
     nodes = np.hstack([nodes, np.zeros(nodes.shape[0])[:, None]])
 
-    problem = ElasticNetwork(nodes,
-                          edges,
-                          valid=False,
-                          periodic=[pbcx, pbcy, False],
-                          boxsize=(Lx, Ly, 1.),
-                          options={'vectorize': True, 'matrix': 'bsr', 'verbose': True},
-                          outdir=args.outdir
-                          )
+    problem = ElasticNetwork(
+        nodes,
+        edges,
+        valid=False,
+        periodic=[pbcx, pbcy, False],
+        boxsize=(Lx, Ly, 1.),
+        options={'vectorize': True, 'matrix': 'bsr', 'verbose': True},
+        outdir=args.outdir
+    )
 
     if pbcx and pbcy:
         problem.add_BC('0', 'D', 'point', [Lx / 2., Ly / 2., 0.], [0., .5, 0., 0., 0., 0.])

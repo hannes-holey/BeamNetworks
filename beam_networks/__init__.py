@@ -14,4 +14,10 @@
 #
 from DiscoverVersion import get_version
 
+from .network import Network
+from .problem import ElasticNetwork
+from .fracture import FractureProblem
+
 __version__ = get_version("beam_networks", __file__)
+
+__all__ = ["Network", "ElasticNetwork", "FractureProblem"]

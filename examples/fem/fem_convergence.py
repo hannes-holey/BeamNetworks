@@ -17,7 +17,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from beam_networks.problem import ElasticNetwork
+from beam_networks import ElasticNetwork
 from beam_networks.geometry.geo import get_geometric_props
 from beam_networks.reference_solutions.cantilever import cantilever_analytic
 

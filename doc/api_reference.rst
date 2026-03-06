@@ -4,8 +4,10 @@ API Reference
 Main classes
 ------------
 
-Three classes form the public API of **beam_networks**.  They live at the
-top level of the package and are the primary entry points for users:
+Three classes form the public API of **beam_networks**.  All three are
+importable directly from the top-level package::
+
+   from beam_networks import Network, ElasticNetwork, FractureProblem
 
 :class:`~beam_networks.network.Network`
    Manages the network topology — nodes, edges, and periodic boundary

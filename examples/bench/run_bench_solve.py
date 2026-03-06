@@ -1,8 +1,8 @@
 import numpy as np
 import time
 
-from beam_networks.network import Network
-from beam_networks.problem import ElasticNetwork
+from beam_networks import Network
+from beam_networks import ElasticNetwork
 
 
 def run(s, v, N=1):
@@ -19,11 +19,12 @@ def run(s, v, N=1):
     c = 0
     lattice = Network.generate_cubic_lattice(a=1., bbox=(s, s, s), lattice_type=lt)
 
-    problem = ElasticNetwork(lattice._nodes,
-                          lattice._edges,
-                          beam_prop=props,
-                          valid=True,
-                          options={'vectorize': True, 'matrix': 'bsr', 'verbose': False})
+    problem = ElasticNetwork(
+        lattice._nodes,
+        lattice._edges,
+        beam_prop=props,
+        valid=True,
+        options={'vectorize': True, 'matrix': 'bsr', 'verbose': False})
 
     problem.add_BC('0', 'D', 'box',
                    [None, 0.01, None, None, None, None],

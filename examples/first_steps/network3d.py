@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 
-from beam_networks.problem import ElasticNetwork
+from beam_networks import ElasticNetwork
 
 
 def get_parser():
@@ -25,12 +25,13 @@ if __name__ == "__main__":
 
     lt = 'bcc'
 
-    problem = ElasticNetwork.from_cubic_lattice(a=1.,
-                                             pbc=None,
-                                             bbox=(20., 5., 5.),
-                                             lattice_type=lt,
-                                             beam_prop=props,
-                                             outdir=args.outdir)
+    problem = ElasticNetwork.from_cubic_lattice(
+        a=1.,
+        pbc=None,
+        bbox=(20., 5., 5.),
+        lattice_type=lt,
+        beam_prop=props,
+        outdir=args.outdir)
 
     problem.add_BC('0', 'D', 'box',
                    [None, 0.01, None, None, None, None],
