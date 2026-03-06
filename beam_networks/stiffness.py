@@ -48,7 +48,7 @@ def _beam_stiffness_2d(beam_prop, L, derivative=None):
 
     Iy, Iz, _, A, kappa, _ = get_geometric_props(beam_prop)
 
-    PhiY = 12 * E * Iz / (kappa * G * A * L**2)
+    PhiY = 0. if beam_prop.get('euler_bernoulli', False) else 12 * E * Iz / (kappa * G * A * L**2)
 
     if derivative is None:
 
@@ -61,7 +61,8 @@ def _beam_stiffness_2d(beam_prop, L, derivative=None):
         dIy, dIz, _, dA, _, _ = get_geometric_props_derivative(beam_prop,
                                                                derivative)
 
-        dPhiY = ((12 * E * dIz) * (kappa * G * A * L**2) -
+        dPhiY = 0. if beam_prop.get('euler_bernoulli', False) else \
+                ((12 * E * dIz) * (kappa * G * A * L**2) -
                  (12 * E * Iz) * (kappa * G * dA * L**2)) / \
                 (kappa * G * A * L**2)**2
         gamma = E * dA / L
@@ -118,8 +119,9 @@ def _beam_stiffness_3d(beam_prop, L, derivative=None):
 
     Iy, Iz, J, A, kappa, _ = get_geometric_props(beam_prop)
 
-    PhiY = 12 * E * Iz / (kappa * G * A * L**2)
-    PhiZ = 12 * E * Iy / (kappa * G * A * L**2)
+    eb = beam_prop.get('euler_bernoulli', False)
+    PhiY = 0. if eb else 12 * E * Iz / (kappa * G * A * L**2)
+    PhiZ = 0. if eb else 12 * E * Iy / (kappa * G * A * L**2)
 
     if derivative is None:
         gamma = E * A / L
@@ -136,10 +138,12 @@ def _beam_stiffness_3d(beam_prop, L, derivative=None):
         dIy, dIz, dJ, dA, _, _ = get_geometric_props_derivative(beam_prop,
                                                                 derivative)
 
-        dPhiY = ((12 * E * dIz) * (kappa * G * A * L**2) -
+        dPhiY = 0. if eb else \
+                ((12 * E * dIz) * (kappa * G * A * L**2) -
                  (12 * E * Iz) * (kappa * G * dA * L**2)) / \
                 (kappa * G * A * L**2)**2
-        dPhiZ = ((12 * E * dIy) * (kappa * G * A * L**2) -
+        dPhiZ = 0. if eb else \
+                ((12 * E * dIy) * (kappa * G * A * L**2) -
                  (12 * E * Iy) * (kappa * G * dA * L**2)) / \
                 (kappa * G * A * L**2)**2
         #
@@ -223,7 +227,7 @@ def _fem_element_stiffness_2d(beam_prop, l, n_nodes, n_gauss):
 
     EA = E * A
     EI = E * Iz
-    kGA = kappa * G * A
+    kGA = 0. if beam_prop.get('euler_bernoulli', False) else kappa * G * A
 
     n_dof = 3 * n_nodes
     K = np.zeros((n_dof, n_dof))
@@ -285,7 +289,7 @@ def _fem_element_stiffness_3d(beam_prop, l, n_nodes, n_gauss):
     EA = E * A
     EIy = E * Iy
     EIz = E * Iz
-    kGA = kappa * G * A
+    kGA = 0. if beam_prop.get('euler_bernoulli', False) else kappa * G * A
     GJ = G * J
 
     n_dof = 6 * n_nodes

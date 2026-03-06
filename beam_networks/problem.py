@@ -99,6 +99,7 @@ class BeamNetwork(Network):
         self._options['min_element_length'] = options.get('min_element_length', None)
         self._options['fem_poly_order'] = options.get('fem_poly_order', 1)
         self._options['fem_n_gauss'] = options.get('fem_n_gauss', None)
+        self._options['euler_bernoulli'] = bool(options.get('euler_bernoulli', False))
 
         if not os.path.exists(outdir):
             os.makedirs(outdir)
@@ -495,10 +496,25 @@ class BeamNetwork(Network):
 
         n_elems = self._compute_edge_discretization()
 
+        beam_prop = dict(self._beam_prop)
+        beam_prop['euler_bernoulli'] = self._options['euler_bernoulli']
+
+        # The FEM path (Lagrange elements) cannot represent EB beams: setting
+        # kGA=0 decouples the transverse DOFs from all other terms, making the
+        # element stiffness singular.  The exact Timoshenko stiffness already
+        # recovers the EB solution exactly when Phi=0, so we force that path.
+        if self._options['euler_bernoulli'] and n_elems is not None:
+            warnings.warn(
+                "euler_bernoulli=True is incompatible with FEM sub-element "
+                "discretization (Lagrange elements become singular when kGA=0). "
+                "Falling back to the exact stiffness assembly.",
+                UserWarning, stacklevel=2)
+            n_elems = None
+
         self._K = assemble_global_system(self._nodes,
                                          self._edges,
                                          self._edge_vectors,
-                                         self._beam_prop,
+                                         beam_prop,
                                          vectorize=self._options['vectorize'],
                                          matrix=self._options['matrix'],
                                          verbose=self._verbose,

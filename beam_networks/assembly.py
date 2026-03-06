@@ -23,12 +23,16 @@ from beam_networks.stiffness import (get_element_stiffness_global,
                                      get_fem_element_stiffness_global)
 
 
-def assemble_global_system(nodes_positions: np.ndarray, edges_indices: np.ndarray,
-                           dr: np.ndarray, beam_prop: dict,
-                           sorted_edges: bool = True, vectorize: bool = True,
-                           matrix: str = 'bsr', verbose: bool = False,
+def assemble_global_system(nodes_positions: np.ndarray,
+                           edges_indices: np.ndarray,
+                           dr: np.ndarray,
+                           beam_prop: dict,
+                           sorted_edges: bool = True,
+                           vectorize: bool = True,
+                           matrix: str = 'bsr',
+                           verbose: bool = False,
                            n_elems: np.ndarray | None = None,
-                           fem_poly_order: int = 1,
+                           fem_poly_order: int = 3,
                            fem_n_gauss: int | None = None):
     """Assemble the global stiffness matrix for a Timoshenko beam network.
 
@@ -64,7 +68,7 @@ def assemble_global_system(nodes_positions: np.ndarray, edges_indices: np.ndarra
         when ``n_elems`` is provided (FEM path is always non-vectorized).
     fem_poly_order : int, optional
         Polynomial degree of the Lagrange shape functions used in each
-        FEM sub-element (default 1 = linear).  Ignored when ``n_elems``
+        FEM sub-element (default 3 = cubic).  Ignored when ``n_elems``
         is None.
     fem_n_gauss : int or None, optional
         Number of Gauss-Legendre quadrature points per sub-element.
@@ -88,16 +92,31 @@ def assemble_global_system(nodes_positions: np.ndarray, edges_indices: np.ndarra
         if vectorize:
             warnings.warn("vectorize=True is ignored when n_elems is provided (FEM path is non-vectorized).")
         if matrix == 'bsr':
-            K_global = _assemble_sparse_bsr_fem(nodes_positions, edges_indices, dr, beam_prop, n_elems,
-                                                fem_poly_order=fem_poly_order, fem_n_gauss=fem_n_gauss,
+            K_global = _assemble_sparse_bsr_fem(nodes_positions,
+                                                edges_indices,
+                                                dr,
+                                                beam_prop,
+                                                n_elems,
+                                                fem_poly_order=fem_poly_order,
+                                                fem_n_gauss=fem_n_gauss,
                                                 verbose=verbose)
         elif matrix == 'lil':
-            K_global = _assemble_sparse_lil_fem(nodes_positions, edges_indices, dr, beam_prop, n_elems,
-                                                fem_poly_order=fem_poly_order, fem_n_gauss=fem_n_gauss,
+            K_global = _assemble_sparse_lil_fem(nodes_positions,
+                                                edges_indices,
+                                                dr,
+                                                beam_prop,
+                                                n_elems,
+                                                fem_poly_order=fem_poly_order,
+                                                fem_n_gauss=fem_n_gauss,
                                                 verbose=verbose)
         elif matrix == 'dense':
-            K_global = _assemble_dense_fem(nodes_positions, edges_indices, dr, beam_prop, n_elems,
-                                           fem_poly_order=fem_poly_order, fem_n_gauss=fem_n_gauss,
+            K_global = _assemble_dense_fem(nodes_positions,
+                                           edges_indices,
+                                           dr,
+                                           beam_prop,
+                                           n_elems,
+                                           fem_poly_order=fem_poly_order,
+                                           fem_n_gauss=fem_n_gauss,
                                            verbose=verbose)
         else:
             raise ValueError
