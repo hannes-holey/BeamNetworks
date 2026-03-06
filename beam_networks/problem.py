@@ -13,8 +13,10 @@
 # beam_networks. If not, see <https://www.gnu.org/licenses/>.
 #
 import os
-import numpy as np
 import warnings
+from typing import TYPE_CHECKING
+
+import numpy as np
 
 from beam_networks.network import Network
 from beam_networks.solve import solve
@@ -24,6 +26,9 @@ from beam_networks.bc import _get_bc_dof, _assemble_BCs
 from beam_networks.utils import check_input_dict, _remove_isolated_nodes_edges, _mic
 from beam_networks.viz import _plot_network
 from beam_networks.io import _to_vtk, _to_vtk_periodic, _to_stl, _from_tar, _to_tar
+
+if TYPE_CHECKING:
+    import matplotlib
 
 
 class BeamNetwork(Network):

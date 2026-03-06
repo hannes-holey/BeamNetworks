@@ -333,4 +333,3 @@ def _get_connections(coords, d):
             connections.append([e0, e1])
 
     return np.array(connections)
-

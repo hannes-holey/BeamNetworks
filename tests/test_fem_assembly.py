@@ -62,18 +62,18 @@ def _tip_disp_fem(length, density, poly_order=1, n_gauss=None):
 
 def test_fem_element_stiffness_2d_structure():
     """Linear Timoshenko element (p=1, n_gauss=1) has the expected entries."""
-    l = 5.
+    le = 5.
     E, nu = PROPS['E'], PROPS['nu']
     G = E / (2 * (1 + nu))
     _, Iz, _, A, kappa, _ = get_geometric_props(PROPS)
 
-    ea = E * A / l
-    kg = kappa * G * A / l
+    ea = E * A / le
+    kg = kappa * G * A / le
     kg_h = kappa * G * A / 2.
-    kg_l = kappa * G * A * l / 4.
-    ei = E * Iz / l
+    kg_l = kappa * G * A * le / 4.
+    ei = E * Iz / le
 
-    K = _fem_element_stiffness_2d(PROPS, l, n_nodes=2, n_gauss=1)
+    K = _fem_element_stiffness_2d(PROPS, le, n_nodes=2, n_gauss=1)
 
     # Symmetry
     np.testing.assert_allclose(K, K.T, atol=1e-14)
@@ -100,15 +100,15 @@ def test_fem_element_stiffness_2d_structure():
 
 def test_fem_element_stiffness_3d_structure():
     """3D element (p=1, n_gauss=1) is symmetric with the expected coupling signs."""
-    l = 5.
+    le = 5.
     E, nu = PROPS['E'], PROPS['nu']
     G = E / (2 * (1 + nu))
     Iy, Iz, J, A, kappa, _ = get_geometric_props(PROPS)
 
     kg_h = kappa * G * A / 2.
-    gj = G * J / l
+    gj = G * J / le
 
-    K = _fem_element_stiffness_3d(PROPS, l, n_nodes=2, n_gauss=1)
+    K = _fem_element_stiffness_3d(PROPS, le, n_nodes=2, n_gauss=1)
 
     np.testing.assert_allclose(K, K.T, atol=1e-14)
 
@@ -134,8 +134,8 @@ def test_fem_element_stiffness_3d_structure():
 ])
 def test_fem_element_stiffness_symmetry_2d(poly_order, n_gauss):
     """2D element stiffness is symmetric for any poly_order and n_gauss."""
-    l = 3.7
-    K = _fem_element_stiffness_2d(PROPS, l, n_nodes=poly_order + 1, n_gauss=n_gauss)
+    le = 3.7
+    K = _fem_element_stiffness_2d(PROPS, le, n_nodes=poly_order + 1, n_gauss=n_gauss)
     np.testing.assert_allclose(K, K.T, atol=1e-13,
                                err_msg=f"Not symmetric: p={poly_order}, ng={n_gauss}")
 
@@ -147,8 +147,8 @@ def test_fem_element_stiffness_symmetry_2d(poly_order, n_gauss):
 ])
 def test_fem_element_stiffness_symmetry_3d(poly_order, n_gauss):
     """3D element stiffness is symmetric for any poly_order and n_gauss."""
-    l = 3.7
-    K = _fem_element_stiffness_3d(PROPS, l, n_nodes=poly_order + 1, n_gauss=n_gauss)
+    le = 3.7
+    K = _fem_element_stiffness_3d(PROPS, le, n_nodes=poly_order + 1, n_gauss=n_gauss)
     np.testing.assert_allclose(K, K.T, atol=1e-13,
                                err_msg=f"Not symmetric: p={poly_order}, ng={n_gauss}")
 

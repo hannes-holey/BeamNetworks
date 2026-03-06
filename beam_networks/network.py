@@ -19,7 +19,13 @@ from scipy.spatial import ConvexHull
 
 from beam_networks.utils import _remove_isolated_nodes_edges, _mic
 from beam_networks.lattice import generate_cubic_lattice, generate_square_lattice, generate_bowtie_lattice
+from typing import TYPE_CHECKING
+
 from beam_networks.viz import _plot_network
+
+if TYPE_CHECKING:
+    import matplotlib
+
 
 class Network:
     """Base class for network structure.
@@ -69,7 +75,6 @@ class Network:
         r0 = nodes_positions[e0]
         r1 = nodes_positions[e1]
         dr = np.sqrt((r1 - r0)**2)
-
 
         if valid:
             self._nodes = nodes_positions
@@ -466,7 +471,6 @@ class Network:
                                                                                bbox=bbox,
                                                                                lattice_type=lattice_type)
 
-
         return cls(lattice_coords, connections, valid=valid, periodic=pbc, boxsize=bbox)
 
     @classmethod
@@ -560,11 +564,9 @@ class Network:
         ax = _plot_network(ax, self.nodes, self.edges, self.edge_vectors, color='0.7',
                            node_ids=node_ids, lw=lw)
 
-
         ax.set_xlabel(r'$x$')
         ax.set_ylabel(r'$y$')
 
         ax.set_aspect(aspect)
 
         return ax
-

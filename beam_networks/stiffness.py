@@ -61,10 +61,10 @@ def _beam_stiffness_2d(beam_prop, L, derivative=None):
         dIy, dIz, _, dA, _, _ = get_geometric_props_derivative(beam_prop,
                                                                derivative)
 
-        dPhiY = 0. if beam_prop.get('euler_bernoulli', False) else \
-                ((12 * E * dIz) * (kappa * G * A * L**2) -
-                 (12 * E * Iz) * (kappa * G * dA * L**2)) / \
-                (kappa * G * A * L**2)**2
+        dPhiY = (0. if beam_prop.get('euler_bernoulli', False) else
+                 ((12 * E * dIz) * (kappa * G * A * L**2) -
+                  (12 * E * Iz) * (kappa * G * dA * L**2)) /
+                 (kappa * G * A * L**2)**2)
         gamma = E * dA / L
         zeta = ((12. * E * dIz) * (L**3 * (1. + PhiY)) -
                 (12. * E * Iz) * (L**3 * dPhiY)) / \
@@ -138,14 +138,14 @@ def _beam_stiffness_3d(beam_prop, L, derivative=None):
         dIy, dIz, dJ, dA, _, _ = get_geometric_props_derivative(beam_prop,
                                                                 derivative)
 
-        dPhiY = 0. if eb else \
-                ((12 * E * dIz) * (kappa * G * A * L**2) -
-                 (12 * E * Iz) * (kappa * G * dA * L**2)) / \
-                (kappa * G * A * L**2)**2
-        dPhiZ = 0. if eb else \
-                ((12 * E * dIy) * (kappa * G * A * L**2) -
-                 (12 * E * Iy) * (kappa * G * dA * L**2)) / \
-                (kappa * G * A * L**2)**2
+        dPhiY = (0. if eb else
+                 ((12 * E * dIz) * (kappa * G * A * L**2) -
+                  (12 * E * Iz) * (kappa * G * dA * L**2)) /
+                 (kappa * G * A * L**2)**2)
+        dPhiZ = (0. if eb else
+                 ((12 * E * dIy) * (kappa * G * A * L**2) -
+                  (12 * E * Iy) * (kappa * G * dA * L**2)) /
+                 (kappa * G * A * L**2)**2)
         #
         gamma = E * dA / L
         alpha = G * dJ / L
@@ -196,7 +196,7 @@ def _beam_stiffness_3d(beam_prop, L, derivative=None):
     return data, rows, cols
 
 
-def _fem_element_stiffness_2d(beam_prop, l, n_nodes, n_gauss):
+def _fem_element_stiffness_2d(beam_prop, le, n_nodes, n_gauss):
     """2D Timoshenko beam element stiffness via Gauss quadrature.
 
     Builds K = ∫₀ˡ (EA Bε^T Bε + EIz Bκ^T Bκ + κGA Bγ^T Bγ) dx using
@@ -233,11 +233,11 @@ def _fem_element_stiffness_2d(beam_prop, l, n_nodes, n_gauss):
     K = np.zeros((n_dof, n_dof))
 
     xi_g, w_g = _gauss_legendre(n_gauss)
-    jac = l / 2.
+    jac = le / 2.
 
     for xi, w in zip(xi_g, w_g):
         N, dN_dxi = _lagrange_basis(n_nodes, xi)
-        dN_dx = dN_dxi / jac        # chain rule: dN/dx = dN/dξ * dξ/dx = dN/dξ * 2/l
+        dN_dx = dN_dxi / jac        # chain rule: dN/dx = dN/dξ * dξ/dx = dN/dξ * 2/le
 
         Be = np.zeros(n_dof)        # axial:   ε  = du/dx
         Bk = np.zeros(n_dof)        # bending: κ  = dθ/dx
@@ -255,7 +255,7 @@ def _fem_element_stiffness_2d(beam_prop, l, n_nodes, n_gauss):
     return K
 
 
-def _fem_element_stiffness_3d(beam_prop, l, n_nodes, n_gauss):
+def _fem_element_stiffness_3d(beam_prop, le, n_nodes, n_gauss):
     """3D Timoshenko beam element stiffness via Gauss quadrature.
 
     Builds K = ∫₀ˡ (EA Bε^T Bε + EIy Bκy^T Bκy + EIz Bκz^T Bκz
@@ -296,7 +296,7 @@ def _fem_element_stiffness_3d(beam_prop, l, n_nodes, n_gauss):
     K = np.zeros((n_dof, n_dof))
 
     xi_g, w_g = _gauss_legendre(n_gauss)
-    jac = l / 2.
+    jac = le / 2.
 
     for xi, w in zip(xi_g, w_g):
         N, dN_dxi = _lagrange_basis(n_nodes, xi)
@@ -377,7 +377,7 @@ def _fem_condensed_stiffness_local(beam_prop: dict, L: float,
 
     dof = 3 * (ndim - 1)           # DOF per node
     n_nodes_per_elem = poly_order + 1
-    l = L / n_elem                  # sub-element length
+    le = L / n_elem                 # sub-element length
 
     # Total global nodes along the chain: each element contributes poly_order
     # new nodes, plus the single shared starting node.
@@ -388,9 +388,9 @@ def _fem_condensed_stiffness_local(beam_prop: dict, L: float,
 
     for i in range(n_elem):
         if ndim == 2:
-            Ke = _fem_element_stiffness_2d(beam_prop, l, n_nodes_per_elem, n_gauss)
+            Ke = _fem_element_stiffness_2d(beam_prop, le, n_nodes_per_elem, n_gauss)
         else:
-            Ke = _fem_element_stiffness_3d(beam_prop, l, n_nodes_per_elem, n_gauss)
+            Ke = _fem_element_stiffness_3d(beam_prop, le, n_nodes_per_elem, n_gauss)
 
         start = i * poly_order * dof
         end = start + n_nodes_per_elem * dof

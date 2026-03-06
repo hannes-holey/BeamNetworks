@@ -14,7 +14,6 @@
 
 import warnings
 import numpy as np
-import pytest
 from beam_networks.utils import box_selection, point_selection, check_input_dict
 
 

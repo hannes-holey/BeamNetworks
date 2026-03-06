@@ -12,7 +12,6 @@
 # You should have received a copy of the GNU General Public License along with
 # beam_networks. If not, see <https://www.gnu.org/licenses/>.
 #
-import pytest
 import numpy as np
 from beam_networks.network import Network
 
@@ -63,4 +62,3 @@ def test_fcc_2d():
     assert lattice.num_nodes == 5
     assert lattice.num_edges == 4
     assert np.all(np.amax(lattice.nodes, axis=0) <= bbox)
-
