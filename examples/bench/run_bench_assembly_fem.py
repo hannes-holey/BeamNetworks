@@ -1,12 +1,13 @@
 """Benchmark FEM assembly time vs. network size.
 
 For each combination of poly_order and n_elem_per_length the script assembles
-a BCC lattice of increasing size (BSR format, no vectorization) and records
-the wall time.  Results are written to::
+a BCC lattice of increasing size (BSR format) in both loop and vectorized mode
+and records the wall time.  Results are written to::
 
-    time_fem-p{poly_order}-n{n_elem_per_length}.txt
+    time_fem-p{poly_order}-n{n_elem_per_length}.txt      (loop)
+    time_fem_vec-p{poly_order}-n{n_elem_per_length}.txt  (vectorized)
 
-with two columns: [num_edges, time_s].
+with two columns: [num_dof, time_s].
 
 Run with::
 
@@ -33,12 +34,12 @@ POLY_ORDERS = [1, 2, 3]
 SIZES = 2 * np.logspace(0, 2, 20)[:8]
 
 
-def run(s, poly_order, n_elem_per_length):
+def run(s, poly_order, n_elem_per_length, vectorize=False):
     lattice = Network.generate_cubic_lattice(a=1., bbox=(s, s, s), lattice_type='bcc')
     tic = time.time()
     problem = BeamNetwork(lattice._nodes, lattice._edges,
                           beam_prop=PROPS, valid=True,
-                          options={'vectorize': False,
+                          options={'vectorize': vectorize,
                                    'matrix': 'bsr',
                                    'verbose': True,
                                    'n_elem_per_length': n_elem_per_length,
@@ -52,10 +53,11 @@ if __name__ == "__main__":
 
     for poly_order in POLY_ORDERS:
         for n_elem in N_ELEM_PER_LENGTH:
-            buffer = []
-            for s in SIZES:
-                n, t = run(s, poly_order, n_elem)
-                buffer.append([n, t])
-            fname = f'time_fem-p{poly_order}-n{n_elem}.txt'
-            np.savetxt(fname, np.array(buffer))
-            print(f'Saved {fname}')
+            for vec, suffix in [(False, 'fem'), (True, 'fem_vec')]:
+                buffer = []
+                for s in SIZES:
+                    n, t = run(s, poly_order, n_elem, vectorize=vec)
+                    buffer.append([n, t])
+                fname = f'time_{suffix}-p{poly_order}-n{n_elem}.txt'
+                np.savetxt(fname, np.array(buffer))
+                print(f'Saved {fname}')

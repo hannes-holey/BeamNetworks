@@ -461,6 +461,252 @@ def get_fem_element_stiffness_global(beam_prop: dict, d: np.ndarray,
     return T.T @ K_cond_local @ T
 
 
+def _fem_element_stiffness_2d_vec(beam_prop: dict, le: np.ndarray,
+                                   n_nodes: int, n_gauss: int) -> np.ndarray:
+    """Vectorised 2D Timoshenko element stiffness for an array of element lengths.
+
+    Parameters
+    ----------
+    beam_prop : dict
+        Beam properties.
+    le : np.ndarray, shape (n,)
+        Element lengths.
+    n_nodes : int
+        Nodes per element (= poly_order + 1).
+    n_gauss : int
+        Number of Gauss-Legendre integration points.
+
+    Returns
+    -------
+    np.ndarray, shape (n, 3*n_nodes, 3*n_nodes)
+    """
+    E = beam_prop['E']
+    nu = beam_prop['nu']
+    G = E / (2. * (1. + nu))
+    _, Iz, _, A, kappa, _ = get_geometric_props(beam_prop)
+
+    EA = E * A
+    EI = E * Iz
+    kGA = 0. if beam_prop.get('euler_bernoulli', False) else kappa * G * A
+
+    le = np.asarray(le)
+    n = len(le)
+    n_dof = 3 * n_nodes
+    K = np.zeros((n, n_dof, n_dof))
+
+    xi_g, w_g = _gauss_legendre(n_gauss)
+    jac = le / 2.                           # (n,)
+
+    for xi, w in zip(xi_g, w_g):
+        N, dN_dxi = _lagrange_basis(n_nodes, xi)
+        dN_dx = dN_dxi[None, :] / jac[:, None]   # (n, n_nodes)
+
+        Be = np.zeros((n, n_dof))
+        Bk = np.zeros((n, n_dof))
+        Bs = np.zeros((n, n_dof))
+
+        for idx in range(n_nodes):
+            Be[:, 3 * idx]     = dN_dx[:, idx]
+            Bk[:, 3 * idx + 2] = dN_dx[:, idx]
+            Bs[:, 3 * idx + 1] = dN_dx[:, idx]
+            Bs[:, 3 * idx + 2] = -N[idx]
+
+        fac = w * jac                        # (n,)
+        K += fac[:, None, None] * (
+            EA  * np.einsum('ni,nj->nij', Be, Be) +
+            EI  * np.einsum('ni,nj->nij', Bk, Bk) +
+            kGA * np.einsum('ni,nj->nij', Bs, Bs)
+        )
+
+    return K
+
+
+def _fem_element_stiffness_3d_vec(beam_prop: dict, le: np.ndarray,
+                                   n_nodes: int, n_gauss: int) -> np.ndarray:
+    """Vectorised 3D Timoshenko element stiffness for an array of element lengths.
+
+    Parameters
+    ----------
+    beam_prop : dict
+        Beam properties.
+    le : np.ndarray, shape (n,)
+        Element lengths.
+    n_nodes : int
+        Nodes per element (= poly_order + 1).
+    n_gauss : int
+        Number of Gauss-Legendre integration points.
+
+    Returns
+    -------
+    np.ndarray, shape (n, 6*n_nodes, 6*n_nodes)
+    """
+    E = beam_prop['E']
+    nu = beam_prop['nu']
+    G = E / (2. * (1. + nu))
+    Iy, Iz, J, A, kappa, _ = get_geometric_props(beam_prop)
+
+    EA = E * A
+    EIy = E * Iy
+    EIz = E * Iz
+    kGA = 0. if beam_prop.get('euler_bernoulli', False) else kappa * G * A
+    GJ = G * J
+
+    le = np.asarray(le)
+    n = len(le)
+    n_dof = 6 * n_nodes
+    K = np.zeros((n, n_dof, n_dof))
+
+    xi_g, w_g = _gauss_legendre(n_gauss)
+    jac = le / 2.                           # (n,)
+
+    for xi, w in zip(xi_g, w_g):
+        N, dN_dxi = _lagrange_basis(n_nodes, xi)
+        dN_dx = dN_dxi[None, :] / jac[:, None]   # (n, n_nodes)
+
+        Be  = np.zeros((n, n_dof))
+        Bt  = np.zeros((n, n_dof))
+        Bky = np.zeros((n, n_dof))
+        Bkz = np.zeros((n, n_dof))
+        Bsy = np.zeros((n, n_dof))
+        Bsz = np.zeros((n, n_dof))
+
+        for idx in range(n_nodes):
+            Be [:, 6 * idx]     = dN_dx[:, idx]
+            Bt [:, 6 * idx + 3] = dN_dx[:, idx]
+            Bky[:, 6 * idx + 4] = dN_dx[:, idx]
+            Bkz[:, 6 * idx + 5] = dN_dx[:, idx]
+            Bsy[:, 6 * idx + 1] = dN_dx[:, idx]
+            Bsy[:, 6 * idx + 5] = -N[idx]
+            Bsz[:, 6 * idx + 2] = dN_dx[:, idx]
+            Bsz[:, 6 * idx + 4] = N[idx]
+
+        fac = w * jac                        # (n,)
+        K += fac[:, None, None] * (
+            EA  * np.einsum('ni,nj->nij', Be,  Be) +
+            GJ  * np.einsum('ni,nj->nij', Bt,  Bt) +
+            EIy * np.einsum('ni,nj->nij', Bky, Bky) +
+            EIz * np.einsum('ni,nj->nij', Bkz, Bkz) +
+            kGA * np.einsum('ni,nj->nij', Bsy, Bsy) +
+            kGA * np.einsum('ni,nj->nij', Bsz, Bsz)
+        )
+
+    return K
+
+
+def _fem_condensed_stiffness_local_vec(beam_prop: dict, L: np.ndarray,
+                                       n_elem: int, ndim: int,
+                                       poly_order: int = 1,
+                                       n_gauss: int | None = None) -> np.ndarray:
+    """Vectorised static condensation for a batch of beams with the same n_elem.
+
+    All beams in the batch share the same sub-element count *n_elem* and
+    polynomial order, but may have different lengths.
+
+    Parameters
+    ----------
+    beam_prop : dict
+        Beam cross-section and elastic properties.
+    L : np.ndarray, shape (n,)
+        Beam lengths.
+    n_elem : int
+        Number of sub-elements (same for every beam in the batch).
+    ndim : int
+        Spatial dimension (2 or 3).
+    poly_order : int, optional
+        Lagrange polynomial degree (default 1).
+    n_gauss : int or None, optional
+        Gauss points per sub-element (default None → poly_order).
+
+    Returns
+    -------
+    np.ndarray, shape (n, 2*dof, 2*dof)
+        Condensed local stiffness matrices.
+    """
+    if n_gauss is None:
+        n_gauss = poly_order
+
+    dof = 3 * (ndim - 1)
+    n_nodes_per_elem = poly_order + 1
+    L = np.asarray(L)
+    n = len(L)
+    le = L / n_elem                         # (n,) sub-element lengths
+
+    n_total_nodes = n_elem * poly_order + 1
+    n_total = n_total_nodes * dof
+
+    K_loc = np.zeros((n, n_total, n_total))
+
+    # All sub-elements of a beam have the same length le[i], so one vectorised
+    # call gives the stiffness for every (beam, sub-element) pair.
+    if ndim == 2:
+        Ke = _fem_element_stiffness_2d_vec(beam_prop, le, n_nodes_per_elem, n_gauss)
+    else:
+        Ke = _fem_element_stiffness_3d_vec(beam_prop, le, n_nodes_per_elem, n_gauss)
+    # Ke: (n, elem_dof, elem_dof)
+
+    elem_dof = n_nodes_per_elem * dof
+    for i in range(n_elem):
+        start = i * poly_order * dof
+        end = start + elem_dof
+        K_loc[:, start:end, start:end] += Ke
+
+    b_dof = list(range(dof)) + list(range(n_total - dof, n_total))
+    i_dof = list(range(dof, n_total - dof))
+
+    if len(i_dof) == 0:
+        return K_loc
+
+    K_bb = K_loc[:, b_dof, :][:, :, b_dof]   # (n, 2*dof, 2*dof)
+    K_bi = K_loc[:, b_dof, :][:, :, i_dof]   # (n, 2*dof, n_int)
+    K_ib = K_loc[:, i_dof, :][:, :, b_dof]   # (n, n_int, 2*dof)
+    K_ii = K_loc[:, i_dof, :][:, :, i_dof]   # (n, n_int, n_int)
+
+    return K_bb - K_bi @ np.linalg.solve(K_ii, K_ib)
+
+
+def get_fem_element_stiffness_global_vec(beam_prop: dict, d_vec: np.ndarray,
+                                         n_elems: np.ndarray,
+                                         poly_order: int = 1,
+                                         n_gauss: int | None = None) -> np.ndarray:
+    """FEM element stiffness matrices for all beams in the global frame.
+
+    Vectorised counterpart of :func:`get_fem_element_stiffness_global`.
+    Beams are grouped by their sub-element count so that each group is
+    processed with a single batched call.
+
+    Parameters
+    ----------
+    beam_prop : dict
+        Beam cross-section and elastic properties.
+    d_vec : np.ndarray, shape (num_edges, dim)
+        Edge vectors (tail → head).
+    n_elems : np.ndarray, shape (num_edges,)
+        Per-edge sub-element counts.
+    poly_order : int, optional
+        Lagrange polynomial degree (default 1).
+    n_gauss : int or None, optional
+        Gauss points per sub-element (default None → poly_order).
+
+    Returns
+    -------
+    np.ndarray, shape (num_edges, num_elem_dof, num_elem_dof)
+        Global-frame element stiffness matrices.
+    """
+    n_edges, ndim = d_vec.shape
+    num_dof_e = 2 * 3 * (ndim - 1)
+    L = np.linalg.norm(d_vec, axis=-1)
+
+    K_cond = np.zeros((n_edges, num_dof_e, num_dof_e))
+    for n_elem in np.unique(n_elems):
+        mask = n_elems == n_elem
+        K_cond[mask] = _fem_condensed_stiffness_local_vec(
+            beam_prop, L[mask], int(n_elem), ndim,
+            poly_order=poly_order, n_gauss=n_gauss)
+
+    T = _get_transformation_matrix_vec(d_vec)
+    return np.einsum('nki,nij,njl->nkl', T, K_cond, T)
+
+
 def get_element_stiffness_global(beam_prop: dict, d: np.ndarray,
                                  derivative: int | None = None) -> np.ndarray:
     """Element stiffness matrix for a single beam in the global frame.

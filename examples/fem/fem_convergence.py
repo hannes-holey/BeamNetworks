@@ -37,7 +37,7 @@ def _disp_fem(length, num_nodes, density, fem_poly_order, fem_n_gauss):
     _, Iz, _, A, kappa, _ = get_geometric_props(PROPS)
     P = 0.05 * PROPS['E'] * Iz / length**3
 
-    opts = {'vectorize': False,
+    opts = {'vectorize': True,
             'matrix': 'dense',
             'verbose': False,
             'n_elem_per_length': density,
