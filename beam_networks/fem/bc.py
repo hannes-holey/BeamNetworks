@@ -14,7 +14,7 @@
 #
 import numpy as np
 
-from beam_networks.utils import box_selection, point_selection
+from beam_networks.geometry.selection import box_selection, point_selection
 
 
 def _get_bc_dof(nodes, select, selection, vector, num=1):

@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 from argparse import ArgumentParser
 
 from beam_networks.problem import BeamNetwork
-from beam_networks.viz import _plot_network, _array_to_colors
-from beam_networks.utils import get_edges_from_disks
+from beam_networks.postprocess.viz import _plot_network, _array_to_colors
+from beam_networks.geometry.selection import get_edges_from_disks
 
 
 def get_parser():

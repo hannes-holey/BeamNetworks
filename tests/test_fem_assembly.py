@@ -17,10 +17,11 @@ import numpy as np
 import pytest
 
 from beam_networks.problem import BeamNetwork
-from beam_networks.geo import get_geometric_props
-from beam_networks.stiffness import (_fem_element_stiffness_2d,
-                                     _fem_element_stiffness_3d,
-                                     global_element_stiffness_timoshenko_numeric_loop)
+from beam_networks.geometry.geo import get_geometric_props
+from beam_networks.fem.stiffness import (
+    _fem_element_stiffness_2d,
+    _fem_element_stiffness_3d,
+    global_element_stiffness_timoshenko_numeric_loop)
 from beam_networks.reference_solutions.cantilever import cantilever_analytic
 
 

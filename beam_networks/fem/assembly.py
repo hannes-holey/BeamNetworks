@@ -16,14 +16,15 @@ from tqdm import tqdm
 import numpy as np
 import scipy.sparse as sp
 
-from beam_networks.stiffness import (global_element_stiffness_timoshenko_exact_loop,
-                                     global_element_stiffness_timoshenko_exact_vec,
-                                     global_element_stiffness_euler_exact_loop,
-                                     global_element_stiffness_euler_exact_vec,
-                                     global_element_stiffness_euler_numeric_loop,
-                                     global_element_stiffness_euler_numeric_vec,
-                                     global_element_stiffness_timoshenko_numeric_loop,
-                                     global_element_stiffness_timoshenko_numeric_vec)
+from beam_networks.fem.stiffness import (
+    global_element_stiffness_timoshenko_exact_loop,
+    global_element_stiffness_timoshenko_exact_vec,
+    global_element_stiffness_euler_exact_loop,
+    global_element_stiffness_euler_exact_vec,
+    global_element_stiffness_euler_numeric_loop,
+    global_element_stiffness_euler_numeric_vec,
+    global_element_stiffness_timoshenko_numeric_loop,
+    global_element_stiffness_timoshenko_numeric_vec)
 
 
 def assemble_global_system(nodes_positions: np.ndarray,

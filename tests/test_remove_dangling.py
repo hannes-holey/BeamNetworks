@@ -13,7 +13,7 @@
 # beam_networks. If not, see <https://www.gnu.org/licenses/>.
 #
 import numpy as np
-from beam_networks.utils import _remove_isolated_nodes_edges
+from beam_networks.geometry.selection import _remove_isolated_nodes_edges
 
 
 def test_linear_chain():

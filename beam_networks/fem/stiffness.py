@@ -14,8 +14,8 @@
 #
 import numpy as np
 
-from beam_networks.geo import get_geometric_props, get_geometric_props_derivative
-from beam_networks.fem_utils import _gauss_legendre, _lagrange_basis
+from beam_networks.geometry.geo import get_geometric_props, get_geometric_props_derivative
+from beam_networks.fem.basis import _gauss_legendre, _lagrange_basis
 
 
 def _beam_stiffness_2d(beam_prop, L, derivative=None):

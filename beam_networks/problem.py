@@ -19,13 +19,14 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from beam_networks.network import Network
-from beam_networks.solve import solve
-from beam_networks.assembly import assemble_global_system
-from beam_networks.stress import get_element_mises_stress, get_element_principal_stress
-from beam_networks.bc import _get_bc_dof, _assemble_BCs
-from beam_networks.utils import check_input_dict, _remove_isolated_nodes_edges, _mic
-from beam_networks.viz import _plot_network
-from beam_networks.io import _to_vtk, _to_vtk_periodic, _to_stl, _from_tar, _to_tar
+from beam_networks.solvers.linear import solve
+from beam_networks.fem.assembly import assemble_global_system
+from beam_networks.postprocess.stress import get_element_mises_stress, get_element_principal_stress
+from beam_networks.fem.bc import _get_bc_dof, _assemble_BCs
+from beam_networks.io.validation import check_input_dict
+from beam_networks.geometry.selection import _remove_isolated_nodes_edges, _mic
+from beam_networks.postprocess.viz import _plot_network
+from beam_networks.io.formats import _to_vtk, _to_vtk_periodic, _to_stl, _from_tar, _to_tar
 
 if TYPE_CHECKING:
     import matplotlib

@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 from argparse import ArgumentParser
 
 from beam_networks.problem import BeamNetwork
-from beam_networks.utils import _reflect
-from beam_networks.viz import _plot_network
+from beam_networks.geometry.selection import _reflect
+from beam_networks.postprocess.viz import _plot_network
 
 
 def get_parser():

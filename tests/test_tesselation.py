@@ -17,7 +17,7 @@ from json import load
 
 import numpy as np
 
-from beam_networks.tesselate import tesselate
+from beam_networks.geometry.tesselate import tesselate
 
 
 def structures_2d_1():

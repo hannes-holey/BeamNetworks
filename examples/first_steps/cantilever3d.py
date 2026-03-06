@@ -5,8 +5,8 @@ from scipy.spatial.transform import Rotation
 from argparse import ArgumentParser
 
 from beam_networks.problem import BeamNetwork
-from beam_networks.geo import get_geometric_props
-from beam_networks.viz import plot_solution_1D
+from beam_networks.geometry.geo import get_geometric_props
+from beam_networks.postprocess.viz import plot_solution_1D
 from beam_networks.reference_solutions.cantilever import cantilever_analytic
 
 

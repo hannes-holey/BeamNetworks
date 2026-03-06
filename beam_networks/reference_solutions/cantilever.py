@@ -15,7 +15,7 @@
 
 import numpy as np
 
-from beam_networks.geo import get_geometric_props
+from beam_networks.geometry.geo import get_geometric_props
 
 
 def cantilever_analytic(x, L, Fext, a, beam_prop, euler_bernoulli=False):

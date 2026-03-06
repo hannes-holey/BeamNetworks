@@ -13,7 +13,6 @@
 # beam_networks. If not, see <https://www.gnu.org/licenses/>.
 #
 import numpy as np
-import warnings
 
 
 def _mic(dr, boxsize, periodic):
@@ -40,33 +39,6 @@ def _mic(dr, boxsize, periodic):
             dr[m, i] -= np.sign(dr[m, i]) * L
 
     return dr
-
-
-def zero_pad_2d_array(arr):
-
-    if arr.shape[1] == 2:
-        return np.hstack([arr, np.zeros(arr.shape[0])[:, None]])
-    else:
-        return arr
-
-
-def _dict_has_keys(d, required):
-    """Check if dictionary has all required keys
-
-    Parameters
-    ----------
-    d : dict
-        Dictionary to test
-    required : list
-        Keys
-
-    Returns
-    -------
-    bool
-        True if all keys in required are in dictionary
-    """
-
-    return np.all([key in d.keys() for key in required])
 
 
 def box_selection(nodes: np.ndarray, lim) -> np.ndarray:
@@ -234,47 +206,6 @@ def _remove_isolated_nodes_edges(nodes, edges, max_depth=None):
     print(f"Pre-processing: removing {nodes_diff} isloated nodes and {edges_diff} dangling bonds.")
 
     return new_nodes, new_edges
-
-
-def check_input_dict(container: dict, keys: list, defaults: list,
-                     allowed: list) -> dict:
-    """Validate and sanitise a dictionary of settings against expected keys.
-
-    For each key in *keys*, the corresponding entry in *container* is checked
-    against the type of the default value and, if *allowed* is not None, against
-    the list of allowed values. Invalid or missing entries are replaced by the
-    default with a warning.
-
-    Parameters
-    ----------
-    container : dict
-        Dictionary of settings to validate (modified in-place).
-    keys : list of str
-        Expected keys in *container*.
-    defaults : list
-        Default value for each key. The type of each default is used to coerce
-        the stored value.
-    allowed : list
-        Allowed value list for each key, or None to accept any value of the
-        correct type.
-
-    Returns
-    -------
-    dict
-        The validated (and possibly corrected) settings dictionary.
-    """
-    types = [type(d) for d in defaults]
-
-    for k, t, d, a in zip(keys, types, defaults, allowed):
-        if k in container.keys() and a is None:
-            container[k] = t(container[k])
-        elif k in container.keys() and container[k] in a:
-            container[k] = t(container[k])
-        else:
-            warnings.warn(f"Invalid or missing option for '{k}'. Falling back to default ({d}).")
-            container[k] = d
-
-    return container
 
 
 def get_edges_from_disks(file: str, cutoff: float = 3.,

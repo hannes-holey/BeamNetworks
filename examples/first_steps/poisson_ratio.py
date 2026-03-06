@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from argparse import ArgumentParser
 
 from beam_networks.problem import BeamNetwork
-from beam_networks.utils import box_selection
+from beam_networks.geometry.selection import box_selection
 
 
 def get_parser():

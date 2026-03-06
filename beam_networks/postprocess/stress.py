@@ -13,8 +13,8 @@
 # beam_networks. If not, see <https://www.gnu.org/licenses/>.
 #
 import numpy as np
-from beam_networks.stiffness import local_element_stiffness_timoshenko_exact_vec
-from beam_networks.geo import get_geometric_props
+from beam_networks.fem.stiffness import local_element_stiffness_timoshenko_exact_vec
+from beam_networks.geometry.geo import get_geometric_props
 
 
 def vmises_stress(rhs: np.ndarray, beam_prop: dict, mode: str) -> np.ndarray:

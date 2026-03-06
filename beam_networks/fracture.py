@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 
 from .problem import BeamNetwork
-from .assembly import assemble_global_system
+from beam_networks.fem.assembly import assemble_global_system
 
 
 class FractureProblem(BeamNetwork):

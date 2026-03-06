@@ -14,7 +14,7 @@
 #
 import numpy as np
 
-from beam_networks.stiffness import global_element_stiffness_timoshenko_exact_loop
+from beam_networks.fem.stiffness import global_element_stiffness_timoshenko_exact_loop
 
 
 def test_K_derivatives_2d():

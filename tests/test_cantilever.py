@@ -18,7 +18,7 @@ import numpy as np
 from scipy.spatial.transform import Rotation
 
 from beam_networks.problem import BeamNetwork
-from beam_networks.geo import get_geometric_props
+from beam_networks.geometry.geo import get_geometric_props
 from beam_networks.reference_solutions.cantilever import cantilever_analytic
 
 

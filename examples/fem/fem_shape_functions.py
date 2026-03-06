@@ -2,7 +2,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from beam_networks.fem_utils import (
+from beam_networks.fem.basis import (
     _lagrange_basis, _hermite_basis, _timoshenko_basis_FK, _gauss_legendre,
 )
 

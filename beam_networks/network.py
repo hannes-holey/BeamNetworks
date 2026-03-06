@@ -17,11 +17,11 @@ import scipy.sparse as sp
 from itertools import combinations
 from scipy.spatial import ConvexHull
 
-from beam_networks.utils import _remove_isolated_nodes_edges, _mic
-from beam_networks.lattice import generate_cubic_lattice, generate_square_lattice, generate_bowtie_lattice
+from beam_networks.geometry.selection import _remove_isolated_nodes_edges, _mic
+from beam_networks.geometry.lattice import generate_cubic_lattice, generate_square_lattice, generate_bowtie_lattice
 from typing import TYPE_CHECKING
 
-from beam_networks.viz import _plot_network
+from beam_networks.postprocess.viz import _plot_network
 
 if TYPE_CHECKING:
     import matplotlib

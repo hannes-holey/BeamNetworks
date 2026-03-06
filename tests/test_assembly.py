@@ -18,7 +18,7 @@ import numpy as np
 from scipy.sparse import issparse
 
 from beam_networks.problem import BeamNetwork
-from beam_networks.utils import get_edges_from_disks
+from beam_networks.geometry.selection import get_edges_from_disks
 
 
 @pytest.mark.parametrize('a0,a1,v', [('lil', 'dense', True),

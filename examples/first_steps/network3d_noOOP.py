@@ -1,9 +1,9 @@
 import numpy as np
 
 from beam_networks.network import Network
-from beam_networks.assembly import assemble_global_system
-from beam_networks.bc import _get_bc_dof, _assemble_BCs
-from beam_networks.solve import solve
+from beam_networks.fem.assembly import assemble_global_system
+from beam_networks.fem.bc import _get_bc_dof, _assemble_BCs
+from beam_networks.solvers.linear import solve
 
 
 if __name__ == "__main__":

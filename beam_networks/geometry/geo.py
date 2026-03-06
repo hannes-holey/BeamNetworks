@@ -13,7 +13,7 @@
 # beam_networks. If not, see <https://www.gnu.org/licenses/>.
 #
 import numpy as np
-from beam_networks.utils import _dict_has_keys
+from beam_networks.io.validation import _dict_has_keys
 
 
 def get_geometric_props(beam_prop: dict) -> tuple[float, float, float, float, float, float]:

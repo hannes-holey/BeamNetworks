@@ -14,7 +14,8 @@
 
 import warnings
 import numpy as np
-from beam_networks.utils import box_selection, point_selection, check_input_dict
+from beam_networks.geometry.selection import box_selection, point_selection
+from beam_networks.io.validation import check_input_dict
 
 
 # ---------------------------------------------------------------------------

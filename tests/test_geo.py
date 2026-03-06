@@ -14,7 +14,7 @@
 
 import pytest
 import numpy as np
-from beam_networks.geo import get_geometric_props, get_geometric_props_derivative
+from beam_networks.geometry.geo import get_geometric_props, get_geometric_props_derivative
 
 
 def circle_props(radius, nu=0.3):

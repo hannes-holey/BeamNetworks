@@ -22,8 +22,8 @@ from meshio.xdmf import TimeSeriesWriter
 import trimesh
 import scipy.sparse as sp
 
-from beam_networks.utils import zero_pad_2d_array
-from beam_networks.stress import get_element_mises_stress
+from beam_networks.io.validation import zero_pad_2d_array
+from beam_networks.postprocess.stress import get_element_mises_stress
 
 
 def _to_tar(filename, problem):
