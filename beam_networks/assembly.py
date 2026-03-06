@@ -16,10 +16,14 @@ from tqdm import tqdm
 import numpy as np
 import scipy.sparse as sp
 
-from beam_networks.stiffness import (get_element_stiffness_global,
-                                     get_element_stiffness_global_vec,
-                                     get_fem_element_stiffness_global,
-                                     get_fem_element_stiffness_global_vec)
+from beam_networks.stiffness import (global_element_stiffness_timoshenko_exact_loop,
+                                     global_element_stiffness_timoshenko_exact_vec,
+                                     global_element_stiffness_euler_exact_loop,
+                                     global_element_stiffness_euler_exact_vec,
+                                     global_element_stiffness_euler_numeric_loop,
+                                     global_element_stiffness_euler_numeric_vec,
+                                     global_element_stiffness_timoshenko_numeric_loop,
+                                     global_element_stiffness_timoshenko_numeric_vec)
 
 
 def assemble_global_system(nodes_positions: np.ndarray,
@@ -86,7 +90,9 @@ def assemble_global_system(nodes_positions: np.ndarray,
 
     edges_indices = np.array(edges_indices)
 
+    # Stiffness matrix assembled via numerical integration
     if n_elems is not None:
+        # Vectorized versions compute all element stiffness matrices at once before assembly
         if vectorize:
             if matrix == 'bsr':
                 K_global = _assemble_sparse_bsr_fem_vec(nodes_positions,
@@ -117,6 +123,8 @@ def assemble_global_system(nodes_positions: np.ndarray,
                                                    verbose=verbose)
             else:
                 raise ValueError
+
+        # 'Loop'-assembly (slower)
         elif matrix == 'bsr':
             K_global = _assemble_sparse_bsr_fem(nodes_positions,
                                                 edges_indices,
@@ -146,22 +154,48 @@ def assemble_global_system(nodes_positions: np.ndarray,
                                            verbose=verbose)
         else:
             raise ValueError
+
+    # Exact stiffness matrix for two node elements
     elif vectorize:
         if matrix == 'bsr':
-            K_global = _assemble_sparse_bsr_vec(nodes_positions, edges_indices, dr, beam_prop, verbose=verbose)
+            K_global = _assemble_sparse_bsr_vec(nodes_positions,
+                                                edges_indices,
+                                                dr,
+                                                beam_prop,
+                                                verbose=verbose)
         elif matrix == 'lil':
-            K_global = _assemble_sparse_lil_vec(nodes_positions, edges_indices, dr, beam_prop, verbose=verbose)
+            K_global = _assemble_sparse_lil_vec(nodes_positions,
+                                                edges_indices,
+                                                dr,
+                                                beam_prop,
+                                                verbose=verbose)
         elif matrix == 'dense':
-            K_global = _assemble_dense_vec(nodes_positions, edges_indices, dr,  beam_prop, verbose=verbose)
+            K_global = _assemble_dense_vec(nodes_positions,
+                                           edges_indices,
+                                           dr,
+                                           beam_prop,
+                                           verbose=verbose)
         else:
             raise ValueError
     else:
         if matrix == 'bsr':
-            K_global = _assemble_sparse_bsr(nodes_positions, edges_indices, dr, beam_prop, verbose=verbose)
+            K_global = _assemble_sparse_bsr(nodes_positions,
+                                            edges_indices,
+                                            dr,
+                                            beam_prop,
+                                            verbose=verbose)
         elif matrix == 'lil':
-            K_global = _assemble_sparse_lil(nodes_positions, edges_indices, dr, beam_prop, verbose=verbose)
+            K_global = _assemble_sparse_lil(nodes_positions,
+                                            edges_indices,
+                                            dr,
+                                            beam_prop,
+                                            verbose=verbose)
         elif matrix == 'dense':
-            K_global = _assemble_dense(nodes_positions, edges_indices, dr, beam_prop, verbose=verbose)
+            K_global = _assemble_dense(nodes_positions,
+                                       edges_indices,
+                                       dr,
+                                       beam_prop,
+                                       verbose=verbose)
         else:
             raise ValueError
 
@@ -210,7 +244,10 @@ def _assemble_sparse_bsr(nodes, edges, dr, beam_prop, verbose=True):
 
     for n0, c0 in zip(n0s, c0s):
         for k, n1 in enumerate(edges[i + np.arange(c0), 1]):
-            Ke = get_element_stiffness_global(beam_prop, dr[i])
+            if beam_prop.get('euler_bernoulli', False):
+                Ke = global_element_stiffness_euler_exact_loop(beam_prop, dr[i])
+            else:
+                Ke = global_element_stiffness_timoshenko_exact_loop(beam_prop, dr[i])
 
             Ke00 = Ke[:num_dof_per_node, :num_dof_per_node]
             Ke01 = Ke[:num_dof_per_node, num_dof_per_node:]
@@ -274,7 +311,10 @@ def _assemble_sparse_bsr_vec(nodes, edges, dr, beam_prop, verbose=True):
     indptr = aux.indptr
     data = np.zeros((len(indices), num_dof_per_node, num_dof_per_node))
 
-    Ke = get_element_stiffness_global_vec(beam_prop, dr)
+    if beam_prop.get('euler_bernoulli', False):
+        Ke = global_element_stiffness_euler_exact_vec(beam_prop, dr)
+    else:
+        Ke = global_element_stiffness_timoshenko_exact_vec(beam_prop, dr)
 
     i = 0
     n0s, c0s = np.unique(edges[:, 0], return_counts=True)
@@ -339,7 +379,7 @@ def _assemble_sparse_lil(nodes, edges, dr, beam_prop, verbose=True):
         s1 = slice(e0 * num_dof_per_node, (e0 + 1) * num_dof_per_node)
         s2 = slice(e1 * num_dof_per_node, (e1 + 1) * num_dof_per_node)
 
-        Ke = get_element_stiffness_global(beam_prop, dr[i])
+        Ke = global_element_stiffness_timoshenko_exact_loop(beam_prop, dr[i])
 
         K_global[s1, s1] += Ke[:num_dof_per_node, :num_dof_per_node] / 2.
         K_global[s1, s2] += Ke[:num_dof_per_node, num_dof_per_node:]
@@ -385,7 +425,10 @@ def _assemble_sparse_lil_vec(nodes, edges, dr, beam_prop, verbose=True):
 
     K_global = sp.lil_array((num_dof, num_dof))
 
-    Ke = get_element_stiffness_global_vec(beam_prop, dr)
+    if beam_prop.get('euler_bernoulli', False):
+        Ke = global_element_stiffness_euler_exact_vec(beam_prop, dr)
+    else:
+        Ke = global_element_stiffness_timoshenko_exact_vec(beam_prop, dr)
 
     for i, element in enumerate(edges):
         e0, e1 = element
@@ -439,7 +482,7 @@ def _assemble_dense(nodes, edges, dr, beam_prop, verbose=True):
         s1 = slice(e0 * num_dof_per_node, (e0 + 1) * num_dof_per_node)
         s2 = slice(e1 * num_dof_per_node, (e1 + 1) * num_dof_per_node)
 
-        Ke = get_element_stiffness_global(beam_prop, dr[i])
+        Ke = global_element_stiffness_timoshenko_exact_loop(beam_prop, dr[i])
 
         K_global[s1, s1] += Ke[:num_dof_per_node, :num_dof_per_node]
         K_global[s1, s2] += Ke[:num_dof_per_node, num_dof_per_node:]
@@ -483,7 +526,10 @@ def _assemble_dense_vec(nodes, edges, dr, beam_prop, verbose=True):
     num_dof = num_nodes * num_dof_per_node
 
     K_global = np.zeros((num_dof, num_dof))
-    Ke = get_element_stiffness_global_vec(beam_prop, dr)
+    if beam_prop.get('euler_bernoulli', False):
+        Ke = global_element_stiffness_euler_exact_vec(beam_prop, dr)
+    else:
+        Ke = global_element_stiffness_timoshenko_exact_vec(beam_prop, dr)
 
     for i, element in enumerate(edges):
         e0, e1 = element
@@ -524,9 +570,14 @@ def _assemble_sparse_bsr_fem(nodes, edges, dr, beam_prop, n_elems,
 
     for n0, c0 in zip(n0s, c0s):
         for k, n1 in enumerate(edges[i + np.arange(c0), 1]):
-            Ke = get_fem_element_stiffness_global(beam_prop, dr[i], n_elems[i],
-                                                  poly_order=fem_poly_order,
-                                                  n_gauss=fem_n_gauss)
+            if beam_prop.get('euler_bernoulli', False):
+                Ke = global_element_stiffness_euler_numeric_loop(
+                    beam_prop, dr[i], n_elems[i])
+            else:
+                Ke = global_element_stiffness_timoshenko_numeric_loop(
+                    beam_prop, dr[i], n_elems[i],
+                    poly_order=fem_poly_order,
+                    n_gauss=fem_n_gauss)
 
             Ke00 = Ke[:num_dof_per_node, :num_dof_per_node]
             Ke01 = Ke[:num_dof_per_node, num_dof_per_node:]
@@ -565,9 +616,10 @@ def _assemble_sparse_lil_fem(nodes, edges, dr, beam_prop, n_elems,
         s1 = slice(e0 * num_dof_per_node, (e0 + 1) * num_dof_per_node)
         s2 = slice(e1 * num_dof_per_node, (e1 + 1) * num_dof_per_node)
 
-        Ke = get_fem_element_stiffness_global(beam_prop, dr[i], n_elems[i],
-                                              poly_order=fem_poly_order,
-                                              n_gauss=fem_n_gauss)
+        Ke = global_element_stiffness_timoshenko_numeric_loop(
+            beam_prop, dr[i], n_elems[i],
+            poly_order=fem_poly_order,
+            n_gauss=fem_n_gauss)
 
         K_global[s1, s1] += Ke[:num_dof_per_node, :num_dof_per_node] / 2.
         K_global[s1, s2] += Ke[:num_dof_per_node, num_dof_per_node:]
@@ -598,9 +650,10 @@ def _assemble_dense_fem(nodes, edges, dr, beam_prop, n_elems,
         s1 = slice(e0 * num_dof_per_node, (e0 + 1) * num_dof_per_node)
         s2 = slice(e1 * num_dof_per_node, (e1 + 1) * num_dof_per_node)
 
-        Ke = get_fem_element_stiffness_global(beam_prop, dr[i], n_elems[i],
-                                              poly_order=fem_poly_order,
-                                              n_gauss=fem_n_gauss)
+        Ke = global_element_stiffness_timoshenko_numeric_loop(
+            beam_prop, dr[i], n_elems[i],
+            poly_order=fem_poly_order,
+            n_gauss=fem_n_gauss)
 
         K_global[s1, s1] += Ke[:num_dof_per_node, :num_dof_per_node]
         K_global[s1, s2] += Ke[:num_dof_per_node, num_dof_per_node:]
@@ -634,9 +687,13 @@ def _assemble_sparse_bsr_fem_vec(nodes, edges, dr, beam_prop, n_elems,
     indptr = aux.indptr
     data = np.zeros((len(indices), num_dof_per_node, num_dof_per_node))
 
-    Ke = get_fem_element_stiffness_global_vec(beam_prop, dr, n_elems,
-                                              poly_order=fem_poly_order,
-                                              n_gauss=fem_n_gauss)
+    if beam_prop.get('euler_bernoulli', False):
+        Ke = global_element_stiffness_euler_numeric_vec(beam_prop, dr, n_elems)
+    else:
+        Ke = global_element_stiffness_timoshenko_numeric_vec(
+            beam_prop, dr, n_elems,
+            poly_order=fem_poly_order,
+            n_gauss=fem_n_gauss)
 
     i = 0
     n0s, c0s = np.unique(edges[:, 0], return_counts=True)
@@ -678,9 +735,13 @@ def _assemble_sparse_lil_fem_vec(nodes, edges, dr, beam_prop, n_elems,
 
     K_global = sp.lil_array((num_dof, num_dof))
 
-    Ke = get_fem_element_stiffness_global_vec(beam_prop, dr, n_elems,
-                                              poly_order=fem_poly_order,
-                                              n_gauss=fem_n_gauss)
+    if beam_prop.get('euler_bernoulli', False):
+        Ke = global_element_stiffness_euler_numeric_vec(beam_prop, dr, n_elems)
+    else:
+        Ke = global_element_stiffness_timoshenko_numeric_vec(
+            beam_prop, dr, n_elems,
+            poly_order=fem_poly_order,
+            n_gauss=fem_n_gauss)
 
     for i, element in enumerate(edges):
         e0, e1 = element
@@ -714,9 +775,13 @@ def _assemble_dense_fem_vec(nodes, edges, dr, beam_prop, n_elems,
 
     K_global = np.zeros((num_dof, num_dof))
 
-    Ke = get_fem_element_stiffness_global_vec(beam_prop, dr, n_elems,
-                                              poly_order=fem_poly_order,
-                                              n_gauss=fem_n_gauss)
+    if beam_prop.get('euler_bernoulli', False):
+        Ke = global_element_stiffness_euler_numeric_vec(beam_prop, dr, n_elems)
+    else:
+        Ke = global_element_stiffness_timoshenko_numeric_vec(
+            beam_prop, dr, n_elems,
+            poly_order=fem_poly_order,
+            n_gauss=fem_n_gauss)
 
     for i, element in enumerate(edges):
         e0, e1 = element

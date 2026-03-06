@@ -413,10 +413,11 @@ def _fem_condensed_stiffness_local(beam_prop: dict, L: float,
     return K_bb - K_bi @ np.linalg.solve(K_ii, K_ib)
 
 
-def get_fem_element_stiffness_global(beam_prop: dict, d: np.ndarray,
-                                     n_elem: int,
-                                     poly_order: int = 1,
-                                     n_gauss: int | None = None) -> np.ndarray:
+def global_element_stiffness_timoshenko_numeric_loop(
+        beam_prop: dict, d: np.ndarray,
+        n_elem: int,
+        poly_order: int = 1,
+        n_gauss: int | None = None) -> np.ndarray:
     """FEM element stiffness matrix for a single beam in the global frame.
 
     Discretizes the beam into *n_elem* equal sub-elements using Lagrange
@@ -424,7 +425,7 @@ def get_fem_element_stiffness_global(beam_prop: dict, d: np.ndarray,
     Gauss-Legendre points, performs static condensation to eliminate interior
     DOFs, and rotates the result into the global coordinate frame.
     The output has the same shape and contract as
-    :func:`get_element_stiffness_global`.  The result converges to the exact
+    :func:`global_element_stiffness_timoshenko_exact_loop`.  The result converges to the exact
     Timoshenko stiffness as *n_elem* increases.
 
     Parameters
@@ -462,7 +463,7 @@ def get_fem_element_stiffness_global(beam_prop: dict, d: np.ndarray,
 
 
 def _fem_element_stiffness_2d_vec(beam_prop: dict, le: np.ndarray,
-                                   n_nodes: int, n_gauss: int) -> np.ndarray:
+                                  n_nodes: int, n_gauss: int) -> np.ndarray:
     """Vectorised 2D Timoshenko element stiffness for an array of element lengths.
 
     Parameters
@@ -506,15 +507,15 @@ def _fem_element_stiffness_2d_vec(beam_prop: dict, le: np.ndarray,
         Bs = np.zeros((n, n_dof))
 
         for idx in range(n_nodes):
-            Be[:, 3 * idx]     = dN_dx[:, idx]
+            Be[:, 3 * idx] = dN_dx[:, idx]
             Bk[:, 3 * idx + 2] = dN_dx[:, idx]
             Bs[:, 3 * idx + 1] = dN_dx[:, idx]
             Bs[:, 3 * idx + 2] = -N[idx]
 
         fac = w * jac                        # (n,)
         K += fac[:, None, None] * (
-            EA  * np.einsum('ni,nj->nij', Be, Be) +
-            EI  * np.einsum('ni,nj->nij', Bk, Bk) +
+            EA * np.einsum('ni,nj->nij', Be, Be) +
+            EI * np.einsum('ni,nj->nij', Bk, Bk) +
             kGA * np.einsum('ni,nj->nij', Bs, Bs)
         )
 
@@ -522,7 +523,7 @@ def _fem_element_stiffness_2d_vec(beam_prop: dict, le: np.ndarray,
 
 
 def _fem_element_stiffness_3d_vec(beam_prop: dict, le: np.ndarray,
-                                   n_nodes: int, n_gauss: int) -> np.ndarray:
+                                  n_nodes: int, n_gauss: int) -> np.ndarray:
     """Vectorised 3D Timoshenko element stiffness for an array of element lengths.
 
     Parameters
@@ -563,16 +564,16 @@ def _fem_element_stiffness_3d_vec(beam_prop: dict, le: np.ndarray,
         N, dN_dxi = _lagrange_basis(n_nodes, xi)
         dN_dx = dN_dxi[None, :] / jac[:, None]   # (n, n_nodes)
 
-        Be  = np.zeros((n, n_dof))
-        Bt  = np.zeros((n, n_dof))
+        Be = np.zeros((n, n_dof))
+        Bt = np.zeros((n, n_dof))
         Bky = np.zeros((n, n_dof))
         Bkz = np.zeros((n, n_dof))
         Bsy = np.zeros((n, n_dof))
         Bsz = np.zeros((n, n_dof))
 
         for idx in range(n_nodes):
-            Be [:, 6 * idx]     = dN_dx[:, idx]
-            Bt [:, 6 * idx + 3] = dN_dx[:, idx]
+            Be[:, 6 * idx] = dN_dx[:, idx]
+            Bt[:, 6 * idx + 3] = dN_dx[:, idx]
             Bky[:, 6 * idx + 4] = dN_dx[:, idx]
             Bkz[:, 6 * idx + 5] = dN_dx[:, idx]
             Bsy[:, 6 * idx + 1] = dN_dx[:, idx]
@@ -582,8 +583,8 @@ def _fem_element_stiffness_3d_vec(beam_prop: dict, le: np.ndarray,
 
         fac = w * jac                        # (n,)
         K += fac[:, None, None] * (
-            EA  * np.einsum('ni,nj->nij', Be,  Be) +
-            GJ  * np.einsum('ni,nj->nij', Bt,  Bt) +
+            EA * np.einsum('ni,nj->nij', Be,  Be) +
+            GJ * np.einsum('ni,nj->nij', Bt,  Bt) +
             EIy * np.einsum('ni,nj->nij', Bky, Bky) +
             EIz * np.einsum('ni,nj->nij', Bkz, Bkz) +
             kGA * np.einsum('ni,nj->nij', Bsy, Bsy) +
@@ -664,13 +665,14 @@ def _fem_condensed_stiffness_local_vec(beam_prop: dict, L: np.ndarray,
     return K_bb - K_bi @ np.linalg.solve(K_ii, K_ib)
 
 
-def get_fem_element_stiffness_global_vec(beam_prop: dict, d_vec: np.ndarray,
-                                         n_elems: np.ndarray,
-                                         poly_order: int = 1,
-                                         n_gauss: int | None = None) -> np.ndarray:
+def global_element_stiffness_timoshenko_numeric_vec(
+        beam_prop: dict, d_vec: np.ndarray,
+        n_elems: np.ndarray,
+        poly_order: int = 1,
+        n_gauss: int | None = None) -> np.ndarray:
     """FEM element stiffness matrices for all beams in the global frame.
 
-    Vectorised counterpart of :func:`get_fem_element_stiffness_global`.
+    Vectorised counterpart of :func:`global_element_stiffness_timoshenko_numeric_loop`.
     Beams are grouped by their sub-element count so that each group is
     processed with a single batched call.
 
@@ -707,8 +709,459 @@ def get_fem_element_stiffness_global_vec(beam_prop: dict, d_vec: np.ndarray,
     return np.einsum('nki,nij,njl->nkl', T, K_cond, T)
 
 
-def get_element_stiffness_global(beam_prop: dict, d: np.ndarray,
-                                 derivative: int | None = None) -> np.ndarray:
+def _eb_element_stiffness_2d(beam_prop: dict, le: float) -> np.ndarray:
+    """Euler-Bernoulli 2D element stiffness via Hermite curvature B-matrices (local frame).
+
+    DOF order: [u₁, v₁, θ₁, u₂, v₂, θ₂]  where θ = dv/dx.
+
+    Two-point Gauss integration is exact for the cubic Hermite curvature field.
+    The result is identical to the analytical Timoshenko stiffness at Φ = 0,
+    which equals the Friedman-Kosmatka shape functions at Φ = 0.
+
+    Parameters
+    ----------
+    beam_prop : dict
+        Beam cross-section and elastic properties.
+    le : float
+        Element length.
+
+    Returns
+    -------
+    np.ndarray, shape (6, 6)
+        Local-frame stiffness matrix.
+    """
+    E = beam_prop['E']
+    _, Iz, _, A, _, _ = get_geometric_props(beam_prop)
+
+    n_dof = 6
+    K = np.zeros((n_dof, n_dof))
+
+    # Axial (constant strain — analytical)
+    ea = E * A / le
+    K[0, 0] = K[3, 3] = ea
+    K[0, 3] = K[3, 0] = -ea
+
+    # Bending via 2-point Gauss integration (exact for cubic Hermite)
+    xi_g, w_g = _gauss_legendre(2)
+    jac = le / 2.
+    # d²(physical shape fn)/dx²: scale = [4/le², 2/le, 4/le², 2/le]
+    # for DOFs [v₁ (disp), θ₁ (rot), v₂ (disp), θ₂ (rot)]
+    scale = np.array([4. / le**2, 2. / le, 4. / le**2, 2. / le])
+
+    for xi, w in zip(xi_g, w_g):
+        d2H = np.array([3. * xi / 2.,
+                        (3. * xi - 1.) / 2.,
+                        -3. * xi / 2.,
+                        (3. * xi + 1.) / 2.])
+        d2N = scale * d2H  # curvature for DOFs [v₁, θ₁, v₂, θ₂]
+        B_k = np.zeros(n_dof)
+        B_k[[1, 2, 4, 5]] = d2N
+        K += (w * jac * E * Iz) * np.outer(B_k, B_k)
+
+    return K
+
+
+def _eb_element_stiffness_3d(beam_prop: dict, le: float) -> np.ndarray:
+    """Euler-Bernoulli 3D element stiffness via Hermite curvature B-matrices (local frame).
+
+    DOF order: [u₁, v₁, w₁, θx₁, θy₁, θz₁, u₂, v₂, w₂, θx₂, θy₂, θz₂]
+    Convention: θz = +dv/dx,  θy = −dw/dx.
+
+    Parameters
+    ----------
+    beam_prop : dict
+        Beam cross-section and elastic properties.
+    le : float
+        Element length.
+
+    Returns
+    -------
+    np.ndarray, shape (12, 12)
+        Local-frame stiffness matrix.
+    """
+    E = beam_prop['E']
+    nu = beam_prop['nu']
+    G = E / (2. * (1. + nu))
+    Iy, Iz, J, A, _, _ = get_geometric_props(beam_prop)
+
+    n_dof = 12
+    K = np.zeros((n_dof, n_dof))
+
+    # Axial (constant strain — analytical)
+    ea = E * A / le
+    K[0, 0] = K[6, 6] = ea
+    K[0, 6] = K[6, 0] = -ea
+
+    # Torsion (constant twist rate — analytical)
+    gj = G * J / le
+    K[3, 3] = K[9, 9] = gj
+    K[3, 9] = K[9, 3] = -gj
+
+    # Bending via 2-point Gauss integration (exact for cubic Hermite)
+    xi_g, w_g = _gauss_legendre(2)
+    jac = le / 2.
+    scale = np.array([4. / le**2, 2. / le, 4. / le**2, 2. / le])
+
+    for xi, w in zip(xi_g, w_g):
+        d2H = np.array([3. * xi / 2.,
+                        (3. * xi - 1.) / 2.,
+                        -3. * xi / 2.,
+                        (3. * xi + 1.) / 2.])
+        d2N = scale * d2H
+
+        # xy-plane bending (EIz): DOFs [v₁, θz₁, v₂, θz₂] → indices [1, 5, 7, 11]
+        # θz = +dv/dx — no sign flip
+        B_kxy = np.zeros(n_dof)
+        B_kxy[[1, 5, 7, 11]] = d2N
+
+        # xz-plane bending (EIy): DOFs [w₁, θy₁, w₂, θy₂] → indices [2, 4, 8, 10]
+        # θy = -dw/dx — sign flip on rotation DOFs
+        B_kxz = np.zeros(n_dof)
+        B_kxz[[2, 8]] = d2N[[0, 2]]
+        B_kxz[[4, 10]] = -d2N[[1, 3]]
+
+        fac = w * jac
+        K += (fac * E * Iz) * np.outer(B_kxy, B_kxy)
+        K += (fac * E * Iy) * np.outer(B_kxz, B_kxz)
+
+    return K
+
+
+def _eb_element_stiffness_2d_vec(beam_prop: dict, le: np.ndarray) -> np.ndarray:
+    """Vectorised 2D EB element stiffness (Hermite B-matrices).
+
+    Parameters
+    ----------
+    beam_prop : dict
+        Beam cross-section and elastic properties.
+    le : np.ndarray, shape (n,)
+        Element lengths.
+
+    Returns
+    -------
+    np.ndarray, shape (n, 6, 6)
+    """
+    E = beam_prop['E']
+    _, Iz, _, A, _, _ = get_geometric_props(beam_prop)
+
+    n = le.shape[0]
+    n_dof = 6
+    K = np.zeros((n, n_dof, n_dof))
+
+    # Axial
+    ea = E * A / le  # (n,)
+    K[:, 0, 0] += ea
+    K[:, 3, 3] += ea
+    K[:, 0, 3] -= ea
+    K[:, 3, 0] -= ea
+
+    # Bending
+    xi_g, w_g = _gauss_legendre(2)
+    jac = le / 2.  # (n,)
+    # scale: (n, 4)
+    scale = np.stack([4. / le**2, 2. / le, 4. / le**2, 2. / le], axis=-1)
+
+    for xi, w in zip(xi_g, w_g):
+        d2H = np.array([3. * xi / 2.,
+                        (3. * xi - 1.) / 2.,
+                        -3. * xi / 2.,
+                        (3. * xi + 1.) / 2.])
+        d2N = scale * d2H[None, :]  # (n, 4)
+
+        B_k = np.zeros((n, n_dof))
+        B_k[:, [1, 2, 4, 5]] = d2N
+
+        fac = w * jac * E * Iz  # (n,)
+        K += fac[:, None, None] * np.einsum('ni,nj->nij', B_k, B_k)
+
+    return K
+
+
+def _eb_element_stiffness_3d_vec(beam_prop: dict, le: np.ndarray) -> np.ndarray:
+    """Vectorised 3D EB element stiffness (Hermite B-matrices).
+
+    Parameters
+    ----------
+    beam_prop : dict
+        Beam cross-section and elastic properties.
+    le : np.ndarray, shape (n,)
+        Element lengths.
+
+    Returns
+    -------
+    np.ndarray, shape (n, 12, 12)
+    """
+    E = beam_prop['E']
+    nu = beam_prop['nu']
+    G = E / (2. * (1. + nu))
+    Iy, Iz, J, A, _, _ = get_geometric_props(beam_prop)
+
+    n = le.shape[0]
+    n_dof = 12
+    K = np.zeros((n, n_dof, n_dof))
+
+    # Axial
+    ea = E * A / le  # (n,)
+    K[:, 0, 0] += ea
+    K[:, 6, 6] += ea
+    K[:, 0, 6] -= ea
+    K[:, 6, 0] -= ea
+
+    # Torsion
+    gj = G * J / le  # (n,)
+    K[:, 3, 3] += gj
+    K[:, 9, 9] += gj
+    K[:, 3, 9] -= gj
+    K[:, 9, 3] -= gj
+
+    # Bending
+    xi_g, w_g = _gauss_legendre(2)
+    jac = le / 2.  # (n,)
+    scale = np.stack([4. / le**2, 2. / le, 4. / le**2, 2. / le], axis=-1)  # (n, 4)
+
+    for xi, w in zip(xi_g, w_g):
+        d2H = np.array([3. * xi / 2.,
+                        (3. * xi - 1.) / 2.,
+                        -3. * xi / 2.,
+                        (3. * xi + 1.) / 2.])
+        d2N = scale * d2H[None, :]  # (n, 4)
+
+        B_kxy = np.zeros((n, n_dof))
+        B_kxy[:, [1, 5, 7, 11]] = d2N
+
+        B_kxz = np.zeros((n, n_dof))
+        B_kxz[:, [2, 8]] = d2N[:, [0, 2]]
+        B_kxz[:, [4, 10]] = -d2N[:, [1, 3]]
+
+        fac = w * jac
+        K += (fac * E * Iz)[:, None, None] * np.einsum('ni,nj->nij', B_kxy, B_kxy)
+        K += (fac * E * Iy)[:, None, None] * np.einsum('ni,nj->nij', B_kxz, B_kxz)
+
+    return K
+
+
+def _eb_condensed_stiffness_local(beam_prop: dict, L: float,
+                                  n_elem: int, ndim: int) -> np.ndarray:
+    """Assemble and statically condense a chain of Hermite EB sub-elements.
+
+    Each sub-element is a 2-node Hermite Euler-Bernoulli element.
+    Interior DOFs (all intermediate nodes) are eliminated by Guyan condensation
+    to yield a (2·dof × 2·dof) condensed stiffness identical in shape to a
+    single exact element.
+
+    Parameters
+    ----------
+    beam_prop : dict
+        Beam cross-section and elastic properties.
+    L : float
+        Total beam length.
+    n_elem : int
+        Number of Hermite sub-elements (>= 1).
+    ndim : int
+        Spatial dimension (2 or 3).
+
+    Returns
+    -------
+    np.ndarray
+        Condensed stiffness matrix, shape (2*dof, 2*dof), local frame.
+    """
+    dof = 3 * (ndim - 1)
+    le = L / n_elem
+    n_total = (n_elem + 1) * dof
+
+    K_loc = np.zeros((n_total, n_total))
+
+    stiffness_fn = _eb_element_stiffness_2d if ndim == 2 else _eb_element_stiffness_3d
+    Ke = stiffness_fn(beam_prop, le)
+
+    for i in range(n_elem):
+        s = i * dof
+        K_loc[s:s + 2 * dof, s:s + 2 * dof] += Ke
+
+    b_dof = list(range(dof)) + list(range(n_total - dof, n_total))
+    i_dof = list(range(dof, n_total - dof))
+
+    if len(i_dof) == 0:
+        return K_loc
+
+    K_bb = K_loc[np.ix_(b_dof, b_dof)]
+    K_bi = K_loc[np.ix_(b_dof, i_dof)]
+    K_ib = K_loc[np.ix_(i_dof, b_dof)]
+    K_ii = K_loc[np.ix_(i_dof, i_dof)]
+
+    return K_bb - K_bi @ np.linalg.solve(K_ii, K_ib)
+
+
+def _eb_condensed_stiffness_local_vec(beam_prop: dict, L: np.ndarray,
+                                      n_elem: int, ndim: int) -> np.ndarray:
+    """Vectorised version of :func:`_eb_condensed_stiffness_local`.
+
+    Parameters
+    ----------
+    beam_prop : dict
+        Beam cross-section and elastic properties.
+    L : np.ndarray, shape (n,)
+        Total beam lengths.
+    n_elem : int
+        Number of Hermite sub-elements per beam (uniform across this batch).
+    ndim : int
+        Spatial dimension (2 or 3).
+
+    Returns
+    -------
+    np.ndarray, shape (n, 2*dof, 2*dof)
+    """
+    n = L.shape[0]
+    dof = 3 * (ndim - 1)
+    le = L / n_elem                          # (n,)
+    n_total = (n_elem + 1) * dof
+
+    K_loc = np.zeros((n, n_total, n_total))
+
+    stiffness_fn = (_eb_element_stiffness_2d_vec if ndim == 2
+                    else _eb_element_stiffness_3d_vec)
+    Ke = stiffness_fn(beam_prop, le)         # (n, 2*dof, 2*dof)
+
+    for i in range(n_elem):
+        s = i * dof
+        K_loc[:, s:s + 2 * dof, s:s + 2 * dof] += Ke
+
+    b_dof = list(range(dof)) + list(range(n_total - dof, n_total))
+    i_dof = list(range(dof, n_total - dof))
+
+    if len(i_dof) == 0:
+        return K_loc
+
+    K_bb = K_loc[:, np.ix_(b_dof, b_dof)[0], np.ix_(b_dof, b_dof)[1]]
+    K_bi = K_loc[:, np.ix_(b_dof, i_dof)[0], np.ix_(b_dof, i_dof)[1]]
+    K_ib = K_loc[:, np.ix_(i_dof, b_dof)[0], np.ix_(i_dof, b_dof)[1]]
+    K_ii = K_loc[:, np.ix_(i_dof, i_dof)[0], np.ix_(i_dof, i_dof)[1]]
+
+    return K_bb - K_bi @ np.linalg.solve(K_ii, K_ib)
+
+
+def global_element_stiffness_euler_numeric_loop(
+        beam_prop: dict, d: np.ndarray,
+        n_elem: int) -> np.ndarray:
+    """Hermite EB element stiffness for a single beam in the global frame.
+
+    Discretizes the beam into *n_elem* Hermite sub-elements, assembles their
+    stiffnesses, eliminates interior DOFs by static condensation, and rotates
+    the result into the global coordinate frame.
+
+    Parameters
+    ----------
+    beam_prop : dict
+        Beam cross-section and elastic properties.
+    d : np.ndarray, shape (dim,)
+        Edge vector (tail → head).
+    n_elem : int
+        Number of Hermite sub-elements (>= 1).
+
+    Returns
+    -------
+    np.ndarray, shape (num_elem_dof, num_elem_dof)
+    """
+    ndim = len(d)
+    L = np.linalg.norm(d)
+    K_cond = _eb_condensed_stiffness_local(beam_prop, L, n_elem, ndim)
+    T = _get_transformation_matrix(d)
+    return T.T @ K_cond @ T
+
+
+def global_element_stiffness_euler_numeric_vec(
+        beam_prop: dict,
+        d_vec: np.ndarray,
+        n_elems: np.ndarray) -> np.ndarray:
+    """Hermite EB element stiffness matrices in the global frame (vectorised).
+
+    Beams are grouped by sub-element count so each group is processed in a
+    single batched call.
+
+    Parameters
+    ----------
+    beam_prop : dict
+        Beam cross-section and elastic properties.
+    d_vec : np.ndarray, shape (num_edges, dim)
+        Edge vectors.
+    n_elems : np.ndarray, shape (num_edges,)
+        Per-edge sub-element counts.
+
+    Returns
+    -------
+    np.ndarray, shape (num_edges, num_elem_dof, num_elem_dof)
+    """
+    n_edges, ndim = d_vec.shape
+    num_dof_e = 2 * 3 * (ndim - 1)
+    L = np.linalg.norm(d_vec, axis=-1)
+
+    K_cond = np.zeros((n_edges, num_dof_e, num_dof_e))
+    for n_elem in np.unique(n_elems):
+        mask = n_elems == n_elem
+        K_cond[mask] = _eb_condensed_stiffness_local_vec(
+            beam_prop, L[mask], int(n_elem), ndim)
+
+    T = _get_transformation_matrix_vec(d_vec)
+    return np.einsum('nki,nij,njl->nkl', T, K_cond, T)
+
+
+def global_element_stiffness_euler_exact_loop(beam_prop: dict, d: np.ndarray) -> np.ndarray:
+    """EB element stiffness matrix in the global frame (single beam).
+
+    Uses Hermite curvature B-matrices, which are equivalent to the
+    Friedman-Kosmatka shape functions at Φ = 0 and to the analytical
+    Timoshenko stiffness at Φ = 0.
+
+    Parameters
+    ----------
+    beam_prop : dict
+        Beam cross-section and elastic properties.
+    d : np.ndarray, shape (dim,)
+        Edge vector (tail → head).
+
+    Returns
+    -------
+    np.ndarray, shape (num_elem_dof, num_elem_dof)
+    """
+    L = np.linalg.norm(d)
+    ndim = d.shape[0]
+    if ndim == 2:
+        K_loc = _eb_element_stiffness_2d(beam_prop, L)
+    else:
+        K_loc = _eb_element_stiffness_3d(beam_prop, L)
+    T = _get_transformation_matrix(d)
+    return T.T @ K_loc @ T
+
+
+def global_element_stiffness_euler_exact_vec(
+        beam_prop: dict,
+        d_vec: np.ndarray) -> np.ndarray:
+    """EB element stiffness matrices in the global frame (vectorised).
+
+    Parameters
+    ----------
+    beam_prop : dict
+        Beam cross-section and elastic properties.
+    d_vec : np.ndarray, shape (num_edges, dim)
+        Edge vectors.
+
+    Returns
+    -------
+    np.ndarray, shape (num_edges, num_elem_dof, num_elem_dof)
+    """
+    n_edges, ndim = d_vec.shape
+    L = np.linalg.norm(d_vec, axis=-1)
+    if ndim == 2:
+        K_loc = _eb_element_stiffness_2d_vec(beam_prop, L)
+    else:
+        K_loc = _eb_element_stiffness_3d_vec(beam_prop, L)
+    T = _get_transformation_matrix_vec(d_vec)
+    return np.einsum('nki,nij,njl->nkl', T, K_loc, T)
+
+
+def global_element_stiffness_timoshenko_exact_loop(
+        beam_prop: dict, d: np.ndarray,
+        derivative: int | None = None) -> np.ndarray:
     """Element stiffness matrix for a single beam in the global frame.
 
     Parameters
@@ -816,9 +1269,10 @@ def _get_transformation_matrix(d):
     return T
 
 
-def get_element_stiffness_local_vec(beam_prop: dict, d: np.ndarray,
-                                    ndim: int,
-                                    derivative: int | None = None) -> np.ndarray:
+def local_element_stiffness_timoshenko_exact_vec(
+        beam_prop: dict, d: np.ndarray,
+        ndim: int,
+        derivative: int | None = None) -> np.ndarray:
     """Element stiffness matrices for all beams in the local frame.
 
     The local frame has the beam axis along its first coordinate direction.
@@ -835,7 +1289,7 @@ def get_element_stiffness_local_vec(beam_prop: dict, d: np.ndarray,
     derivative : int or None, optional
         If not None, return derivatives of the stiffness matrices with
         respect to a cross-section shape parameter (see
-        :func:`get_element_stiffness_global`). The default is None.
+        :func:`global_element_stiffness_timoshenko_exact_loop`). The default is None.
 
     Returns
     -------
@@ -920,11 +1374,12 @@ def _get_transformation_matrix_vec(d):
     return T
 
 
-def get_element_stiffness_global_vec(beam_prop: dict, d_vec: np.ndarray,
-                                     derivative: int | None = None) -> np.ndarray:
+def global_element_stiffness_timoshenko_exact_vec(
+        beam_prop: dict, d_vec: np.ndarray,
+        derivative: int | None = None) -> np.ndarray:
     """Element stiffness matrices for all beams in the global frame.
 
-    Vectorised counterpart of :func:`get_element_stiffness_global`.
+    Vectorised counterpart of :func:`global_element_stiffness_timoshenko_exact_loop`.
 
     Parameters
     ----------
@@ -936,7 +1391,7 @@ def get_element_stiffness_global_vec(beam_prop: dict, d_vec: np.ndarray,
     derivative : int or None, optional
         If not None, return derivatives of the stiffness matrices with
         respect to a cross-section shape parameter (see
-        :func:`get_element_stiffness_global`). The default is None.
+        :func:`global_element_stiffness_timoshenko_exact_loop`). The default is None.
 
     Returns
     -------

@@ -14,7 +14,7 @@
 #
 import numpy as np
 
-from beam_networks.stiffness import get_element_stiffness_global
+from beam_networks.stiffness import global_element_stiffness_timoshenko_exact_loop
 
 
 def test_K_derivatives_2d():
@@ -26,27 +26,21 @@ def test_K_derivatives_2d():
     #
     d = np.array([1., 0.])
     # finite difference
-    Ke = get_element_stiffness_global(beam_prop={'name': 'circle',
-                                                 'radius': R,
-                                                 'E': E,
-                                                 'nu': nu},
-                                      d=d,
-                                      derivative=None)
+    Ke = global_element_stiffness_timoshenko_exact_loop(
+        beam_prop={'name': 'circle', 'radius': R, 'E': E, 'nu': nu},
+        d=d,
+        derivative=None)
 
     dr = 1e-10
-    dKe_fdiff = ((get_element_stiffness_global(beam_prop={'name': 'circle',
-                                                          'radius': R+dr,
-                                                          'E': E,
-                                                          'nu': nu},
-                                               d=d,
-                                               derivative=None)-Ke)/dr)
+    dKe_fdiff = ((global_element_stiffness_timoshenko_exact_loop(
+        beam_prop={'name': 'circle', 'radius': R + dr, 'E': E, 'nu': nu},
+        d=d,
+        derivative=None) - Ke) / dr)
 
-    dKe = get_element_stiffness_global(beam_prop={'name': 'circle',
-                                                  'radius': R,
-                                                  'E': E,
-                                                  'nu': nu},
-                                       d=d,
-                                       derivative=0)
+    dKe = global_element_stiffness_timoshenko_exact_loop(
+        beam_prop={'name': 'circle', 'radius': R, 'E': E, 'nu': nu},
+        d=d,
+        derivative=0)
 
     np.testing.assert_almost_equal(dKe, dKe_fdiff)
 
@@ -60,26 +54,20 @@ def test_K_derivatives_3d():
     #
     d = np.array([1., 0., 0.])
     # finite difference
-    Ke = get_element_stiffness_global(beam_prop={'name': 'circle',
-                                                 'radius': R,
-                                                 'E': E,
-                                                 'nu': nu},
-                                      d=d,
-                                      derivative=None)
+    Ke = global_element_stiffness_timoshenko_exact_loop(
+        beam_prop={'name': 'circle', 'radius': R, 'E': E, 'nu': nu},
+        d=d,
+        derivative=None)
 
     dr = 1e-11
-    dKe_fdiff = ((get_element_stiffness_global(beam_prop={'name': 'circle',
-                                                          'radius': R+dr,
-                                                          'E': E,
-                                                          'nu': nu},
-                                               d=d,
-                                               derivative=None)-Ke)/dr)
+    dKe_fdiff = ((global_element_stiffness_timoshenko_exact_loop(
+        beam_prop={'name': 'circle', 'radius': R + dr, 'E': E, 'nu': nu},
+        d=d,
+        derivative=None) - Ke) / dr)
 
-    dKe = get_element_stiffness_global(beam_prop={'name': 'circle',
-                                                  'radius': R,
-                                                  'E': E,
-                                                  'nu': nu},
-                                       d=d,
-                                       derivative=0)
+    dKe = global_element_stiffness_timoshenko_exact_loop(
+        beam_prop={'name': 'circle', 'radius': R, 'E': E, 'nu': nu},
+        d=d,
+        derivative=0)
 
     np.testing.assert_almost_equal(dKe, dKe_fdiff)

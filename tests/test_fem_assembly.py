@@ -20,7 +20,7 @@ from beam_networks.problem import BeamNetwork
 from beam_networks.geo import get_geometric_props
 from beam_networks.stiffness import (_fem_element_stiffness_2d,
                                      _fem_element_stiffness_3d,
-                                     get_fem_element_stiffness_global)
+                                     global_element_stiffness_timoshenko_numeric_loop)
 from beam_networks.reference_solutions.cantilever import cantilever_analytic
 
 
@@ -326,6 +326,6 @@ def test_condensed_global_stiffness_symmetric(poly_order):
     """Condensed FEM element stiffness in global frame is symmetric."""
     d = np.array([3., 4.])   # 2D, L=5, non-axis-aligned
     n_elem = 3
-    K = get_fem_element_stiffness_global(PROPS, d, n_elem=n_elem, poly_order=poly_order)
+    K = global_element_stiffness_timoshenko_numeric_loop(PROPS, d, n_elem=n_elem, poly_order=poly_order)
     np.testing.assert_allclose(K, K.T, atol=1e-12,
                                err_msg=f"Not symmetric for p={poly_order}")

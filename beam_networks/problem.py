@@ -78,9 +78,26 @@ class BeamNetwork(Network):
             removal, etc.). Set to False when loading untrusted external data.
             The default is True.
         options : dict, optional
-            Assembly options: 'vectorize' (bool), 'matrix' ('bsr'|'lil'|'dense'),
-            'verbose' (bool). The default uses vectorized BSR assembly with
-            verbose output.
+            Assembly options:
+
+            ``'vectorize'`` (bool)
+                Pre-compute all element stiffness matrices at once before
+                assembly. Faster for large networks but uses more memory.
+                Default True.
+            ``'matrix'`` (``'bsr'`` | ``'lil'`` | ``'dense'``)
+                Sparse format for the global stiffness matrix. Default ``'bsr'``.
+            ``'verbose'`` (bool)
+                Show a progress bar during assembly. Default True.
+            ``'euler_bernoulli'`` (bool)
+                Use Euler-Bernoulli beam theory (ignore shear deformation).
+                Default False (Timoshenko).
+            ``'n_elem_per_length'`` (float or None)
+                Number of FEM sub-elements per unit length. When set, each
+                beam is discretised into sub-elements and interior DOFs are
+                eliminated by static condensation. The element type is chosen
+                automatically: Lagrange (Timoshenko) or Hermite
+                (Euler-Bernoulli), both with reduced integration. Default None
+                (exact analytical stiffness).
         outdir : str, optional
             Directory for output files. Created if it does not exist.
             The default is the current working directory.
@@ -99,12 +116,14 @@ class BeamNetwork(Network):
                                          ['verbose', 'vectorize', 'matrix'],
                                          [True, True, 'bsr'],
                                          [None, None, ['bsr', 'lil', 'dense']])
-        # FEM options with None/int defaults (not handled by check_input_dict)
         self._options['n_elem_per_length'] = options.get('n_elem_per_length', None)
         self._options['min_element_length'] = options.get('min_element_length', None)
-        self._options['fem_poly_order'] = options.get('fem_poly_order', 1)
-        self._options['fem_n_gauss'] = options.get('fem_n_gauss', None)
         self._options['euler_bernoulli'] = bool(options.get('euler_bernoulli', False))
+        # Advanced FEM options (not part of the public API).
+        # Shape function type is selected automatically (Lagrange for Timoshenko,
+        # Hermite for Euler-Bernoulli); reduced integration is always used.
+        self._options['fem_poly_order'] = options.get('fem_poly_order', 3)
+        self._options['fem_n_gauss'] = options.get('fem_n_gauss', None)
 
         if not os.path.exists(outdir):
             os.makedirs(outdir)
@@ -503,18 +522,6 @@ class BeamNetwork(Network):
 
         beam_prop = dict(self._beam_prop)
         beam_prop['euler_bernoulli'] = self._options['euler_bernoulli']
-
-        # The FEM path (Lagrange elements) cannot represent EB beams: setting
-        # kGA=0 decouples the transverse DOFs from all other terms, making the
-        # element stiffness singular.  The exact Timoshenko stiffness already
-        # recovers the EB solution exactly when Phi=0, so we force that path.
-        if self._options['euler_bernoulli'] and n_elems is not None:
-            warnings.warn(
-                "euler_bernoulli=True is incompatible with FEM sub-element "
-                "discretization (Lagrange elements become singular when kGA=0). "
-                "Falling back to the exact stiffness assembly.",
-                UserWarning, stacklevel=2)
-            n_elems = None
 
         self._K = assemble_global_system(self._nodes,
                                          self._edges,
