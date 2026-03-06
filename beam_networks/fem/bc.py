@@ -1,5 +1,5 @@
 #
-# Copyright 2025 Hannes Holey
+# Copyright 2025-2026 Hannes Holey
 #
 # This file is part of beam_networks. beam_networks is free software: you can
 # redistribute it and/or modify it under the terms of the GNU General Public
