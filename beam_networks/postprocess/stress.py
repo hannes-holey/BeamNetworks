@@ -285,6 +285,36 @@ def _get_element_dof_3d(coords, adj, edge_vec, sol_global, rot=None):
     return dof_elem
 
 
+def _axial_stress_truss(adj: np.ndarray, d_vec: np.ndarray,
+                        sol: np.ndarray, beam_prop: dict) -> np.ndarray:
+    """Axial (von Mises) stress for truss elements.
+
+    Parameters
+    ----------
+    adj : np.ndarray
+        Edge connectivity, shape (num_edges, 2).
+    d_vec : np.ndarray
+        Edge vectors, shape (num_edges, ndim).
+    sol : np.ndarray
+        Global displacement vector, length num_nodes * ndim.
+    beam_prop : dict
+        Beam properties.
+
+    Returns
+    -------
+    np.ndarray
+        Absolute axial stress per element, shape (num_edges,).
+    """
+    _, ndim = d_vec.shape
+    E = beam_prop['E']
+    _, _, _, A, _, _ = get_geometric_props(beam_prop)
+    L = np.linalg.norm(d_vec, axis=-1)
+    e_hat = d_vec / L[:, None]
+    u = sol.reshape(-1, ndim)
+    du = np.einsum('ni,ni->n', u[adj[:, 1]] - u[adj[:, 0]], e_hat)
+    return np.abs(E * du / L)
+
+
 def get_element_mises_stress(coords: np.ndarray, adj: np.ndarray,
                              d_vec: np.ndarray, sol: np.ndarray,
                              beam_prop: dict, rot: np.ndarray | None = None,
@@ -328,6 +358,12 @@ def get_element_mises_stress(coords: np.ndarray, adj: np.ndarray,
         *return_ratio* is True.
     """
     _, ndim = coords.shape
+
+    if beam_prop.get('truss', False):
+        svM = _axial_stress_truss(adj, d_vec, sol, beam_prop)
+        if return_ratio:
+            return svM, np.zeros_like(svM)
+        return svM
 
     d = np.linalg.norm(d_vec, axis=-1)
 
@@ -383,6 +419,12 @@ def get_element_principal_stress(coords: np.ndarray, adj: np.ndarray,
         shape (num_edges, 3).
     """
     _, ndim = coords.shape
+
+    if beam_prop.get('truss', False):
+        sxx = _axial_stress_truss(adj, d_vec, sol, beam_prop)
+        pS = np.zeros((len(sxx), 3))
+        pS[:, 0] = sxx
+        return pS
 
     d = np.linalg.norm(d_vec, axis=-1)
 

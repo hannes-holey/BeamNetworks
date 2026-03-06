@@ -394,9 +394,11 @@ class BeamNetwork(Network):
     def dof_per_node(self) -> int:
         """Number of degrees of freedom per node.
 
-        3 for 2D problems (ux, uy, θz) and 6 for 3D problems
-        (ux, uy, uz, θx, θy, θz).
+        For beams: 3 for 2D (ux, uy, θz) and 6 for 3D (ux, uy, uz, θx, θy, θz).
+        For trusses: 2 for 2D (ux, uy) and 3 for 3D (ux, uy, uz).
         """
+        if self._beam_prop.get('truss', False):
+            return self.dim
         return 3 * (self.dim - 1)
 
     @property
@@ -453,11 +455,10 @@ class BeamNetwork(Network):
             Shape (num_nodes, dim). Zero array if no solution is available.
         """
         if self.has_solution:
-            u = self.sol.reshape(
-                len(self.sol) // self.dof_per_node, self.dof_per_node)
-            return u[:, :self.dof_per_node // self.dim + 1]
+            u = self.sol.reshape(-1, self.dof_per_node)
+            return u[:, :self.dim]
         else:
-            return np.zeros((self.num_nodes, self.dof_per_node // self.dim + 1))
+            return np.zeros((self.num_nodes, self.dim))
 
     @property
     def rotation(self) -> np.ndarray:
@@ -466,15 +467,16 @@ class BeamNetwork(Network):
         Returns
         -------
         numpy.ndarray
-            Shape (num_nodes, 1) for 2D (θz) or (num_nodes, 3) for 3D
-            (θx, θy, θz). Zero array if no solution is available.
+            Shape (num_nodes, 1) for 2D beams (θz), (num_nodes, 3) for 3D
+            beams (θx, θy, θz), or (num_nodes, 0) for trusses (no rotations).
+            Zero array if no solution is available.
         """
+        n_rot = self.dof_per_node - self.dim
         if self.has_solution:
-            u = self.sol.reshape(
-                len(self.sol) // self.dof_per_node, self.dof_per_node)
-            return u[:, self.dof_per_node // self.dim + 1:]
+            u = self.sol.reshape(-1, self.dof_per_node)
+            return u[:, self.dim:]
         else:
-            return np.zeros((self.num_nodes, self.dof_per_node // self.dim + 1))
+            return np.zeros((self.num_nodes, n_rot))
 
     @property
     def stiffness(self) -> np.ndarray:
@@ -581,7 +583,9 @@ class BeamNetwork(Network):
             warnings.warn(f"Boundary condition '{name} has been overridden'")
 
         self._bc[name].update([('type', type), ('active', active)])
-        self._bc[name].update(_get_bc_dof(self.nodes, select, selection, vector, num_per_point))
+        self._bc[name].update(
+            _get_bc_dof(self.nodes, select, selection, vector,
+                        num_per_point, dof_per_node=self.dof_per_node))
         self._bc_changed = True
 
     def delete_BC(self, name: str) -> None:
@@ -954,7 +958,8 @@ class BeamNetwork(Network):
                         r=None,
                         u=np.hstack((self.displacement, self.rotation)).flatten(),
                         f=None,
-                        stress=self._sVM)
+                        stress=self._sVM,
+                        dof_per_node=self.dof_per_node)
 
     def to_stl(self, file: str, clean: bool = False, tol: float = 1e-6) -> None:
         """Write the beam network geometry to an STL file.

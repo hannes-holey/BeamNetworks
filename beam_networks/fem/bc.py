@@ -17,7 +17,7 @@ import numpy as np
 from beam_networks.geometry.selection import box_selection, point_selection
 
 
-def _get_bc_dof(nodes, select, selection, vector, num=1):
+def _get_bc_dof(nodes, select, selection, vector, num=1, dof_per_node=None):
     """Transforms user input of selected nodes and displacement, load vectors
     to DOF.
 
@@ -52,7 +52,8 @@ def _get_bc_dof(nodes, select, selection, vector, num=1):
     """
 
     num_nodes, ndim = nodes.shape
-    dof_per_node = 3 * (ndim - 1)
+    if dof_per_node is None:
+        dof_per_node = 3 * (ndim - 1)
 
     if select == 'box':
         node_mask = box_selection(nodes, selection)

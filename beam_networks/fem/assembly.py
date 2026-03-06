@@ -24,7 +24,29 @@ from beam_networks.fem.stiffness import (
     global_element_stiffness_euler_numeric_single,
     global_element_stiffness_euler_numeric_all,
     global_element_stiffness_timoshenko_numeric_single,
-    global_element_stiffness_timoshenko_numeric_all)
+    global_element_stiffness_timoshenko_numeric_all,
+    global_element_stiffness_truss_exact_single,
+    global_element_stiffness_truss_exact_all)
+
+
+def _dof_per_node(ndim, beam_prop):
+    """Return the number of DOFs per node.
+
+    Parameters
+    ----------
+    ndim : int
+        Spatial dimension (2 or 3).
+    beam_prop : dict
+        Beam properties; the ``'truss'`` key selects pin-jointed bar elements.
+
+    Returns
+    -------
+    int
+        ``ndim`` for trusses, ``3 * (ndim - 1)`` for beams.
+    """
+    if beam_prop.get('truss', False):
+        return ndim
+    return 3 * (ndim - 1)
 
 
 def assemble_global_system(nodes_positions: np.ndarray,
@@ -229,7 +251,7 @@ def _assemble_sparse_bsr(nodes, edges, dr, beam_prop, verbose=True):
         pbar = tqdm(desc="Assemble BSR matrix", total=edges.shape[0], ncols=100)
 
     num_nodes, ndim = nodes.shape
-    num_dof_per_node = 3 * (ndim - 1)
+    num_dof_per_node = _dof_per_node(ndim, beam_prop)
     num_dof = num_nodes * num_dof_per_node
 
     aux = sp.csr_array((np.ones_like(edges[:, 0]),
@@ -245,7 +267,9 @@ def _assemble_sparse_bsr(nodes, edges, dr, beam_prop, verbose=True):
 
     for n0, c0 in zip(n0s, c0s):
         for k, n1 in enumerate(edges[i + np.arange(c0), 1]):
-            if beam_prop.get('euler_bernoulli', False):
+            if beam_prop.get('truss', False):
+                Ke = global_element_stiffness_truss_exact_single(beam_prop, dr[i])
+            elif beam_prop.get('euler_bernoulli', False):
                 Ke = global_element_stiffness_euler_exact_single(beam_prop, dr[i])
             else:
                 Ke = global_element_stiffness_timoshenko_exact_single(beam_prop, dr[i])
@@ -301,7 +325,7 @@ def _assemble_sparse_bsr_vec(nodes, edges, dr, beam_prop, verbose=True):
         pbar = tqdm(desc="Assemble BSR matrix (vectorized)", total=edges.shape[0], ncols=100)
 
     num_nodes, ndim = nodes.shape
-    num_dof_per_node = 3 * (ndim - 1)
+    num_dof_per_node = _dof_per_node(ndim, beam_prop)
     num_dof = num_nodes * num_dof_per_node
 
     aux = sp.csr_array((np.ones_like(edges[:, 0]),
@@ -312,7 +336,9 @@ def _assemble_sparse_bsr_vec(nodes, edges, dr, beam_prop, verbose=True):
     indptr = aux.indptr
     data = np.zeros((len(indices), num_dof_per_node, num_dof_per_node))
 
-    if beam_prop.get('euler_bernoulli', False):
+    if beam_prop.get('truss', False):
+        Ke = global_element_stiffness_truss_exact_all(beam_prop, dr)
+    elif beam_prop.get('euler_bernoulli', False):
         Ke = global_element_stiffness_euler_exact_all(beam_prop, dr)
     else:
         Ke = global_element_stiffness_timoshenko_exact_all(beam_prop, dr)
@@ -370,7 +396,7 @@ def _assemble_sparse_lil(nodes, edges, dr, beam_prop, verbose=True):
         pbar = tqdm(desc="Assemble LIL matrix", total=edges.shape[0], ncols=100)
 
     num_nodes, ndim = nodes.shape
-    num_dof_per_node = 3 * (ndim - 1)
+    num_dof_per_node = _dof_per_node(ndim, beam_prop)
     num_dof = num_nodes * num_dof_per_node
 
     K_global = sp.lil_array((num_dof, num_dof))
@@ -380,7 +406,10 @@ def _assemble_sparse_lil(nodes, edges, dr, beam_prop, verbose=True):
         s1 = slice(e0 * num_dof_per_node, (e0 + 1) * num_dof_per_node)
         s2 = slice(e1 * num_dof_per_node, (e1 + 1) * num_dof_per_node)
 
-        Ke = global_element_stiffness_timoshenko_exact_single(beam_prop, dr[i])
+        if beam_prop.get('truss', False):
+            Ke = global_element_stiffness_truss_exact_single(beam_prop, dr[i])
+        else:
+            Ke = global_element_stiffness_timoshenko_exact_single(beam_prop, dr[i])
 
         K_global[s1, s1] += Ke[:num_dof_per_node, :num_dof_per_node] / 2.
         K_global[s1, s2] += Ke[:num_dof_per_node, num_dof_per_node:]
@@ -421,12 +450,14 @@ def _assemble_sparse_lil_vec(nodes, edges, dr, beam_prop, verbose=True):
         pbar = tqdm(desc="Assemble LIL matrix (vectorized)", total=edges.shape[0], ncols=100)
 
     num_nodes, ndim = nodes.shape
-    num_dof_per_node = 3 * (ndim - 1)
+    num_dof_per_node = _dof_per_node(ndim, beam_prop)
     num_dof = num_nodes * num_dof_per_node
 
     K_global = sp.lil_array((num_dof, num_dof))
 
-    if beam_prop.get('euler_bernoulli', False):
+    if beam_prop.get('truss', False):
+        Ke = global_element_stiffness_truss_exact_all(beam_prop, dr)
+    elif beam_prop.get('euler_bernoulli', False):
         Ke = global_element_stiffness_euler_exact_all(beam_prop, dr)
     else:
         Ke = global_element_stiffness_timoshenko_exact_all(beam_prop, dr)
@@ -473,7 +504,7 @@ def _assemble_dense(nodes, edges, dr, beam_prop, verbose=True):
         pbar = tqdm(desc="Assemble dense matrix", total=edges.shape[0], ncols=100)
 
     num_nodes, ndim = nodes.shape
-    num_dof_per_node = 3 * (ndim - 1)
+    num_dof_per_node = _dof_per_node(ndim, beam_prop)
     num_dof = num_nodes * num_dof_per_node
 
     K_global = np.zeros((num_dof, num_dof))
@@ -483,7 +514,10 @@ def _assemble_dense(nodes, edges, dr, beam_prop, verbose=True):
         s1 = slice(e0 * num_dof_per_node, (e0 + 1) * num_dof_per_node)
         s2 = slice(e1 * num_dof_per_node, (e1 + 1) * num_dof_per_node)
 
-        Ke = global_element_stiffness_timoshenko_exact_single(beam_prop, dr[i])
+        if beam_prop.get('truss', False):
+            Ke = global_element_stiffness_truss_exact_single(beam_prop, dr[i])
+        else:
+            Ke = global_element_stiffness_timoshenko_exact_single(beam_prop, dr[i])
 
         K_global[s1, s1] += Ke[:num_dof_per_node, :num_dof_per_node]
         K_global[s1, s2] += Ke[:num_dof_per_node, num_dof_per_node:]
@@ -523,11 +557,13 @@ def _assemble_dense_vec(nodes, edges, dr, beam_prop, verbose=True):
         pbar = tqdm(desc="Assemble dense matrix (vectorized)", total=edges.shape[0], ncols=100)
 
     num_nodes, ndim = nodes.shape
-    num_dof_per_node = 3 * (ndim - 1)
+    num_dof_per_node = _dof_per_node(ndim, beam_prop)
     num_dof = num_nodes * num_dof_per_node
 
     K_global = np.zeros((num_dof, num_dof))
-    if beam_prop.get('euler_bernoulli', False):
+    if beam_prop.get('truss', False):
+        Ke = global_element_stiffness_truss_exact_all(beam_prop, dr)
+    elif beam_prop.get('euler_bernoulli', False):
         Ke = global_element_stiffness_euler_exact_all(beam_prop, dr)
     else:
         Ke = global_element_stiffness_timoshenko_exact_all(beam_prop, dr)
@@ -555,7 +591,7 @@ def _assemble_sparse_bsr_fem(nodes, edges, dr, beam_prop, n_elems,
         pbar = tqdm(desc="Assemble BSR matrix (FEM)", total=edges.shape[0], ncols=100)
 
     num_nodes, ndim = nodes.shape
-    num_dof_per_node = 3 * (ndim - 1)
+    num_dof_per_node = _dof_per_node(ndim, beam_prop)
     num_dof = num_nodes * num_dof_per_node
 
     aux = sp.csr_array((np.ones_like(edges[:, 0]),
@@ -607,7 +643,7 @@ def _assemble_sparse_lil_fem(nodes, edges, dr, beam_prop, n_elems,
         pbar = tqdm(desc="Assemble LIL matrix (FEM)", total=edges.shape[0], ncols=100)
 
     num_nodes, ndim = nodes.shape
-    num_dof_per_node = 3 * (ndim - 1)
+    num_dof_per_node = _dof_per_node(ndim, beam_prop)
     num_dof = num_nodes * num_dof_per_node
 
     K_global = sp.lil_array((num_dof, num_dof))
@@ -641,7 +677,7 @@ def _assemble_dense_fem(nodes, edges, dr, beam_prop, n_elems,
         pbar = tqdm(desc="Assemble dense matrix (FEM)", total=edges.shape[0], ncols=100)
 
     num_nodes, ndim = nodes.shape
-    num_dof_per_node = 3 * (ndim - 1)
+    num_dof_per_node = _dof_per_node(ndim, beam_prop)
     num_dof = num_nodes * num_dof_per_node
 
     K_global = np.zeros((num_dof, num_dof))
@@ -677,7 +713,7 @@ def _assemble_sparse_bsr_fem_vec(nodes, edges, dr, beam_prop, n_elems,
         pbar = tqdm(desc="Assemble BSR matrix (FEM, vectorized)", total=edges.shape[0], ncols=100)
 
     num_nodes, ndim = nodes.shape
-    num_dof_per_node = 3 * (ndim - 1)
+    num_dof_per_node = _dof_per_node(ndim, beam_prop)
     num_dof = num_nodes * num_dof_per_node
 
     aux = sp.csr_array((np.ones_like(edges[:, 0]),
@@ -731,7 +767,7 @@ def _assemble_sparse_lil_fem_vec(nodes, edges, dr, beam_prop, n_elems,
         pbar = tqdm(desc="Assemble LIL matrix (FEM, vectorized)", total=edges.shape[0], ncols=100)
 
     num_nodes, ndim = nodes.shape
-    num_dof_per_node = 3 * (ndim - 1)
+    num_dof_per_node = _dof_per_node(ndim, beam_prop)
     num_dof = num_nodes * num_dof_per_node
 
     K_global = sp.lil_array((num_dof, num_dof))
@@ -771,7 +807,7 @@ def _assemble_dense_fem_vec(nodes, edges, dr, beam_prop, n_elems,
         pbar = tqdm(desc="Assemble dense matrix (FEM, vectorized)", total=edges.shape[0], ncols=100)
 
     num_nodes, ndim = nodes.shape
-    num_dof_per_node = 3 * (ndim - 1)
+    num_dof_per_node = _dof_per_node(ndim, beam_prop)
     num_dof = num_nodes * num_dof_per_node
 
     K_global = np.zeros((num_dof, num_dof))

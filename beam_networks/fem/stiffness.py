@@ -1432,3 +1432,61 @@ def global_element_stiffness_timoshenko_exact_all(
     K = np.einsum('...ni,...ij,...jk->...nk', np.transpose(T, axes=(0, 2, 1)), K_elem, T)
 
     return K
+
+
+def global_element_stiffness_truss_exact_single(
+        beam_prop: dict, d: np.ndarray) -> np.ndarray:
+    """Truss element stiffness matrix in the global frame (single element).
+
+    Assumes pin-jointed bar: no bending, no rotational DOFs.  The element
+    has ``2 * ndim`` DOFs ordered as ``[ux₁, uy₁, (uz₁,) ux₂, uy₂, (uz₂)]``.
+
+    Parameters
+    ----------
+    beam_prop : dict
+        Beam cross-section and elastic properties.  Only ``'E'`` and the
+        cross-sectional area (derived from the ``'name'``/size keys) are used.
+    d : np.ndarray
+        Vector from node 0 to node 1, shape (ndim,).  Its norm is the
+        bar length.
+
+    Returns
+    -------
+    np.ndarray
+        Element stiffness matrix in the global frame,
+        shape (2*ndim, 2*ndim).
+    """
+    E = beam_prop['E']
+    _, _, _, A, _, _ = get_geometric_props(beam_prop)
+    L = np.linalg.norm(d)
+    gamma = E * A / L
+    c = d / L
+    c_ext = np.concatenate([c, -c])
+    return gamma * np.outer(c_ext, c_ext)
+
+
+def global_element_stiffness_truss_exact_all(
+        beam_prop: dict, d_vec: np.ndarray) -> np.ndarray:
+    """Truss element stiffness matrices in the global frame (all elements).
+
+    Vectorised version of :func:`global_element_stiffness_truss_exact_single`.
+
+    Parameters
+    ----------
+    beam_prop : dict
+        Beam cross-section and elastic properties.
+    d_vec : np.ndarray
+        Edge vectors, shape (n_edges, ndim).
+
+    Returns
+    -------
+    np.ndarray
+        Element stiffness matrices, shape (n_edges, 2*ndim, 2*ndim).
+    """
+    E = beam_prop['E']
+    _, _, _, A, _, _ = get_geometric_props(beam_prop)
+    L = np.linalg.norm(d_vec, axis=-1)
+    gamma = E * A / L
+    c = d_vec / L[:, None]
+    c_ext = np.concatenate([c, -c], axis=1)
+    return gamma[:, None, None] * np.einsum('ni,nj->nij', c_ext, c_ext)

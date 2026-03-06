@@ -156,7 +156,10 @@ def _from_tar(filename):
         indptr = np.load(os.path.join(tmp_dir, 'K_indptr.npy'))
 
         num_nodes, dim = nodes.shape
-        dof_per_node = 3 * (dim - 1)
+        if beam_prop.get('truss', False):
+            dof_per_node = dim
+        else:
+            dof_per_node = 3 * (dim - 1)
         num_dof = num_nodes * dof_per_node
 
         K = sp.bsr_array((data, indices, indptr),
@@ -191,9 +194,9 @@ def _write_vtk(file, nodes, edges, disp, rot, stress):
         ("line", edges),
     ]
 
-    point_data = {"u": disp,
-                  "theta": rot
-                  }
+    point_data = {"u": disp}
+    if rot.size > 0:
+        point_data["theta"] = rot
 
     cell_data = {"svM": [stress]}
 
@@ -301,7 +304,8 @@ def _to_vtk(file, coords, adj,
             r=None,
             u=None,
             f=None,
-            stress=None):
+            stress=None,
+            dof_per_node=None):
     """Write structure and possibly solution to VTK file.
 
     Parameters
@@ -320,32 +324,34 @@ def _to_vtk(file, coords, adj,
         (generalized) forces of each node shape (n_nodes,node_dof)
     stress : np.ndarray, optional
         von Mises stress of each beam shape (n_beams)
+    dof_per_node : int, optional
+        Number of DOFs per node.  Defaults to ``3 * (ndim - 1)`` (beams).
+        Pass ``ndim`` for truss networks (translation-only DOFs).
 
     """
 
     #
     n_nodes, ndim = coords.shape
-    n_dof = 3 * (ndim - 1)
+    if dof_per_node is None:
+        dof_per_node = 3 * (ndim - 1)
     n_transl = ndim
-    n_rot = n_dof - n_transl
+    n_rot = dof_per_node - n_transl
     #
     cells = [("line", adj), ]
     # create mask for drawing degrees of freedom
     if u is not None or f is not None:
-        # masks for drawing degrees of freedom
-        if ndim == 2:
-            mask = np.array([True, True, False])
-        elif ndim == 3:
-            mask = np.array([True, True, True, False, False, False])
-        mask = np.tile(mask, n_nodes)
+        mask_single = np.array([True] * n_transl + [False] * n_rot)
+        mask = np.tile(mask_single, n_nodes)
     # insert data for nodes
     point_data = {}
     if u is not None:
-        point_data.update({"u": zero_pad_2d_array(u[mask].reshape(n_nodes, n_transl)),
-                           "theta": u[~mask].reshape(n_nodes, n_rot)})
+        point_data.update({"u": zero_pad_2d_array(u[mask].reshape(n_nodes, n_transl))})
+        if n_rot > 0:
+            point_data.update({"theta": u[~mask].reshape(n_nodes, n_rot)})
     if f is not None:
-        point_data.update({"f": f[mask].reshape(n_nodes, n_transl),
-                           "m": f[~mask].reshape(n_nodes, n_rot)})
+        point_data.update({"f": f[mask].reshape(n_nodes, n_transl)})
+        if n_rot > 0:
+            point_data.update({"m": f[~mask].reshape(n_nodes, n_rot)})
     # insert data for elements
     cell_data = {}
     if r is not None:
