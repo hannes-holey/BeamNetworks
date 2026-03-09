@@ -668,7 +668,8 @@ class ElasticNetwork(Network):
         self._bc_changed = False
 
     def solve(self, solver: str = 'cg', stress_mode: str = 'mean',
-              verbosity: int = 0, tol: float = 1e-10) -> None:
+              verbosity: int = 0, tol: float = 1e-10,
+              scale: bool = True) -> None:
         """Solve the linear elastic system.
 
         Assembles boundary conditions if they have changed, solves the
@@ -709,6 +710,10 @@ class ElasticNetwork(Network):
             Relative convergence tolerance for iterative solvers.
             Convergence is declared when ``‖r‖ / ‖b‖ < tol`` in the
             Jacobi-scaled system.  The default is 1e-10.
+        scale : bool, optional
+            Apply symmetric Jacobi scaling to the reduced system before
+            solving.  Set to ``False`` to work with the raw (unscaled) system.
+            The default is ``True``.
 
         Raises
         ------
@@ -733,7 +738,8 @@ class ElasticNetwork(Network):
                              self._val_N,
                              solver=solver,
                              verbosity=verbosity,
-                             tol=tol)
+                             tol=tol,
+                             scale=scale)
 
         self.has_solution = info == 0
 

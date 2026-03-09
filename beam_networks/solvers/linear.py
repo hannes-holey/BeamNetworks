@@ -25,7 +25,8 @@ _ALL_SOLVERS = frozenset({'direct', 'cholesky'}) | _ITERATIVE_SOLVERS
 
 def solve(K, bc_D: list, d_D: list, bc_N: list, F_N: list,
           solver: str = 'direct', verbosity: int = 0,
-          tol: float = 1e-10) -> tuple[np.ndarray, np.ndarray, int]:
+          tol: float = 1e-10,
+          scale: bool = True) -> tuple[np.ndarray, np.ndarray, int]:
     """Solve the partitioned linear elastic system K·d = f.
 
     Dispatches to a sparse or dense backend depending on the type of *K*.
@@ -67,6 +68,11 @@ def solve(K, bc_D: list, d_D: list, bc_N: list, F_N: list,
         Relative convergence tolerance for iterative solvers.  Convergence is
         declared when ``‖r‖ / ‖b‖ < tol`` in the scaled system.
         The default is 1e-10.
+    scale : bool, optional
+        Apply symmetric Jacobi (diagonal) scaling to the reduced system before
+        solving.  This normalises all diagonal entries to 1, which improves
+        convergence for iterative solvers on ill-conditioned systems.
+        The default is ``True``.
 
     Returns
     -------
@@ -82,7 +88,7 @@ def solve(K, bc_D: list, d_D: list, bc_N: list, F_N: list,
 
     if sp.issparse(K):
         d, F, info = _solve_sparse(K, bc_D, d_D, bc_N, F_N, solver=solver,
-                                   verbosity=verbosity, tol=tol)
+                                   verbosity=verbosity, tol=tol, scale=scale)
     else:
         d, F, info = _solve_dense(K, bc_D, d_D, bc_N, F_N)
 
@@ -90,7 +96,7 @@ def solve(K, bc_D: list, d_D: list, bc_N: list, F_N: list,
 
 
 def _solve_sparse(K_global, bc_D, d_D, bc_N, F_N,
-                  solver='direct', verbosity=0, tol=1e-10):
+                  solver='direct', verbosity=0, tol=1e-10, scale=True):
     """Solve sparse system.
 
     Parameters
@@ -168,11 +174,12 @@ def _solve_sparse(K_global, bc_D, d_D, bc_N, F_N,
     # After solving K̃ x̃ = b̃, recover dF = S x̃.
     # Makes all diagonal entries 1 and the convergence criterion ‖r̃‖/‖b̃‖
     # scale-invariant across arbitrary material and geometric parameters.
-    diag = KFF.diagonal()
-    s = 1.0 / np.sqrt(np.maximum(diag, 1e-300))
-    S = sp.diags(s)
-    KFF = S @ KFF @ S
-    rhs = s * rhs
+    if scale:
+        diag = KFF.diagonal()
+        s = 1.0 / np.sqrt(np.maximum(diag, 1e-300))
+        S = sp.diags(s)
+        KFF = S @ KFF @ S
+        rhs = s * rhs
 
     # print condition number
     if verbosity >= 100:
@@ -274,7 +281,8 @@ def _solve_sparse(K_global, bc_D, d_D, bc_N, F_N,
             info = 1
 
     # Unscale solution
-    dF = s * dF
+    if scale:
+        dF = s * dF
 
     if verbosity >= 25 and verbosity < 50:
         print("Free displacements dF statistics")
