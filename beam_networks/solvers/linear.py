@@ -16,9 +16,16 @@ import numpy as np
 import scipy.sparse as sp
 
 
+# Solvers that apply Jacobi scaling and use an iterative Krylov method.
+_ITERATIVE_SOLVERS = frozenset({'cg', 'ilu', 'ssor', 'amg', 'amg_rs'})
+
+# All valid solver names.
+_ALL_SOLVERS = frozenset({'direct', 'cholesky'}) | _ITERATIVE_SOLVERS
+
+
 def solve(K, bc_D: list, d_D: list, bc_N: list, F_N: list,
-          solver: str = 'direct', preconditioner: str | None = None,
-          verbosity: int = 0) -> tuple[np.ndarray, np.ndarray, int]:
+          solver: str = 'direct', verbosity: int = 0,
+          tol: float = 1e-10) -> tuple[np.ndarray, np.ndarray, int]:
     """Solve the partitioned linear elastic system K·d = f.
 
     Dispatches to a sparse or dense backend depending on the type of *K*.
@@ -36,15 +43,30 @@ def solve(K, bc_D: list, d_D: list, bc_N: list, F_N: list,
     F_N : list of float
         Applied force values corresponding to *bc_N*.
     solver : str, optional
-        Linear solver: ``'direct'`` (sparse LU via ``spsolve``) or ``'cg'``
-        (conjugate gradient). The default is ``'direct'``.
-    preconditioner : str or None, optional
-        Preconditioner for the CG solver: ``'diagonal'`` or None.
-        Only active for sparse matrices. The default is None.
+        Linear solver.  Available options:
+
+        * ``'direct'``    — sparse LU via ``spsolve`` (default)
+        * ``'cholesky'``  — sparse Cholesky via CHOLMOD (requires
+          ``scikit-sparse``); best for repeated solves with the same
+          sparsity pattern (e.g. fracture simulations)
+        * ``'cg'``        — unpreconditioned conjugate gradient
+        * ``'ilu'``       — CG preconditioned with incomplete LU (ILU)
+        * ``'ssor'``      — CG preconditioned with SSOR (ω = 1)
+        * ``'amg'``       — CG preconditioned with smoothed-aggregation
+          algebraic multigrid (requires ``pyamg``); optimal O(N) for
+          homogeneous lattices
+        * ``'amg_rs'``    — CG preconditioned with Ruge–Stüben AMG
+          (requires ``pyamg``); better for heterogeneous / diluted networks
+
+        The default is ``'direct'``.
     verbosity : int, optional
         Diagnostic output level (sparse solver only); see
         :meth:`~beam_networks.problem.ElasticNetwork.solve` for details.
         The default is 0.
+    tol : float, optional
+        Relative convergence tolerance for iterative solvers.  Convergence is
+        declared when ``‖r‖ / ‖b‖ < tol`` in the scaled system.
+        The default is 1e-10.
 
     Returns
     -------
@@ -60,8 +82,7 @@ def solve(K, bc_D: list, d_D: list, bc_N: list, F_N: list,
 
     if sp.issparse(K):
         d, F, info = _solve_sparse(K, bc_D, d_D, bc_N, F_N, solver=solver,
-                                   preconditioner=preconditioner,
-                                   verbosity=verbosity)
+                                   verbosity=verbosity, tol=tol)
     else:
         d, F, info = _solve_dense(K, bc_D, d_D, bc_N, F_N)
 
@@ -69,45 +90,41 @@ def solve(K, bc_D: list, d_D: list, bc_N: list, F_N: list,
 
 
 def _solve_sparse(K_global, bc_D, d_D, bc_N, F_N,
-                  solver='direct', preconditioner=None,
-                  verbosity=0):
+                  solver='direct', verbosity=0, tol=1e-10):
     """Solve sparse system.
-
 
     Parameters
     ----------
-    K : scipy.sparse.csr_matrix
-        Stiffness matrix
+    K_global : scipy.sparse matrix
+        Global stiffness matrix.
     bc_D : iterable
-        List of constraint DOFs (Dirichlet BCs)
+        List of constraint DOFs (Dirichlet BCs).
     d_D : iterable
-        List of constraint DOF values (Dirichlet BCs)
+        List of constraint DOF values (Dirichlet BCs).
     bc_N : iterable
-        List of DOFs with nonzero loads (Neumann BCs)
+        List of DOFs with nonzero loads (Neumann BCs).
     F_N : iterable
-        List of DOF values with nonzero loads (Neumann BCs)
+        List of DOF values with nonzero loads (Neumann BCs).
     solver : str, optional
-        Type of solver, 'direct' or 'cg' (the default is 'direct')
-    preconditioner : str, optional
-        Type of preconditioner, 'diagonal' or None (the default is None)
+        See :func:`solve` for the full list of options.
     verbosity : int, optional
-        level of verbosity, if between 25/50 print information about
-        displacements and reaction forces, if between 50/100 print
-        information about stiffness matrix, if greater equal 100 print
-        condition number (default is 0).
-
+        Verbosity level (default 0).
+    tol : float, optional
+        Relative convergence tolerance for iterative solvers (default 1e-10).
 
     Returns
     -------
     d : np.ndarray
-        Global solution vector
+        Global solution vector.
     F : np.ndarray
-        Global load vector
+        Global load vector.
     info : int
-        Info about numerical solution, 0 if successful
+        0 on success, non-zero on failure.
     """
 
-    assert solver in ['direct', 'cg', 'pcg']
+    if solver not in _ALL_SOLVERS:
+        raise ValueError(
+            f"Unknown solver '{solver}'. Choose from: {sorted(_ALL_SOLVERS)}")
 
     num_dof = K_global.shape[0]
 
@@ -146,12 +163,17 @@ def _solve_sparse(K_global, bc_D, d_D, bc_N, F_N,
     # Right-hand-side
     rhs = -KFE.dot(d_D) + LFs.T.dot(f)
 
-    # apply diagonal preconditioner
-    if preconditioner == "diagonal":
-        P = sp.diags(1/KFF.diagonal(), format=KFF._format)
-        P_inv = sp.diags(KFF.diagonal(), format=KFF._format)
-        KFF = P@KFF
-        rhs = P@rhs
+    # Symmetric Jacobi scaling for iterative solvers:
+    # K̃ = S K_FF S,  b̃ = S b,  s = 1/sqrt(diag(K_FF))
+    # After solving K̃ x̃ = b̃, recover dF = S x̃.
+    # Makes all diagonal entries 1 and the convergence criterion ‖r̃‖/‖b̃‖
+    # scale-invariant across arbitrary material and geometric parameters.
+    diag = KFF.diagonal()
+    s = 1.0 / np.sqrt(np.maximum(diag, 1e-300))
+    S = sp.diags(s)
+    KFF = S @ KFF @ S
+    rhs = s * rhs
+
     # print condition number
     if verbosity >= 100:
         smallest_eigenvalue = sp.linalg.eigsh(KFF, k=1,
@@ -170,7 +192,10 @@ def _solve_sparse(K_global, bc_D, d_D, bc_N, F_N,
         print("condition number: ",
               largest_eigenvalue/smallest_eigenvalue)
 
+    # ------------------------------------------------------------------
     # Solve reduced system
+    # ------------------------------------------------------------------
+
     if solver == 'direct':
         try:
             dF = sp.linalg.spsolve(KFF.tocsr(), rhs)
@@ -178,24 +203,84 @@ def _solve_sparse(K_global, bc_D, d_D, bc_N, F_N,
         except sp.linalg.MatrixRankWarning:
             dF = np.zeros_like(rhs)
             info = 1
+
+    elif solver == 'cholesky':
+        # Sparse Cholesky via CHOLMOD (scikit-sparse).
+        # Ideal for repeated solves with the same sparsity pattern.
+        try:
+            from sksparse.cholmod import cho_factor
+        except ImportError:
+            raise ImportError(
+                "solver='cholesky' requires scikit-sparse.\n"
+                "Install with:  pip install scikit-sparse")
+        try:
+            factor = cho_factor(KFF.tocsc())
+            dF = factor.solve(rhs)
+            info = 0
+        except Exception as e:
+            print(e)
+            dF = np.zeros_like(rhs)
+            info = 1
+
     elif solver == 'cg':
-        dF, info = sp.linalg.cg(KFF, rhs, rtol=1e-10, maxiter=10000)
-    elif solver == 'pcg':
+        dF, info = sp.linalg.cg(KFF, rhs, rtol=tol, atol=0., maxiter=10000)
+
+    elif solver == 'ilu':
+        # CG preconditioned with incomplete LU (ILU).
         ilu = sp.linalg.spilu(KFF.tocsc(), fill_factor=100., drop_tol=1e-5)
         M = sp.linalg.LinearOperator(KFF.shape, ilu.solve)
-        dF, info = sp.linalg.cg(KFF, rhs, M=M)
-    else:
-        raise RuntimeError(f'Solver {solver} not available.')
+        dF, info = sp.linalg.cg(KFF, rhs, M=M, rtol=tol, atol=0.)
+
+    elif solver == 'ssor':
+        # CG preconditioned with SSOR (ω = 1).
+        # M⁻¹ r = (D + U)⁻¹ D (D + L)⁻¹ r
+        L_mat = sp.tril(KFF).tocsc()
+        U_mat = sp.triu(KFF).tocsc()
+        d_vec = KFF.diagonal()
+
+        def _ssor_apply(r):
+            y = sp.linalg.spsolve_triangular(L_mat, r, lower=True)
+            return sp.linalg.spsolve_triangular(U_mat, d_vec * y, lower=False)
+
+        M = sp.linalg.LinearOperator(KFF.shape, _ssor_apply)
+        dF, info = sp.linalg.cg(KFF, rhs, M=M, rtol=tol, atol=0.)
+
+    elif solver in ('amg', 'amg_rs'):
+        # CG preconditioned with algebraic multigrid (pyamg).
+        try:
+            import pyamg
+        except ImportError:
+            raise ImportError(
+                f"solver='{solver}' requires pyamg.\n"
+                "Install with:  pip install pyamg")
+        # pyamg requires int32 CSR indices; newer scipy defaults to int64.
+        KFF_csr = KFF.tocsr()
+        KFF_csr.indptr = KFF_csr.indptr.astype(np.int32)
+        KFF_csr.indices = KFF_csr.indices.astype(np.int32)
+        try:
+            if solver == 'amg':
+                # Smoothed aggregation: optimal for homogeneous lattices.
+                ml = pyamg.smoothed_aggregation_solver(KFF_csr)
+            else:
+                # Ruge–Stüben: better for heterogeneous / diluted networks.
+                # Can degenerate on ill-scaled (unscaled) matrices — caught below.
+                ml = pyamg.ruge_stuben_solver(KFF_csr)
+            M = ml.aspreconditioner()
+            dF, info = sp.linalg.cg(KFF, rhs, M=M, rtol=tol, atol=0.)
+        except (ValueError, RuntimeError):
+            # AMG hierarchy failed (e.g. NaN/Inf in coarse levels due to
+            # extreme stiffness ratios in unscaled beam matrices).
+            dF = np.zeros_like(rhs)
+            info = 1
+
+    # Unscale solution
+    dF = s * dF
 
     if verbosity >= 25 and verbosity < 50:
         print("Free displacements dF statistics")
         print("min(|dF|): ", dF.min())
         print("median(|dF|): ", np.median(dF))
         print("max(|dF|): ", dF.max())
-
-    # apply diagonal preconditioner
-    if preconditioner == "diagonal":
-        rhs = P_inv@rhs
 
     # Solution all DOFs
     d = LEs.dot(d_D) + LFs.dot(dF)

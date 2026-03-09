@@ -22,19 +22,17 @@ from beam_networks.geometry.geo import get_geometric_props
 from beam_networks.reference_solutions.cantilever import cantilever_analytic
 
 
-@pytest.mark.parametrize('phi_deg, a, num_nodes, assembly, vectorized, solver, preconditioner',
-                         [(0., 0.5, 51, 'bsr', True, 'direct', None),
-                          (0., 0.5, 51, 'bsr', False, 'cg', None),
-                          (-45., 0.5, 51, 'lil', True, 'direct', None),
-                          (30., 0.7, 101, 'lil', False, 'direct', None),
-                          (30., 0.7, 101, 'dense', True, 'cg', None),
-                          (-120., 0.9, 101, 'dense', False, 'direct', None),
-                          (-120., 0.9, 101, 'bsr', True, 'cg', None),
-                          (180., 0.3, 101, 'bsr', True, 'direct', None),
-                          (180., 0.3, 101, 'bsr', True, 'direct', 'diagonal'),
-                          (-120., 0.9, 101, 'bsr', True, 'pcg', 'diagonal')])
-def test_cantilever_rot(phi_deg, a, num_nodes, assembly, vectorized,
-                        solver, preconditioner):
+@pytest.mark.parametrize('phi_deg, a, num_nodes, assembly, vectorized, solver',
+                         [(0., 0.5, 51, 'bsr', True, 'direct'),
+                          (0., 0.5, 51, 'bsr', False, 'cg'),
+                          (-45., 0.5, 51, 'lil', True, 'direct'),
+                          (30., 0.7, 101, 'lil', False, 'direct'),
+                          (30., 0.7, 101, 'dense', True, 'cg'),
+                          (-120., 0.9, 101, 'dense', False, 'direct'),
+                          (-120., 0.9, 101, 'bsr', True, 'cg'),
+                          (180., 0.3, 101, 'bsr', True, 'direct'),
+                          (-120., 0.9, 101, 'bsr', True, 'ilu')])
+def test_cantilever_rot(phi_deg, a, num_nodes, assembly, vectorized, solver):
 
     # Beam properties
     E = 1.
@@ -87,7 +85,7 @@ def test_cantilever_rot(phi_deg, a, num_nodes, assembly, vectorized,
     problem.add_BC('1', 'N', 'node', [node], F_rot)
 
     # Solve the system
-    problem.solve(solver=solver, preconditioner=preconditioner)
+    problem.solve(solver=solver)
     d_num = problem.sol
 
     # Rotate solution back into beam frame

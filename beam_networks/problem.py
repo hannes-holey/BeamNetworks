@@ -667,8 +667,8 @@ class ElasticNetwork(Network):
 
         self._bc_changed = False
 
-    def solve(self, solver: str | None = None, stress_mode: str = 'mean',
-              preconditioner: str | None = None, verbosity: int = 0) -> None:
+    def solve(self, solver: str = 'cg', stress_mode: str = 'mean',
+              verbosity: int = 0, tol: float = 1e-10) -> None:
         """Solve the linear elastic system.
 
         Assembles boundary conditions if they have changed, solves the
@@ -676,22 +676,27 @@ class ElasticNetwork(Network):
         (``sol``), reaction forces (``Freact``), and von Mises stress
         (``_sVM``). Sets ``has_solution = True`` on success.
 
-        The solver is chosen automatically based on system size when *solver*
-        is None: ``'direct'`` for fewer than 20 000 free DOFs, ``'cg'``
-        otherwise.
-
         Parameters
         ----------
-        solver : str or None, optional
-            Linear solver: ``'direct'`` (sparse LU via ``spsolve``) or
-            ``'cg'`` (conjugate gradient). The default is None (auto-select).
+        solver : str, optional
+            Linear solver.  Available options:
+
+            * ``'cg'``       — unpreconditioned conjugate gradient
+            * ``'direct'``   — sparse LU via ``spsolve``
+            * ``'cholesky'`` — sparse Cholesky via CHOLMOD
+              (requires ``scikit-sparse``)
+            * ``'ilu'``      — CG + incomplete LU (ILU)
+            * ``'ssor'``     — CG + SSOR (ω = 1)
+            * ``'amg'``      — CG + smoothed-aggregation AMG
+              (requires ``pyamg``); optimal for homogeneous lattices
+            * ``'amg_rs'``   — CG + Ruge–Stüben AMG
+              (requires ``pyamg``); better for heterogeneous / diluted networks
+
+            The default is ``'cg'``.
         stress_mode : str, optional
             How to aggregate von Mises stress along each beam: ``'max'``
             takes the end-point maximum, ``'mean'`` averages both ends.
             The default is ``'mean'``.
-        preconditioner : str or None, optional
-            Preconditioner for the CG solver: ``'diagonal'`` or None.
-            The default is None. Only active for sparse matrices.
         verbosity : int, optional
             Diagnostic output level (active for sparse solvers only):
 
@@ -699,6 +704,11 @@ class ElasticNetwork(Network):
             * 25–49 — print displacement and reaction force statistics
             * 50–99 — additionally print stiffness matrix statistics
             * ≥100 — additionally print the condition number
+
+        tol : float, optional
+            Relative convergence tolerance for iterative solvers.
+            Convergence is declared when ``‖r‖ / ‖b‖ < tol`` in the
+            Jacobi-scaled system.  The default is 1e-10.
 
         Raises
         ------
@@ -712,12 +722,6 @@ class ElasticNetwork(Network):
         if self._bc_changed:
             self.assemble_BCs()
 
-        if solver is None:
-            if self.num_dof < 20_000:
-                solver = 'direct'
-            else:
-                solver = 'cg'
-
         if not self.has_bc:
             raise RuntimeError(
                 'No boundary conditions given. Nothing to solve here.')
@@ -728,8 +732,8 @@ class ElasticNetwork(Network):
                              self._dof_N,
                              self._val_N,
                              solver=solver,
-                             preconditioner=preconditioner,
-                             verbosity=verbosity)
+                             verbosity=verbosity,
+                             tol=tol)
 
         self.has_solution = info == 0
 

@@ -33,6 +33,13 @@ tests = [
 doc = [
     'sphinx',
     'sphinx_book_theme']
+cholesky = [
+    'scikit-sparse']
+amg = [
+    'pyamg']
+solvers = [
+    'scikit-sparse',
+    'pyamg']
 
 [project.scripts]
 vtk2img = "beam_networks.viz:vtk2img"

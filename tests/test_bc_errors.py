@@ -57,9 +57,9 @@ def test_no_bc_raises():
 # ---------------------------------------------------------------------------
 
 def test_invalid_solver_raises():
-    """Unknown solver name should raise AssertionError (assert in solve.py)."""
+    """Unknown solver name should raise ValueError."""
     p = _valid_problem()
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         p.solve(solver='mumps')
 
 
