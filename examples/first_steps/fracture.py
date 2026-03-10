@@ -79,7 +79,8 @@ if __name__ == "__main__":
             problem.add_BC('1', 'D', 'box', [None, None, 0.95, None], [None, 0., None])
 
             # Run
-            problem.run(mode=mode, sign=sign, dist=dist)
+            # direct solver usually better for disordered networks
+            problem.run(mode=mode, sign=sign, dist=dist, solver='direct')
             problem.write()
 
             t = datetime.now() - tic

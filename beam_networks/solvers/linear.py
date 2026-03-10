@@ -169,6 +169,13 @@ def _solve_sparse(K_global, bc_D, d_D, bc_N, F_N,
     # Right-hand-side
     rhs = -KFE.dot(d_D) + LFs.T.dot(f)
 
+    # Regularize isolated DOFs (zero-diagonal rows/columns).
+    # These arise when all bonds at a node are removed (e.g. fracture)
+    # Adding 1.0 to their diagonal gives the trivial equation 1·dF_i = 0
+    zero_mask = KFF.diagonal() == 0.0
+    if zero_mask.any():
+        KFF = KFF + sp.diags(zero_mask.astype(float))
+
     # Symmetric Jacobi scaling for iterative solvers:
     # K̃ = S K_FF S,  b̃ = S b,  s = 1/sqrt(diag(K_FF))
     # After solving K̃ x̃ = b̃, recover dF = S x̃.
@@ -231,6 +238,7 @@ def _solve_sparse(K_global, bc_D, d_D, bc_N, F_N,
 
     elif solver == 'cg':
         dF, info = sp.linalg.cg(KFF, rhs, rtol=tol, atol=0., maxiter=10000)
+        print(info)
 
     elif solver == 'ilu':
         # CG preconditioned with incomplete LU (ILU).

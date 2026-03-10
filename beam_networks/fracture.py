@@ -83,6 +83,7 @@ class FractureProblem(ElasticNetwork):
             mode='cascade',
             sign=-1,
             dist=None,
+            solver='cg',
             fail_crit='vM',
             no_output=False):
 
@@ -105,7 +106,7 @@ class FractureProblem(ElasticNetwork):
         # Get first stress distribution
         u = sign * 1. * self.Ly
         self.modify_BC('1', [None, u, None])
-        self.solve(solver='direct', scale=False, stress_mode='max')
+        self.solve(solver=solver, stress_mode='max')
 
         E = self._beam_prop.get('E')
         fail = self._beam_prop.get('strength', 0.1 * E)
@@ -125,7 +126,7 @@ class FractureProblem(ElasticNetwork):
                 u *= factor
                 self.scale_BC('D', factor)
 
-            self.solve(solver='direct', scale=False, stress_mode='max')
+            self.solve(solver=solver, stress_mode='max')
 
             # Reaction forces
             Fy1 = self.Freact['1']
