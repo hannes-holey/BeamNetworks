@@ -27,6 +27,7 @@ from beam_networks.io.validation import check_input_dict
 from beam_networks.geometry.selection import _remove_isolated_nodes_edges, _mic
 from beam_networks.postprocess.viz import _plot_network
 from beam_networks.io.formats import _to_vtk, _to_vtk_periodic, _to_stl, _from_tar, _to_tar
+from beam_networks.solvers.nonlinear import solve_nonlinear as _solve_nonlinear
 
 if TYPE_CHECKING:
     import matplotlib
@@ -747,6 +748,84 @@ class ElasticNetwork(Network):
             self.sol = sol
             self.Freact = self._get_reaction_forces(F)
             self.compute_equivalent_stress(mode=stress_mode)
+
+    def solve_nonlinear(self, n_steps: int = 100, max_iter: int = 10000,
+                        tol: float = 1e-9, verbose: bool = True,
+                        callback=None, matrix: str = 'dense') -> None:
+        """Solve the geometrically nonlinear elastic system (2D only).
+
+        Uses a load-stepped Newton–Raphson scheme with the Crisfield (1990)
+        co-rotational formulation. Large rigid-body rotations are handled
+        exactly; strains in the local element frame remain small. An Updated
+        Lagrangian approach is used: the reference configuration is advanced
+        to the deformed state after each converged load step.
+
+        Only Neumann (force/moment) boundary conditions are load-stepped.
+        Dirichlet (prescribed displacement) BCs are enforced as zero
+        incremental displacements throughout (fixed supports).
+
+        Parameters
+        ----------
+        n_steps : int, optional
+            Number of load increments. The total Neumann load is divided
+            equally across all steps. The default is 100.
+        max_iter : int, optional
+            Maximum Newton–Raphson iterations per load step. The default is
+            10 000.
+        tol : float, optional
+            Convergence tolerance on the incremental displacement norm.
+            The default is 1e-9.
+        verbose : bool, optional
+            Print per-step convergence information. The default is True.
+        callback : callable or None, optional
+            If provided, called at the end of each converged load step as
+            ``callback(step, nodes_current, sol_total)`` where *nodes_current*
+            is the reference nodal array after committing the step (shape
+            ``(N, 2)``) and *sol_total* is the accumulated displacement from
+            the original nodes (shape ``(3*N,)``). Useful for plotting
+            intermediate deformed shapes. The default is None.
+        matrix : {'dense', 'bsr'}, optional
+            Storage format for the element-level tangent stiffness assembly.
+            ``'dense'`` uses plain NumPy arrays and ``numpy.linalg.solve``
+            for the Newton–Raphson linear step; suitable for small networks.
+            ``'bsr'`` assembles a ``scipy.sparse.bsr_array`` and uses
+            ``scipy.sparse.linalg.spsolve`` for the linear step; recommended
+            for large networks. The default is ``'dense'``.
+
+        Raises
+        ------
+        NotImplementedError
+            If the network is not 2D.
+        RuntimeError
+            If no boundary conditions have been defined.
+        """
+        if self.dim != 2:
+            raise NotImplementedError(
+                "solve_nonlinear currently supports 2D networks only.")
+
+        if self._bc_changed:
+            self.assemble_BCs()
+
+        if not self.has_bc:
+            raise RuntimeError(
+                "No boundary conditions given. Nothing to solve here.")
+
+        self.sol = _solve_nonlinear(
+            self._nodes,
+            self._edges,
+            self._beam_prop,
+            dof_D=self._dof_D,
+            dof_N=self._dof_N,
+            val_N=self._val_N,
+            val_D=self._val_D,
+            n_steps=n_steps,
+            max_iter=max_iter,
+            tol=tol,
+            verbose=verbose,
+            callback=callback,
+            matrix=matrix,
+        )
+        self.has_solution = True
 
     def _get_reaction_forces(self, F):
         """Extract reaction forces from global force vector
