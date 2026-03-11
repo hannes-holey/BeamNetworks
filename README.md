@@ -84,3 +84,9 @@ Innovation Council and SMEs Executive Agency (EISMEA). Neither the European Unio
 the granting authority can be held responsible for them.
 
 ![EIC Logo](doc/assets/EIC-logo-FundedBy.png)
+
+
+## Disclaimer on AI Usage                                                                                                              
+The initial version (0.0.1) was written by Hannes Holey with contributions from Stefan Hiemer.
+Later versions were developed with the assistance of AI coding tools (Claude Code / Sonnet 4.6),                                       
+with all generated code reviewed and validated by the authors.
