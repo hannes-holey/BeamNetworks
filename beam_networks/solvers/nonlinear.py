@@ -23,6 +23,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from beam_networks.fem.corotational import assemble_nonlinear_system_2d
+from beam_networks.fem.partitioning import partition_stiffness
 
 
 def solve_nonlinear(
@@ -129,14 +130,6 @@ def solve_nonlinear(
     mask_F[dof_D] = False
     dof_F = np.where(mask_F)[0]
 
-    # Partition matrix L_F (ndof × n_free): precomputed once for sparse path
-    if matrix == 'bsr':
-        LFs = sp.bsr_array(
-            (np.ones(len(dof_F), dtype=float),
-             (dof_F, np.arange(len(dof_F)))),
-            shape=(ndof, len(dof_F)),
-        )
-
     # Updated Lagrangian: reference nodes advanced after each load step
     nodes_ref = nodes.copy()
 
@@ -155,8 +148,7 @@ def solve_nonlinear(
                 nodes_ref, edges, sol_step, beam_prop, matrix=matrix)
 
             if matrix == 'bsr':
-                K_FF = LFs.T.dot(K.dot(LFs))
-                rhs = LFs.T.dot(f_step - F_int)
+                K_FF, _, rhs, _ = partition_stiffness(K, dof_D, f_step - F_int)
                 du_F = sp.linalg.spsolve(K_FF.tocsr(), rhs)
             else:
                 res_F = (F_int - f_step)[dof_F]

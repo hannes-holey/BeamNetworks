@@ -15,6 +15,8 @@
 import numpy as np
 import scipy.sparse as sp
 
+from beam_networks.fem.partitioning import partition_stiffness, scatter_solution
+
 
 # Solvers that apply Jacobi scaling and use an iterative Krylov method.
 _ITERATIVE_SOLVERS = frozenset({'cg', 'ilu', 'ssor', 'amg', 'amg_rs'})
@@ -134,13 +136,8 @@ def _solve_sparse(K_global, bc_D, d_D, bc_N, F_N,
 
     num_dof = K_global.shape[0]
 
-    LE_rows = bc_D
-    LE_cols = np.arange(len(d_D))
-    LEs = sp.bsr_array((np.ones_like(LE_cols), (LE_rows, LE_cols)), shape=(num_dof, len(d_D)))
-    LF_rows = np.delete(np.arange(num_dof), bc_D)
-
-    LF_cols = np.arange(num_dof - len(d_D))
-    LFs = sp.bsr_array((np.ones_like(LF_cols), (LF_rows, LF_cols)), shape=(num_dof, num_dof - len(d_D)))
+    bc_D = np.asarray(bc_D)
+    d_D = np.asarray(d_D, dtype=float)
 
     # Global force vector
     f = np.zeros(num_dof)
@@ -153,8 +150,7 @@ def _solve_sparse(K_global, bc_D, d_D, bc_N, F_N,
         print("median(|K|): ", np.median(K_global.data))
         print("max(|K|): ", K_global.data.max())
 
-    KFF = LFs.T.dot(K_global.dot(LFs))
-    KFE = LFs.T.dot(K_global.dot(LEs))
+    KFF, KFE, f_free, free_dofs = partition_stiffness(K_global, bc_D, f)
 
     if verbosity >= 50 and verbosity < 100:
         print("Free stiffness matrix statistics")
@@ -167,7 +163,7 @@ def _solve_sparse(K_global, bc_D, d_D, bc_N, F_N,
         print("max(|KFE|): ", KFE.data.max())
 
     # Right-hand-side
-    rhs = -KFE.dot(d_D) + LFs.T.dot(f)
+    rhs = -KFE.dot(d_D) + f_free
 
     # Regularize isolated DOFs (zero-diagonal rows/columns).
     # These arise when all bonds at a node are removed (e.g. fracture)
@@ -298,7 +294,7 @@ def _solve_sparse(K_global, bc_D, d_D, bc_N, F_N,
         print("max(|dF|): ", dF.max())
 
     # Solution all DOFs
-    d = LEs.dot(d_D) + LFs.dot(dF)
+    d = scatter_solution(dF, bc_D, d_D, num_dof, free_dofs)
 
     # Reaction forces
     F = K_global.dot(d)
