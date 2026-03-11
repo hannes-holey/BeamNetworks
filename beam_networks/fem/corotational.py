@@ -32,37 +32,65 @@ from beam_networks.geometry.geo import get_geometric_props
 
 
 # ---------------------------------------------------------------------------
-# Local stiffness
+# Helpers (batch over M elements)
 # ---------------------------------------------------------------------------
 
-def _local_stiffness_2d(beam_prop: dict, L: float) -> np.ndarray:
-    """3×3 local stiffness for a 2D co-rotational beam element.
+def _rigid_body_rotation_2d(
+        nodes: np.ndarray,
+        d: np.ndarray,
+        edges: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Vectorised rigid-body rotation for all M elements.
 
-    The three reduced local DOFs after applying the chord constraint are::
+    Parameters
+    ----------
+    nodes : np.ndarray, shape (N, 2)
+        Reference (undeformed) nodal coordinates.
+    d : np.ndarray, shape (N, 3)
+        Current nodal DOFs ``[ux, uy, θ_z]`` per node.
+    edges : np.ndarray, shape (M, 2)
+        Edge connectivity.
 
-        ul = [elongation,  θ_0 - α,  θ_1 - α]
+    Returns
+    -------
+    alpha, l0, ln, c, s : np.ndarray, each shape (M,)
+    """
+    e0, e1 = edges[:, 0], edges[:, 1]
 
-    with corresponding local forces ``[N, M_0, M_1]``.
+    dr = nodes[e1] - nodes[e0]            # (M, 2)
+    l0 = np.linalg.norm(dr, axis=1)       # (M,)
 
-    The bending block is the exact condensed Timoshenko stiffness (Przemieniecki
-    1968). For a Timoshenko beam the shear flexibility parameter is
-    ``Φ = 12 EI / (κGA L²)``; setting ``Φ → 0`` recovers Euler–Bernoulli::
+    rn0 = nodes[e0] + d[e0, :2]          # (M, 2)
+    rn1 = nodes[e1] + d[e1, :2]          # (M, 2)
+    drn = rn1 - rn0                        # (M, 2)
+    ln = np.linalg.norm(drn, axis=1)       # (M,)
 
-        Kl = [[EA/L,              0,                   0          ],
-              [0,    EI(4+Φ)/(L(1+Φ)),   EI(2-Φ)/(L(1+Φ))      ],
-              [0,    EI(2-Φ)/(L(1+Φ)),   EI(4+Φ)/(L(1+Φ))      ]]
+    c0 = dr[:, 0] / l0
+    s0 = dr[:, 1] / l0
+    c = drn[:, 0] / ln
+    s = drn[:, 1] / ln
+
+    sin_a = c0 * s - s0 * c
+    cos_a = c0 * c + s0 * s
+    # arctan2(sin α, cos α) is equivalent to the quadrant-aware scalar logic
+    alpha = np.arctan2(sin_a, cos_a)       # (M,)
+
+    return alpha, l0, ln, c, s
+
+
+def _local_stiffness_2d(beam_prop: dict, l0: np.ndarray) -> np.ndarray:
+    """Vectorised 3×3 local stiffness for all M elements.
 
     Parameters
     ----------
     beam_prop : dict
         Beam cross-section and elastic properties.
-    L : float
-        Reference (undeformed) element length.
+    l0 : np.ndarray, shape (M,)
+        Reference (undeformed) element lengths.
 
     Returns
     -------
-    Kl : np.ndarray, shape (3, 3)
-        Symmetric local stiffness matrix.
+    Kl : np.ndarray, shape (M, 3, 3)
     """
     E = beam_prop['E']
     nu = beam_prop['nu']
@@ -72,153 +100,116 @@ def _local_stiffness_2d(beam_prop: dict, L: float) -> np.ndarray:
     EA = E * A
     EI = E * Iz
     kGA = kappa * G * A
-    Phi = 12. * EI / (kGA * L**2)
-    f = 1. / (1. + Phi)
+    Phi = 12. * EI / (kGA * l0**2)        # (M,)
+    f = 1. / (1. + Phi)                    # (M,)
 
-    Kl = np.array([
-        [EA, 0., 0.],
-        [0., EI * (4. + Phi) * f,  EI * (2. - Phi) * f],
-        [0., EI * (2. - Phi) * f,  EI * (4. + Phi) * f],
-    ]) / L
+    M = len(l0)
+    Kl = np.zeros((M, 3, 3))
+    Kl[:, 0, 0] = EA / l0
+    Kl[:, 1, 1] = EI * (4. + Phi) * f / l0
+    Kl[:, 1, 2] = EI * (2. - Phi) * f / l0
+    Kl[:, 2, 1] = EI * (2. - Phi) * f / l0
+    Kl[:, 2, 2] = EI * (4. + Phi) * f / l0
 
     return Kl
 
 
-# ---------------------------------------------------------------------------
-# Corotational geometry
-# ---------------------------------------------------------------------------
-
-def _rigid_body_rotation_2d(r0: np.ndarray,
-                            r1: np.ndarray,
-                            d0: np.ndarray,
-                            d1: np.ndarray,
-                            ) -> tuple[float, float, float, float, float]:
-    """Rigid-body rotation angle and deformed geometry of a 2D element.
+def _b_matrix_2d(c: np.ndarray, s: np.ndarray, ln: np.ndarray) -> np.ndarray:
+    """Vectorised 3×6 kinematic (B) matrix for all M elements.
 
     Parameters
     ----------
-    r0, r1 : np.ndarray, shape (2,)
-        Reference (undeformed) nodal coordinates.
-    d0, d1 : np.ndarray, shape (3,)
-        Current nodal DOFs ``[ux, uy, θ_z]`` for nodes 0 and 1.
+    c, s, ln : np.ndarray, shape (M,)
+        Direction cosines and deformed lengths.
 
     Returns
     -------
-    alpha : float
-        Rigid-body rotation angle of the deformed chord (radians).
-    l0 : float
-        Undeformed element length.
-    ln : float
-        Deformed element length.
-    c, s : float
-        Direction cosines of the deformed chord (cos α_global, sin α_global).
+    B : np.ndarray, shape (M, 3, 6)
     """
-    l0 = np.linalg.norm(r1 - r0)
-    rn0 = r0 + d0[:2]
-    rn1 = r1 + d1[:2]
-    ln = np.linalg.norm(rn1 - rn0)
-
-    # Unit vectors of reference and deformed chords
-    c0 = (r1[0] - r0[0]) / l0
-    s0 = (r1[1] - r0[1]) / l0
-    c = (rn1[0] - rn0[0]) / ln
-    s = (rn1[1] - rn0[1]) / ln
-
-    sin_a = c0 * s - s0 * c
-    cos_a = c0 * c + s0 * s
-
-    if sin_a >= 0. and cos_a >= 0.:
-        alpha = np.arcsin(sin_a)
-    elif sin_a >= 0. and cos_a < 0.:
-        alpha = np.arccos(cos_a)
-    elif sin_a < 0. and cos_a >= 0.:
-        alpha = np.arcsin(sin_a)
-    else:
-        alpha = -np.arccos(cos_a)
-
-    return alpha, l0, ln, c, s
+    M = len(c)
+    B = np.zeros((M, 3, 6))
+    B[:, 0, 0] = -c
+    B[:, 0, 1] = -s
+    B[:, 0, 3] = c
+    B[:, 0, 4] = s
+    B[:, 1, 0] = -s / ln
+    B[:, 1, 1] = c / ln
+    B[:, 1, 2] = 1.
+    B[:, 1, 3] = s / ln
+    B[:, 1, 4] = -c / ln
+    B[:, 2, 0] = -s / ln
+    B[:, 2, 1] = c / ln
+    B[:, 2, 3] = s / ln
+    B[:, 2, 4] = -c / ln
+    B[:, 2, 5] = 1.
+    return B
 
 
-def _b_matrix_2d(c: float, s: float, ln: float) -> np.ndarray:
-    """3×6 kinematic (B) matrix for a 2D co-rotational element.
+def _element_tangent_2d(
+        nodes: np.ndarray,
+        edges: np.ndarray,
+        sol: np.ndarray,
+        beam_prop: dict,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Vectorised tangent stiffness and internal forces for all M elements.
 
-    Linearised relationship ``δu_local = B · δu_global`` between the three
-    local deformational DOFs and the six global element DOFs.
+    Computes element tangent stiffness and internal forces for the entire
+    network in a single vectorised pass, without a Python loop over elements.
 
     Parameters
     ----------
-    c, s : float
-        Direction cosines of the deformed chord.
-    ln : float
-        Deformed element length.
-
-    Returns
-    -------
-    B : np.ndarray, shape (3, 6)
-    """
-    return np.array([
-        [-c,    -s,    0., c,     s,     0.],
-        [-s/ln,  c/ln, 1., s/ln, -c/ln,  0.],
-        [-s/ln,  c/ln, 0., s/ln, -c/ln,  1.],
-    ])
-
-
-# ---------------------------------------------------------------------------
-# Element tangent stiffness and internal forces
-# ---------------------------------------------------------------------------
-
-def element_tangent_2d(r0: np.ndarray,
-                       r1: np.ndarray,
-                       d0: np.ndarray,
-                       d1: np.ndarray,
-                       beam_prop: dict,
-                       ) -> tuple[np.ndarray, np.ndarray]:
-    """Tangent stiffness and internal forces for a 2D co-rotational beam.
-
-    Implements the Crisfield (1990) co-rotational formulation: large
-    rigid-body rotations are handled exactly through the corotational frame
-    while small strains in the local frame are treated with linear elasticity.
-
-    Parameters
-    ----------
-    r0, r1 : np.ndarray, shape (2,)
+    nodes : np.ndarray, shape (N, 2)
         Reference (undeformed) nodal coordinates.
-    d0, d1 : np.ndarray, shape (3,)
-        Current nodal DOFs ``[ux, uy, θ_z]`` for nodes 0 and 1.
+    edges : np.ndarray, shape (M, 2)
+        Edge connectivity.
+    sol : np.ndarray, shape (3*N,)
+        Current nodal DOFs ``[ux, uy, θ_z, ...]``.
     beam_prop : dict
         Beam cross-section and elastic properties.
 
     Returns
     -------
-    Kt : np.ndarray, shape (6, 6)
-        Element tangent stiffness matrix in the global frame.
-        Equals the material tangent ``B'·K_l·B`` plus geometric stiffness
-        terms from the axial force and bending moments.
-    fg : np.ndarray, shape (6,)
-        Element internal force vector in the global frame.
+    Kt : np.ndarray, shape (M, 6, 6)
+        Element tangent stiffness matrices in the global frame.
+    fg : np.ndarray, shape (M, 6)
+        Element internal force vectors in the global frame.
     """
-    alpha, l0, ln, c, s = _rigid_body_rotation_2d(r0, r1, d0, d1)
-    Kl = _local_stiffness_2d(beam_prop, l0)
+    e0, e1 = edges[:, 0], edges[:, 1]
+    d = sol.reshape(-1, 3)                         # (N, 3)
 
-    # Local deformational DOFs and corresponding internal forces
-    ul = np.array([ln - l0, d0[2] - alpha, d1[2] - alpha])
-    fl = Kl @ ul
+    alpha, l0, ln, c, s = _rigid_body_rotation_2d(nodes, d, edges)
+    Kl = _local_stiffness_2d(beam_prop, l0)    # (M, 3, 3)
 
-    # Kinematic transformation and global internal force
+    # Local deformational DOFs: ul = [ln-l0, θ0-α, θ1-α], shape (M, 3)
+    ul = np.stack([ln - l0, d[e0, 2] - alpha, d[e1, 2] - alpha], axis=1)
+
+    # Local internal forces: fl = Kl @ ul, shape (M, 3)
+    fl = np.einsum('mij,mj->mi', Kl, ul)
+
+    # Kinematic (B) matrix: (M, 3, 6)
     B = _b_matrix_2d(c, s, ln)
-    fg = B.T @ fl
 
-    # Geometric stiffness contributions (Crisfield 1990, eqs. 3.28–3.30)
-    r = np.array([-c, -s, 0., c, s, 0.])   # chord direction
-    z = np.array([s, -c, 0., -s, c, 0.])   # perpendicular direction
-    zz = z[:, None] @ z[None, :]
-    rz = r[:, None] @ z[None, :]
+    # Global internal forces: fg = B^T fl, shape (M, 6)
+    fg = np.einsum('mji,mj->mi', B, fl)
 
-    Kt = (B.T @ Kl @ B
-          + zz * fl[0] / ln
-          + (rz + rz.T) / ln**2 * (fl[1] + fl[2]))
+    # Material stiffness: Km = B^T Kl B, shape (M, 6, 6)
+    BT = B.transpose(0, 2, 1)                      # (M, 6, 3)
+    Km = BT @ Kl @ B                               # (M, 6, 6)
 
-    return Kt, fg
+    # Geometric stiffness (Crisfield 1990, eqs. 3.28–3.30)
+    # chord and perpendicular unit vectors, shape (M, 6)
+    zeros = np.zeros(len(c))
+    r = np.column_stack([-c, -s, zeros, c, s, zeros])
+    z = np.column_stack([s, -c, zeros, -s, c, zeros])
+
+    zz = np.einsum('mi,mj->mij', z, z)            # (M, 6, 6)
+    rz = np.einsum('mi,mj->mij', r, z)            # (M, 6, 6)
+
+    Kg = (zz * (fl[:, 0] / ln)[:, None, None]
+          + (rz + rz.transpose(0, 2, 1))
+          * ((fl[:, 1] + fl[:, 2]) / ln**2)[:, None, None])
+
+    return Km + Kg, fg
 
 
 # ---------------------------------------------------------------------------
@@ -236,19 +227,21 @@ def _assemble_dense_nonlinear_2d(
     K = np.zeros((ndof, ndof))
     F_int = np.zeros(ndof)
 
-    for e0, e1 in edges:
-        s0 = slice(e0 * 3, (e0 + 1) * 3)
-        s1 = slice(e1 * 3, (e1 + 1) * 3)
+    e0, e1 = edges[:, 0], edges[:, 1]
+    Kt_all, fg_all = _element_tangent_2d(nodes, edges, sol, beam_prop)
 
-        Kt, fg = element_tangent_2d(nodes[e0], nodes[e1], sol[s0], sol[s1], beam_prop)
+    # Scatter internal forces
+    for i in range(3):
+        np.add.at(F_int, e0 * 3 + i, fg_all[:, i])
+        np.add.at(F_int, e1 * 3 + i, fg_all[:, 3 + i])
 
-        K[s0, s0] += Kt[:3, :3]
-        K[s0, s1] += Kt[:3, 3:]
-        K[s1, s0] += Kt[3:, :3]
-        K[s1, s1] += Kt[3:, 3:]
-
-        F_int[s0] += fg[:3]
-        F_int[s1] += fg[3:]
+    # Scatter 3×3 stiffness blocks
+    for i in range(3):
+        for j in range(3):
+            np.add.at(K, (e0 * 3 + i, e0 * 3 + j), Kt_all[:, i,     j])
+            np.add.at(K, (e0 * 3 + i, e1 * 3 + j), Kt_all[:, i,     3 + j])
+            np.add.at(K, (e1 * 3 + i, e0 * 3 + j), Kt_all[:, 3 + i, j])
+            np.add.at(K, (e1 * 3 + i, e1 * 3 + j), Kt_all[:, 3 + i, 3 + j])
 
     return K, F_int
 
@@ -275,10 +268,11 @@ def _assemble_bsr_nonlinear_2d(
     # Ensure n0 < n1 and rows are sorted by n0 (matches the linear assembler)
     edges_sorted = np.sort(edges, axis=1)
     edges_sorted = edges_sorted[np.lexsort((edges_sorted[:, 1], edges_sorted[:, 0]))]
+    e0s, e1s = edges_sorted[:, 0], edges_sorted[:, 1]
 
     # Build sparsity pattern: upper triangle (off-diagonal edges) + diagonal
     aux = sp.csr_array(
-        (np.ones(len(edges_sorted)), (edges_sorted[:, 0], edges_sorted[:, 1])),
+        (np.ones(len(edges_sorted)), (e0s, e1s)),
         shape=(num_nodes, num_nodes),
     )
     aux = aux + sp.eye_array(num_nodes)
@@ -288,25 +282,31 @@ def _assemble_bsr_nonlinear_2d(
     data = np.zeros((len(indices), ndof_per_node, ndof_per_node))
     F_int = np.zeros(ndof)
 
-    i = 0
-    n0s, c0s = np.unique(edges_sorted[:, 0], return_counts=True)
+    # Compute all element tangent stiffnesses and internal forces at once
+    Kt_all, fg_all = _element_tangent_2d(nodes, edges_sorted, sol, beam_prop)
 
-    for n0, c0 in zip(n0s, c0s):
-        for k, n1 in enumerate(edges_sorted[i + np.arange(c0), 1]):
-            s0 = slice(n0 * ndof_per_node, (n0 + 1) * ndof_per_node)
-            s1 = slice(n1 * ndof_per_node, (n1 + 1) * ndof_per_node)
+    # Precompute BSR data-array positions for each edge
+    # Diagonal block of n0 is always the first entry in its CSR row (n0 < n1)
+    diag_pos_n0 = indptr[e0s]                       # (M,)
+    diag_pos_n1 = indptr[e1s]                       # (M,)
 
-            Kt, fg = element_tangent_2d(nodes[n0], nodes[n1], sol[s0], sol[s1], beam_prop)
+    # Off-diagonal block (n0, n1): within row n0 it is the (k+1)-th entry,
+    # where k is the 0-indexed rank of this edge among all edges from n0.
+    _, first_occ, c0s = np.unique(e0s, return_index=True, return_counts=True)
+    k_per_edge = np.arange(len(e0s)) - np.repeat(first_occ, c0s)
+    offdiag_pos = indptr[e0s] + 1 + k_per_edge      # (M,)
 
-            # Factor 1/2 on diagonal blocks; symmetrised by K + K.T below
-            data[indptr[n0]] += Kt[:3, :3] / 2.
-            data[indptr[n1]] += Kt[3:, 3:] / 2.
-            data[indptr[n0] + k + 1] += Kt[:3, 3:]
+    # Scatter diagonal blocks (factor 1/2; symmetrised by K + K.T below)
+    np.add.at(data, diag_pos_n0, Kt_all[:, :3, :3] / 2.)
+    np.add.at(data, diag_pos_n1, Kt_all[:, 3:, 3:] / 2.)
 
-            F_int[s0] += fg[:3]
-            F_int[s1] += fg[3:]
+    # Scatter off-diagonal blocks
+    np.add.at(data, offdiag_pos, Kt_all[:, :3, 3:])
 
-            i += 1
+    # Scatter internal forces
+    for i in range(3):
+        np.add.at(F_int, e0s * 3 + i, fg_all[:, i])
+        np.add.at(F_int, e1s * 3 + i, fg_all[:, 3 + i])
 
     K = sp.bsr_array(
         (data, indices, indptr),
@@ -354,16 +354,14 @@ def compute_element_forces_2d(
         the axial force, *M0* the moment at node 0, and *M1* the moment at
         node 1.
     """
-    forces = np.zeros((len(edges), 3))
-    for i, (e0, e1) in enumerate(edges):
-        s0 = slice(e0 * 3, (e0 + 1) * 3)
-        s1 = slice(e1 * 3, (e1 + 1) * 3)
-        alpha, l0, ln, _, _ = _rigid_body_rotation_2d(
-            nodes[e0], nodes[e1], sol[s0], sol[s1])
-        Kl = _local_stiffness_2d(beam_prop, l0)
-        ul = np.array([ln - l0, sol[s0][2] - alpha, sol[s1][2] - alpha])
-        forces[i] = Kl @ ul
-    return forces
+    e0, e1 = edges[:, 0], edges[:, 1]
+    d = sol.reshape(-1, 3)                          # (N, 3)
+
+    alpha, l0, ln, _, _ = _rigid_body_rotation_2d(nodes, d, edges)
+    Kl = _local_stiffness_2d(beam_prop, l0)    # (M, 3, 3)
+
+    ul = np.stack([ln - l0, d[e0, 2] - alpha, d[e1, 2] - alpha], axis=1)
+    return np.einsum('mij,mj->mi', Kl, ul)
 
 
 def element_mises_stress_2d(

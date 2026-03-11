@@ -14,7 +14,6 @@ Three cases are shown side by side:
   plotted on top of each other for θ = 2π, demonstrating that the two
   approaches give identical deformed shapes.
 """
-import os
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
