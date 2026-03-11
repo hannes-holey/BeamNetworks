@@ -18,7 +18,7 @@ from beam_networks.geometry.geo import get_geometric_props, get_geometric_props_
 from beam_networks.fem.basis import _gauss_legendre, _lagrange_basis
 
 
-def _local_element_stiffness_timoshenko_exact_2d_single(beam_prop, L, derivative=None):
+def _local_element_stiffness_timoshenko_exact_2d(beam_prop, L, derivative=None):
     """Element stiffness matrix 2D (local frame).
 
     Parameters
@@ -86,7 +86,7 @@ def _local_element_stiffness_timoshenko_exact_2d_single(beam_prop, L, derivative
     return data, rows, cols
 
 
-def _local_element_stiffness_timoshenko_exact_3d_single(beam_prop, L, derivative=None):
+def _local_element_stiffness_timoshenko_exact_3d(beam_prop, L, derivative=None):
     """Element stiffness matrix 3D (local frame).
 
     See e.g.
@@ -196,7 +196,7 @@ def _local_element_stiffness_timoshenko_exact_3d_single(beam_prop, L, derivative
     return data, rows, cols
 
 
-def _local_element_stiffness_timoshenko_numeric_2d_single(beam_prop, le, n_nodes, n_gauss):
+def _local_element_stiffness_timoshenko_numeric_2d(beam_prop, le, n_nodes, n_gauss):
     """2D Timoshenko beam element stiffness via Gauss quadrature.
 
     Builds K = ∫₀ˡ (EA Bε^T Bε + EIz Bκ^T Bκ + κGA Bγ^T Bγ) dx using
@@ -255,7 +255,7 @@ def _local_element_stiffness_timoshenko_numeric_2d_single(beam_prop, le, n_nodes
     return K
 
 
-def _local_element_stiffness_timoshenko_numeric_3d_single(beam_prop, le, n_nodes, n_gauss):
+def _local_element_stiffness_timoshenko_numeric_3d(beam_prop, le, n_nodes, n_gauss):
     """3D Timoshenko beam element stiffness via Gauss quadrature.
 
     Builds K = ∫₀ˡ (EA Bε^T Bε + EIy Bκy^T Bκy + EIz Bκz^T Bκz
@@ -327,7 +327,7 @@ def _local_element_stiffness_timoshenko_numeric_3d_single(beam_prop, le, n_nodes
     return K
 
 
-def _local_element_stiffness_timoshenko_condensed_single(
+def _local_element_stiffness_timoshenko_condensed(
         beam_prop: dict, L: float,
         n_elem: int, ndim: int,
         poly_order: int = 1,
@@ -335,8 +335,8 @@ def _local_element_stiffness_timoshenko_condensed_single(
     """Assemble and statically condense a chain of FEM sub-elements.
 
     Each sub-element is built via variational integration
-    (:func:`_local_element_stiffness_timoshenko_numeric_2d_single` /
-    :func:`_local_element_stiffness_timoshenko_numeric_3d_single`)
+    (:func:`_local_element_stiffness_timoshenko_numeric_2d` /
+    :func:`_local_element_stiffness_timoshenko_numeric_3d`)
     using Lagrange shape functions of degree *poly_order* and *n_gauss*
     Gauss-Legendre quadrature points.  The interior DOFs (all but the first
     and last global nodes) are eliminated by Guyan (static) condensation so
@@ -390,9 +390,9 @@ def _local_element_stiffness_timoshenko_condensed_single(
 
     for i in range(n_elem):
         if ndim == 2:
-            Ke = _local_element_stiffness_timoshenko_numeric_2d_single(beam_prop, le, n_nodes_per_elem, n_gauss)
+            Ke = _local_element_stiffness_timoshenko_numeric_2d(beam_prop, le, n_nodes_per_elem, n_gauss)
         else:
-            Ke = _local_element_stiffness_timoshenko_numeric_3d_single(beam_prop, le, n_nodes_per_elem, n_gauss)
+            Ke = _local_element_stiffness_timoshenko_numeric_3d(beam_prop, le, n_nodes_per_elem, n_gauss)
 
         start = i * poly_order * dof
         end = start + n_nodes_per_elem * dof
@@ -456,11 +456,11 @@ def global_element_stiffness_timoshenko_numeric_single(
     ndim = len(d)
     L = np.linalg.norm(d)
 
-    K_cond_local = _local_element_stiffness_timoshenko_condensed_single(
+    K_cond_local = _local_element_stiffness_timoshenko_condensed(
         beam_prop, L, n_elem, ndim,
         poly_order=poly_order,
         n_gauss=n_gauss)
-    T = _transformation_matrix_single(d)
+    T = _transformation_matrix(d)
 
     return T.T @ K_cond_local @ T
 
@@ -715,7 +715,7 @@ def global_element_stiffness_timoshenko_numeric_all(
     return np.einsum('nki,nij,njl->nkl', T, K_cond, T)
 
 
-def _local_element_stiffness_euler_exact_2d_single(beam_prop: dict, le: float) -> np.ndarray:
+def _local_element_stiffness_euler_exact_2d(beam_prop: dict, le: float) -> np.ndarray:
     """Euler-Bernoulli 2D element stiffness via Hermite curvature B-matrices (local frame).
 
     DOF order: [u₁, v₁, θ₁, u₂, v₂, θ₂]  where θ = dv/dx.
@@ -767,7 +767,7 @@ def _local_element_stiffness_euler_exact_2d_single(beam_prop: dict, le: float) -
     return K
 
 
-def _local_element_stiffness_euler_exact_3d_single(beam_prop: dict, le: float) -> np.ndarray:
+def _local_element_stiffness_euler_exact_3d(beam_prop: dict, le: float) -> np.ndarray:
     """Euler-Bernoulli 3D element stiffness via Hermite curvature B-matrices (local frame).
 
     DOF order: [u₁, v₁, w₁, θx₁, θy₁, θz₁, u₂, v₂, w₂, θx₂, θy₂, θz₂]
@@ -946,7 +946,7 @@ def _local_element_stiffness_euler_exact_3d_all(beam_prop: dict, le: np.ndarray)
     return K
 
 
-def _local_element_stiffness_euler_condensed_single(
+def _local_element_stiffness_euler_condensed(
         beam_prop: dict, L: float,
         n_elem: int, ndim: int) -> np.ndarray:
     """Assemble and statically condense a chain of Hermite EB sub-elements.
@@ -979,9 +979,9 @@ def _local_element_stiffness_euler_condensed_single(
     K_loc = np.zeros((n_total, n_total))
 
     if ndim == 2:
-        stiffness_fn = _local_element_stiffness_euler_exact_2d_single
+        stiffness_fn = _local_element_stiffness_euler_exact_2d
     else:
-        stiffness_fn = _local_element_stiffness_euler_exact_3d_single
+        stiffness_fn = _local_element_stiffness_euler_exact_3d
     Ke = stiffness_fn(beam_prop, le)
 
     for i in range(n_elem):
@@ -1005,7 +1005,7 @@ def _local_element_stiffness_euler_condensed_single(
 def _local_element_stiffness_euler_condensed_all(
         beam_prop: dict, L: np.ndarray,
         n_elem: int, ndim: int) -> np.ndarray:
-    """Vectorised version of :func:`_local_element_stiffness_euler_condensed_single`.
+    """Vectorised version of :func:`_local_element_stiffness_euler_condensed`.
 
     Parameters
     ----------
@@ -1075,8 +1075,8 @@ def global_element_stiffness_euler_numeric_single(
     """
     ndim = len(d)
     L = np.linalg.norm(d)
-    K_cond = _local_element_stiffness_euler_condensed_single(beam_prop, L, n_elem, ndim)
-    T = _transformation_matrix_single(d)
+    K_cond = _local_element_stiffness_euler_condensed(beam_prop, L, n_elem, ndim)
+    T = _transformation_matrix(d)
     return T.T @ K_cond @ T
 
 
@@ -1137,10 +1137,10 @@ def global_element_stiffness_euler_exact_single(beam_prop: dict, d: np.ndarray) 
     L = np.linalg.norm(d)
     ndim = d.shape[0]
     if ndim == 2:
-        K_loc = _local_element_stiffness_euler_exact_2d_single(beam_prop, L)
+        K_loc = _local_element_stiffness_euler_exact_2d(beam_prop, L)
     else:
-        K_loc = _local_element_stiffness_euler_exact_3d_single(beam_prop, L)
-    T = _transformation_matrix_single(d)
+        K_loc = _local_element_stiffness_euler_exact_3d(beam_prop, L)
+    T = _transformation_matrix(d)
     return T.T @ K_loc @ T
 
 
@@ -1203,15 +1203,15 @@ def global_element_stiffness_timoshenko_exact_single(
     L = np.linalg.norm(d, axis=-1)
 
     if ndim == 3:
-        data, rows, cols = _local_element_stiffness_timoshenko_exact_3d_single(beam_prop, L, derivative)
+        data, rows, cols = _local_element_stiffness_timoshenko_exact_3d(beam_prop, L, derivative)
     else:
-        data, rows, cols = _local_element_stiffness_timoshenko_exact_2d_single(beam_prop, L, derivative)
+        data, rows, cols = _local_element_stiffness_timoshenko_exact_2d(beam_prop, L, derivative)
 
     K_elem = np.zeros(shape=(num_dof_elem, num_dof_elem))
 
     K_elem[rows, cols] = data
 
-    T_elem = _transformation_matrix_single(d)
+    T_elem = _transformation_matrix(d)
 
     # transform element stiffness in global frame
     Ke_global = T_elem.T.dot(K_elem.dot(T_elem))
@@ -1219,7 +1219,7 @@ def global_element_stiffness_timoshenko_exact_single(
     return Ke_global
 
 
-def _transformation_matrix_single(d):
+def _transformation_matrix(d):
     """Compute the transformation matrix from local to global frame for a single element.
 
     Parameters
@@ -1313,9 +1313,9 @@ def local_element_stiffness_timoshenko_exact_all(
     num_dof_e = 2 * 3 * (ndim - 1)
 
     if ndim == 2:
-        data, rows, cols = _local_element_stiffness_timoshenko_exact_2d_single(beam_prop, d, derivative)
+        data, rows, cols = _local_element_stiffness_timoshenko_exact_2d(beam_prop, d, derivative)
     else:
-        data, rows, cols = _local_element_stiffness_timoshenko_exact_3d_single(beam_prop, d, derivative)
+        data, rows, cols = _local_element_stiffness_timoshenko_exact_3d(beam_prop, d, derivative)
 
     data = np.array(data)
 
@@ -1418,9 +1418,9 @@ def global_element_stiffness_timoshenko_exact_all(
     num_dof_e = 2 * 3 * (ndim - 1)
 
     if ndim == 2:
-        data, rows, cols = _local_element_stiffness_timoshenko_exact_2d_single(beam_prop, d, derivative)
+        data, rows, cols = _local_element_stiffness_timoshenko_exact_2d(beam_prop, d, derivative)
     else:
-        data, rows, cols = _local_element_stiffness_timoshenko_exact_3d_single(beam_prop, d, derivative)
+        data, rows, cols = _local_element_stiffness_timoshenko_exact_3d(beam_prop, d, derivative)
 
     data = np.array(data)
 

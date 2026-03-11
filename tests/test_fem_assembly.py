@@ -19,8 +19,8 @@ import pytest
 from beam_networks.problem import ElasticNetwork
 from beam_networks.geometry.geo import get_geometric_props
 from beam_networks.fem.stiffness import (
-    _local_element_stiffness_timoshenko_numeric_2d_single,
-    _local_element_stiffness_timoshenko_numeric_3d_single,
+    _local_element_stiffness_timoshenko_numeric_2d,
+    _local_element_stiffness_timoshenko_numeric_3d,
     global_element_stiffness_timoshenko_numeric_single)
 from beam_networks.reference_solutions.cantilever import cantilever_analytic
 
@@ -61,7 +61,7 @@ def _tip_disp_fem(length, density, poly_order=1, n_gauss=None):
 # Test 1: Single-element stiffness structure for 2D (p=1, n_gauss=1)
 # ---------------------------------------------------------------------------
 
-def test_local_element_stiffness_timoshenko_numeric_2d_single_structure():
+def test_local_element_stiffness_timoshenko_numeric_2d_structure():
     """Linear Timoshenko element (p=1, n_gauss=1) has the expected entries."""
     le = 5.
     E, nu = PROPS['E'], PROPS['nu']
@@ -74,7 +74,7 @@ def test_local_element_stiffness_timoshenko_numeric_2d_single_structure():
     kg_l = kappa * G * A * le / 4.
     ei = E * Iz / le
 
-    K = _local_element_stiffness_timoshenko_numeric_2d_single(PROPS, le, n_nodes=2, n_gauss=1)
+    K = _local_element_stiffness_timoshenko_numeric_2d(PROPS, le, n_nodes=2, n_gauss=1)
 
     # Symmetry
     np.testing.assert_allclose(K, K.T, atol=1e-14)
@@ -99,7 +99,7 @@ def test_local_element_stiffness_timoshenko_numeric_2d_single_structure():
 # Test 2: Single-element stiffness structure for 3D (p=1, n_gauss=1)
 # ---------------------------------------------------------------------------
 
-def test_local_element_stiffness_timoshenko_numeric_3d_single_structure():
+def test_local_element_stiffness_timoshenko_numeric_3d_structure():
     """3D element (p=1, n_gauss=1) is symmetric with the expected coupling signs."""
     le = 5.
     E, nu = PROPS['E'], PROPS['nu']
@@ -109,7 +109,7 @@ def test_local_element_stiffness_timoshenko_numeric_3d_single_structure():
     kg_h = kappa * G * A / 2.
     gj = G * J / le
 
-    K = _local_element_stiffness_timoshenko_numeric_3d_single(PROPS, le, n_nodes=2, n_gauss=1)
+    K = _local_element_stiffness_timoshenko_numeric_3d(PROPS, le, n_nodes=2, n_gauss=1)
 
     np.testing.assert_allclose(K, K.T, atol=1e-14)
 
@@ -136,7 +136,7 @@ def test_local_element_stiffness_timoshenko_numeric_3d_single_structure():
 def test_fem_element_stiffness_symmetry_2d(poly_order, n_gauss):
     """2D element stiffness is symmetric for any poly_order and n_gauss."""
     le = 3.7
-    K = _local_element_stiffness_timoshenko_numeric_2d_single(PROPS, le, n_nodes=poly_order + 1, n_gauss=n_gauss)
+    K = _local_element_stiffness_timoshenko_numeric_2d(PROPS, le, n_nodes=poly_order + 1, n_gauss=n_gauss)
     np.testing.assert_allclose(K, K.T, atol=1e-13,
                                err_msg=f"Not symmetric: p={poly_order}, ng={n_gauss}")
 
@@ -149,7 +149,7 @@ def test_fem_element_stiffness_symmetry_2d(poly_order, n_gauss):
 def test_fem_element_stiffness_symmetry_3d(poly_order, n_gauss):
     """3D element stiffness is symmetric for any poly_order and n_gauss."""
     le = 3.7
-    K = _local_element_stiffness_timoshenko_numeric_3d_single(PROPS, le, n_nodes=poly_order + 1, n_gauss=n_gauss)
+    K = _local_element_stiffness_timoshenko_numeric_3d(PROPS, le, n_nodes=poly_order + 1, n_gauss=n_gauss)
     np.testing.assert_allclose(K, K.T, atol=1e-13,
                                err_msg=f"Not symmetric: p={poly_order}, ng={n_gauss}")
 
