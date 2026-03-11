@@ -34,9 +34,9 @@ x = np.linspace(0., Lx, ne + 1)
 nodes = np.column_stack([x, np.zeros_like(x)])
 edges = np.column_stack([np.arange(ne), np.arange(ne) + 1])
 
-n_steps = 10
-n_snapshots = 10
-plot_every = n_steps // n_snapshots
+n_steps = 2
+n_snapshots = 5
+plot_every = max(n_steps // n_snapshots, 1)
 
 cmap = plt.cm.coolwarm
 
@@ -106,9 +106,12 @@ def cb_2pi(step, nodes_cur, _):
         snaps_2pi.append((nodes_cur.copy(), cmap(step / n_steps)))
 
 
-net_2pi.solve_nonlinear(n_steps=n_steps, tol=1e-9, verbose=False,
+net_2pi.solve_nonlinear(n_steps=n_steps,
+                        tol=1e-9,
+                        verbose=True,
                         callback=cb_2pi)
 tip_2pi = net_2pi.displaced_nodes[-1]
+
 print(f"θ = 2π → tip = ({tip_2pi[0]:.4e}, {tip_2pi[1]:.4e}),  "
       f"expected (0, 0)")
 
@@ -127,7 +130,9 @@ def cb_mom(step, nodes_cur, _):
         snaps_mom.append((nodes_cur.copy(), cmap(step / n_steps)))
 
 
-net_mom.solve_nonlinear(n_steps=n_steps, tol=1e-9, verbose=False,
+net_mom.solve_nonlinear(n_steps=n_steps,
+                        tol=1e-9,
+                        verbose=True,
                         callback=cb_mom)
 
 # ---------------------------------------------------------------------------

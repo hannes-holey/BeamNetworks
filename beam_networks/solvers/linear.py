@@ -238,7 +238,6 @@ def _solve_sparse(K_global, bc_D, d_D, bc_N, F_N,
 
     elif solver == 'cg':
         dF, info = sp.linalg.cg(KFF, rhs, rtol=tol, atol=0., maxiter=10000)
-        print(info)
 
     elif solver == 'ilu':
         # CG preconditioned with incomplete LU (ILU).
