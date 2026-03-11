@@ -300,30 +300,27 @@ def _assemble_sparse_bsr(nodes, edges, dr, beam_prop, verbose=True):
 def _assemble_sparse_bsr_vec(nodes, edges, dr, beam_prop, verbose=True):
     """Assemble global stiffness matrix in BSR format.
 
-    Vectorized version.
+    All element stiffness matrices are computed at once, then scattered into
+    the BSR data array using ``np.add.at``.
 
     Parameters
     ----------
     nodes : np.ndarray
         Nodal coordinates
-    edges : np.ndarray (of ints)
-        Edge connectivity
+    edges : np.ndarray of int
+        Edge connectivity (sorted, ``edges[:, 0] < edges[:, 1]``)
     dr : np.ndarray
         Edge vectors
     beam_prop : dict
         Beam properties (cross section and elastic properties)
     verbose : bool, optional
-        Verbosity (the default is False which hides the progress bar)
+        Unused; kept for API compatibility.
 
     Returns
     -------
     scipy.sparse.bsr_array
         The global stiffness matrix
     """
-
-    if verbose:
-        pbar = tqdm(desc="Assemble BSR matrix (vectorized)", total=edges.shape[0], ncols=100)
-
     num_nodes, ndim = nodes.shape
     num_dof_per_node = _dof_per_node(ndim, beam_prop)
     num_dof = num_nodes * num_dof_per_node
@@ -343,31 +340,27 @@ def _assemble_sparse_bsr_vec(nodes, edges, dr, beam_prop, verbose=True):
     else:
         Ke = global_element_stiffness_timoshenko_exact_all(beam_prop, dr)
 
-    i = 0
-    n0s, c0s = np.unique(edges[:, 0], return_counts=True)
+    e0s, e1s = edges[:, 0], edges[:, 1]
 
-    for n0, c0 in zip(n0s, c0s):
-        for k, n1 in enumerate(edges[i + np.arange(c0), 1]):
-            Ke00 = Ke[i, :num_dof_per_node, :num_dof_per_node]
-            Ke01 = Ke[i, :num_dof_per_node, num_dof_per_node:]
-            Ke11 = Ke[i, num_dof_per_node:, num_dof_per_node:]
+    # Diagonal block positions (diagonal is always the first entry in each row
+    # because e0 < e1 for all edges, making the diagonal the smallest column)
+    diag_pos_n0 = indptr[e0s]
+    diag_pos_n1 = indptr[e1s]
 
-            data[indptr[n0]] += Ke00 / 2.
-            data[indptr[n1]] += Ke11 / 2.
-            data[indptr[n0] + k + 1] += Ke01
-            i += 1
-            if verbose:
-                pbar.update(1)
+    # Off-diagonal block positions: rank of each edge within its source row
+    _, first_occ, counts = np.unique(e0s, return_index=True, return_counts=True)
+    k_per_edge = np.arange(len(e0s)) - np.repeat(first_occ, counts)
+    offdiag_pos = indptr[e0s] + 1 + k_per_edge
 
-    # Create block sparse array (upper triangular)
+    ndpn = num_dof_per_node
+    np.add.at(data, diag_pos_n0, Ke[:, :ndpn, :ndpn] / 2.)
+    np.add.at(data, diag_pos_n1, Ke[:, ndpn:, ndpn:] / 2.)
+    np.add.at(data, offdiag_pos, Ke[:, :ndpn, ndpn:])
+
     K_global = sp.bsr_array((data, indices, indptr),
                             shape=(num_dof, num_dof),
-                            blocksize=(num_dof_per_node, num_dof_per_node)
-                            )
-    # Make symmetric
-    K_global = K_global + K_global.T
-
-    return K_global
+                            blocksize=(num_dof_per_node, num_dof_per_node))
+    return K_global + K_global.T
 
 
 def _assemble_sparse_lil(nodes, edges, dr, beam_prop, verbose=True):
@@ -704,14 +697,7 @@ def _assemble_dense_fem(nodes, edges, dr, beam_prop, n_elems,
 
 def _assemble_sparse_bsr_fem_vec(nodes, edges, dr, beam_prop, n_elems,
                                  fem_poly_order=1, fem_n_gauss=None, verbose=True):
-    """Assemble global stiffness matrix in BSR format using FEM sub-elements.
-
-    Vectorized version.
-    """
-
-    if verbose:
-        pbar = tqdm(desc="Assemble BSR matrix (FEM, vectorized)", total=edges.shape[0], ncols=100)
-
+    """Assemble BSR stiffness (FEM sub-elements): batch computation + scatter via np.add.at."""
     num_nodes, ndim = nodes.shape
     num_dof_per_node = _dof_per_node(ndim, beam_prop)
     num_dof = num_nodes * num_dof_per_node
@@ -732,28 +718,24 @@ def _assemble_sparse_bsr_fem_vec(nodes, edges, dr, beam_prop, n_elems,
             poly_order=fem_poly_order,
             n_gauss=fem_n_gauss)
 
-    i = 0
-    n0s, c0s = np.unique(edges[:, 0], return_counts=True)
+    e0s, e1s = edges[:, 0], edges[:, 1]
 
-    for n0, c0 in zip(n0s, c0s):
-        for k, n1 in enumerate(edges[i + np.arange(c0), 1]):
-            Ke00 = Ke[i, :num_dof_per_node, :num_dof_per_node]
-            Ke01 = Ke[i, :num_dof_per_node, num_dof_per_node:]
-            Ke11 = Ke[i, num_dof_per_node:, num_dof_per_node:]
+    diag_pos_n0 = indptr[e0s]
+    diag_pos_n1 = indptr[e1s]
 
-            data[indptr[n0]] += Ke00 / 2.
-            data[indptr[n1]] += Ke11 / 2.
-            data[indptr[n0] + k + 1] += Ke01
-            i += 1
-            if verbose:
-                pbar.update(1)
+    _, first_occ, counts = np.unique(e0s, return_index=True, return_counts=True)
+    k_per_edge = np.arange(len(e0s)) - np.repeat(first_occ, counts)
+    offdiag_pos = indptr[e0s] + 1 + k_per_edge
+
+    ndpn = num_dof_per_node
+    np.add.at(data, diag_pos_n0, Ke[:, :ndpn, :ndpn] / 2.)
+    np.add.at(data, diag_pos_n1, Ke[:, ndpn:, ndpn:] / 2.)
+    np.add.at(data, offdiag_pos, Ke[:, :ndpn, ndpn:])
 
     K_global = sp.bsr_array((data, indices, indptr),
                             shape=(num_dof, num_dof),
                             blocksize=(num_dof_per_node, num_dof_per_node))
-    K_global = K_global + K_global.T
-
-    return K_global
+    return K_global + K_global.T
 
 
 def _assemble_sparse_lil_fem_vec(nodes, edges, dr, beam_prop, n_elems,
