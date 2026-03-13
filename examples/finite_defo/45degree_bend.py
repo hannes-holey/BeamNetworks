@@ -20,8 +20,7 @@ y = -100. * (1. - np.cos(angle))
 nodes = np.column_stack([x, y, np.zeros(ne + 1)])
 edges = np.column_stack([np.arange(ne), np.arange(ne) + 1])
 
-# FIXME: n_steps > 1 does not work here. What's the difference compared to the rolling_cantilever.py
-n_steps = 1
+n_steps = 8
 
 
 def run(matrix='bsr', Fz=0.):

@@ -65,7 +65,10 @@ def _rigid_body_rotation_2d(
 
     Returns
     -------
-    alpha, l0, ln, c, s : np.ndarray, each shape (M,)
+    alpha, l0, ln, c, s, sin_a, cos_a : np.ndarray, each shape (M,)
+        ``sin_a`` and ``cos_a`` are the sine and cosine of the chord rotation
+        angle *α*; they are returned to allow callers to form wrap-safe
+        differences ``θ − α`` using the angle-difference identities.
     """
     e0, e1 = edges[:, 0], edges[:, 1]
 
@@ -87,7 +90,7 @@ def _rigid_body_rotation_2d(
     # arctan2(sin α, cos α) is equivalent to the quadrant-aware scalar logic
     alpha = np.arctan2(sin_a, cos_a)       # (M,)
 
-    return alpha, l0, ln, c, s
+    return alpha, l0, ln, c, s, sin_a, cos_a
 
 
 def _rigid_body_rotation_3d(
@@ -568,11 +571,20 @@ def _element_tangent_2d(
     e0, e1 = edges[:, 0], edges[:, 1]
     d = sol.reshape(-1, 3)                         # (N, 3)
 
-    alpha, l0, ln, c, s = _rigid_body_rotation_2d(nodes, d, edges)
+    alpha, l0, ln, c, s, sin_a, cos_a = _rigid_body_rotation_2d(nodes, d, edges)
     Kl = _local_stiffness_2d(beam_prop, l0)    # (M, 3, 3)
 
-    # Local deformational DOFs: ul = [ln-l0, θ0-α, θ1-α], shape (M, 3)
-    ul = np.stack([ln - l0, d[e0, 2] - alpha, d[e1, 2] - alpha], axis=1)
+    # Local deformational DOFs: ul = [ln-l0, θ0-α, θ1-α], shape (M, 3).
+    # The bending DOFs use a wrap-safe angle-difference formula so that
+    # accumulated nodal rotations > π (Total Lagrangian) are handled
+    # correctly: arctan2(sin(θ−α), cos(θ−α)) via the trig-difference identity.
+    theta0 = d[e0, 2]
+    theta1 = d[e1, 2]
+    ul_b0 = np.arctan2(np.sin(theta0) * cos_a - np.cos(theta0) * sin_a,
+                       np.cos(theta0) * cos_a + np.sin(theta0) * sin_a)
+    ul_b1 = np.arctan2(np.sin(theta1) * cos_a - np.cos(theta1) * sin_a,
+                       np.cos(theta1) * cos_a + np.sin(theta1) * sin_a)
+    ul = np.stack([ln - l0, ul_b0, ul_b1], axis=1)
 
     # Local internal forces: fl = Kl @ ul, shape (M, 3)
     fl = np.einsum('mij,mj->mi', Kl, ul)
@@ -750,10 +762,16 @@ def compute_element_forces_2d(
     e0, e1 = edges[:, 0], edges[:, 1]
     d = sol.reshape(-1, 3)                          # (N, 3)
 
-    alpha, l0, ln, _, _ = _rigid_body_rotation_2d(nodes, d, edges)
+    _, l0, ln, _, _, sin_a, cos_a = _rigid_body_rotation_2d(nodes, d, edges)
     Kl = _local_stiffness_2d(beam_prop, l0)    # (M, 3, 3)
 
-    ul = np.stack([ln - l0, d[e0, 2] - alpha, d[e1, 2] - alpha], axis=1)
+    theta0 = d[e0, 2]
+    theta1 = d[e1, 2]
+    ul_b0 = np.arctan2(np.sin(theta0) * cos_a - np.cos(theta0) * sin_a,
+                       np.cos(theta0) * cos_a + np.sin(theta0) * sin_a)
+    ul_b1 = np.arctan2(np.sin(theta1) * cos_a - np.cos(theta1) * sin_a,
+                       np.cos(theta1) * cos_a + np.sin(theta1) * sin_a)
+    ul = np.stack([ln - l0, ul_b0, ul_b1], axis=1)
     return np.einsum('mij,mj->mi', Kl, ul)
 
 
@@ -821,14 +839,31 @@ def _exact_local_dofs_3d(
     theta0 = d[e0i, 3:6]                            # (M, 3)
     theta1 = d[e1i, 3:6]                            # (M, 3)
 
+    # Bending DOFs use a wrap-safe angle-difference formula analogous to 2D:
+    #   arctan2(sin(θ_proj − α), cos(θ_proj − α))
+    # This handles accumulated nodal rotations > π correctly (TL mode).
+    cos_ae2 = np.cos(alpha_e2)
+    sin_ae2 = np.sin(alpha_e2)
+    cos_ae3 = np.cos(alpha_e3)
+    sin_ae3 = np.sin(alpha_e3)
+
+    te2_0 = np.einsum('mi,mi->m', e2_hat, theta0)
+    te3_0 = np.einsum('mi,mi->m', e3_hat, theta0)
+    te2_1 = np.einsum('mi,mi->m', e2_hat, theta1)
+    te3_1 = np.einsum('mi,mi->m', e3_hat, theta1)
+
+    def _wdiff(tp, ca, sa):
+        return np.arctan2(np.sin(tp) * ca - np.cos(tp) * sa,
+                          np.cos(tp) * ca + np.sin(tp) * sa)
+
     return np.stack([
         ln - l0,                                               # Δl (exact)
         np.einsum('mi,mi->m', e1_hat, theta0),                # θx0_l (torsion)
-        np.einsum('mi,mi->m', e2_hat, theta0) - alpha_e2,     # θy0_l
-        np.einsum('mi,mi->m', e3_hat, theta0) - alpha_e3,     # θz0_l
+        _wdiff(te2_0, cos_ae2, sin_ae2),                      # θy0_l
+        _wdiff(te3_0, cos_ae3, sin_ae3),                      # θz0_l
         np.einsum('mi,mi->m', e1_hat, theta1),                # θx1_l (torsion)
-        np.einsum('mi,mi->m', e2_hat, theta1) - alpha_e2,     # θy1_l
-        np.einsum('mi,mi->m', e3_hat, theta1) - alpha_e3,     # θz1_l
+        _wdiff(te2_1, cos_ae2, sin_ae2),                      # θy1_l
+        _wdiff(te3_1, cos_ae3, sin_ae3),                      # θz1_l
     ], axis=1)  # (M, 7)
 
 
@@ -921,14 +956,15 @@ def assemble_nonlinear_system_2d(
     Parameters
     ----------
     nodes : np.ndarray, shape (N, 2)
-        Current reference nodal coordinates (updated each load step in the
-        Updated Lagrangian sense).
+        Reference nodal coordinates.  In a Total Lagrangian scheme these are
+        the original (undeformed) coordinates; in an Updated Lagrangian scheme
+        they are the committed reference from the previous load step.
     edges : np.ndarray, shape (M, 2)
         Edge connectivity (integer node-index pairs). Must be sorted
         (``edges[:, 0] < edges[:, 1]``) when *matrix* is ``'bsr'``.
     sol : np.ndarray, shape (3*N,)
-        Current incremental displacement vector ``[ux, uy, θ_z, ...]``
-        measured from *nodes*.
+        Current displacement vector ``[ux, uy, θ_z, ...]`` measured from
+        *nodes*.
     beam_prop : dict
         Beam cross-section and elastic properties.
     matrix : {'dense', 'bsr'}, optional
