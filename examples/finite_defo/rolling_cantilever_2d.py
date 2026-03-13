@@ -25,7 +25,7 @@ from beam_networks.geometry.geo import get_geometric_props
 # ---------------------------------------------------------------------------
 # Common geometry and material
 # ---------------------------------------------------------------------------
-ne = 50
+ne = 10
 Lx = 10.
 beam_prop = {'b': .1, 'h': .1, 'E': 2.e11, 'nu': 0., 'name': 'rectangle'}
 Iz = get_geometric_props(beam_prop)[1]
@@ -72,6 +72,8 @@ def cb_pi(step, nodes_cur, _):
         snaps_pi.append((nodes_cur.copy(), cmap(step / n_steps / 2.)))
 
 
+cb_pi(0, net_pi.nodes, None)
+
 net_pi.solve_nonlinear(n_steps=n_steps,
                        tol=1e-9,
                        verbose=True,
@@ -105,6 +107,8 @@ def cb_2pi(step, nodes_cur, _):
     if step % plot_every == 0 or step == n_steps:
         snaps_2pi.append((nodes_cur.copy(), cmap(step / n_steps)))
 
+
+cb_2pi(0, net_2pi.nodes, None)
 
 net_2pi.solve_nonlinear(n_steps=n_steps,
                         tol=1e-9,
@@ -143,7 +147,7 @@ try:
 except OSError:
     pass
 
-fig, axes = plt.subplots(1, 3, figsize=(13, 5))
+fig, axes = plt.subplots(1, 3, figsize=(11, 5))
 
 # --- left: semicircle ---
 ax = axes[0]
@@ -171,8 +175,11 @@ ax.set_ylabel('y')
 ax.legend(fontsize=8)
 
 sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(0, 1.))
-fig.colorbar(sm, ax=axes[:2], shrink=1.,
-             label=r'$\theta / 2 \pi$')
+fig.colorbar(sm,
+             ax=axes[:2],
+             shrink=.33,
+             label=r'$\theta / 2 \pi$',
+             orientation='horizontal')
 
 # --- centre: full circle (prescribed rotation) ---
 ax = axes[1]

@@ -22,7 +22,10 @@ converged load step.
 import numpy as np
 import scipy.sparse as sp
 
-from beam_networks.fem.corotational import assemble_nonlinear_system_2d
+from beam_networks.fem.corotational import (
+    assemble_nonlinear_system_2d,
+    assemble_nonlinear_system_3d,
+)
 from beam_networks.fem.partitioning import partition_stiffness
 
 
@@ -41,20 +44,24 @@ def solve_nonlinear(
         callback=None,
         matrix: str = 'dense',
         out: dict | None = None,
+        ndim: int = 2,
+        ref_vectors: np.ndarray | None = None,
 ) -> np.ndarray:
-    """Load-stepped Newton–Raphson solver for a 2D geometrically nonlinear network.
+    """Load-stepped Newton–Raphson solver for geometrically nonlinear beam networks.
 
-    The total Neumann load is divided into *n_steps* equal increments.  Within
-    each increment the nonlinear equilibrium is solved by Newton–Raphson
-    iteration using the co-rotational tangent stiffness.  The reference
-    configuration is updated after each converged step (Updated Lagrangian).
+    Supports both 2D (*ndim* = 2) and 3D (*ndim* = 3) co-rotational beam
+    elements.  The total Neumann load is divided into *n_steps* equal
+    increments.  Within each increment the nonlinear equilibrium is solved by
+    Newton–Raphson iteration using the co-rotational tangent stiffness.  The
+    reference configuration is updated after each converged step (Updated
+    Lagrangian).
 
     Dirichlet boundary conditions support both fixed supports (zero
     displacement) and prescribed non-zero displacements via *val_D*.
 
     Parameters
     ----------
-    nodes : np.ndarray, shape (N, 2)
+    nodes : np.ndarray, shape (N, 2) or (N, 3)
         Original (undeformed) nodal coordinates.
     edges : np.ndarray, shape (M, 2)
         Edge connectivity (integer node-index pairs).
@@ -84,9 +91,9 @@ def solve_nonlinear(
     callback : callable or None, optional
         If provided, called after each converged load step as
         ``callback(step, nodes_current, sol_total)`` where *nodes_current* is
-        the reference nodal array after committing the step (shape ``(N, 2)``)
-        and *sol_total* is the accumulated displacement from the original nodes
-        (shape ``(3*N,)``).  The default is None.
+        the reference nodal array after committing the step and *sol_total* is
+        the accumulated displacement from the original nodes.  The default is
+        None.
     matrix : {'dense', 'bsr'}, optional
         Assembly and solve format.  ``'dense'`` uses ``numpy.linalg.solve``;
         ``'bsr'`` assembles a ``scipy.sparse.bsr_array`` and uses
@@ -95,20 +102,34 @@ def solve_nonlinear(
         If a dict is provided it is populated with auxiliary results after the
         final load step:
 
-        * ``'F_int'`` — global internal force vector at the last converged NR
-          state (shape ``(3*N,)``).  The entries at *dof_D* equal the
-          reaction forces needed to maintain the prescribed displacement.
+        * ``'F_int'`` — global internal force vector computed via a Total
+          Lagrangian pass (original nodes + sol_total).  The entries at
+          *dof_D* equal the reaction forces needed to maintain the prescribed
+          displacement.
         * ``'nodes_ref'`` — reference nodal coordinates after the final
-          committed step (shape ``(N, 2)``).
+          committed step.
 
         The default is None.
+    ndim : {2, 3}, optional
+        Problem dimension.  ``2`` uses the 2D co-rotational formulation
+        (3 DOFs per node); ``3`` uses the 3D formulation (6 DOFs per node).
+        The default is ``2``.
+    ref_vectors : np.ndarray, shape (M, 3), or None, optional
+        Reference vectors defining the local e2 axis per element.  Required
+        when *ndim* = 3; ignored for *ndim* = 2.
 
     Returns
     -------
-    sol_total : np.ndarray, shape (3*N,)
+    sol_total : np.ndarray, shape (ndof_per_node * N,)
         Total displacement vector measured from the original *nodes*.
     """
-    ndof = nodes.shape[0] * 3
+    if ndim not in (2, 3):
+        raise ValueError(f"ndim must be 2 or 3, got {ndim}.")
+    if ndim == 3 and ref_vectors is None:
+        raise ValueError("ref_vectors must be provided when ndim=3.")
+
+    ndof_per_node = 3 if ndim == 2 else 6
+    ndof = nodes.shape[0] * ndof_per_node
 
     dof_D = np.asarray(dof_D, dtype=int)
     dof_N = np.asarray(dof_N, dtype=int)
@@ -139,13 +160,19 @@ def solve_nonlinear(
     # Cumulative displacement from the original nodes
     sol_total = np.zeros(ndof)
 
+    def _assemble(n_ref, s):
+        if ndim == 2:
+            return assemble_nonlinear_system_2d(
+                n_ref, edges, s, beam_prop, matrix=matrix)
+        return assemble_nonlinear_system_3d(
+            n_ref, edges, s, beam_prop, ref_vectors, matrix=matrix)
+
     for step in range(n_steps):
         # Initialise prescribed DOFs for this step (fixed stay 0, driven get increment)
         sol_step[dof_D] = d_D_step[dof_D]
 
         for it in range(max_iter):
-            K, F_int = assemble_nonlinear_system_2d(
-                nodes_ref, edges, sol_step, beam_prop, matrix=matrix)
+            K, F_int = _assemble(nodes_ref, sol_step)
 
             if matrix == 'bsr':
                 K_FF, _, rhs, _ = partition_stiffness(K, dof_D, f_step - F_int)
@@ -165,14 +192,13 @@ def solve_nonlinear(
             print(f"Step {step + 1:4d}/{n_steps}: converged in {it + 1:4d} iter,"
                   f" |Δu| = {norm:.3e}")
 
-        # Commit: advance reference nodes with the translational increment
-        nodes_ref[:, 0] += sol_step[0::3]
-        nodes_ref[:, 1] += sol_step[1::3]
+        # Commit: advance reference nodes with the translational increments
+        for k in range(ndim):
+            nodes_ref[:, k] += sol_step[k::ndof_per_node]
 
         # Accumulate total displacement from original nodes
-        sol_total[0::3] += sol_step[0::3]
-        sol_total[1::3] += sol_step[1::3]
-        sol_total[2::3] += sol_step[2::3]
+        for k in range(ndof_per_node):
+            sol_total[k::ndof_per_node] += sol_step[k::ndof_per_node]
 
         sol_step = np.zeros(ndof)
 
@@ -183,8 +209,7 @@ def solve_nonlinear(
         # Compute reaction forces via Total Lagrangian: original nodes + total
         # displacement.  The UL incremental F_int from the last NR step only
         # reflects the final load-step increment, not the accumulated load.
-        _, F_int_tl = assemble_nonlinear_system_2d(
-            nodes, edges, sol_total, beam_prop, matrix=matrix)
+        _, F_int_tl = _assemble(nodes, sol_total)
         out['F_int'] = F_int_tl
         out['nodes_ref'] = nodes_ref.copy()
 

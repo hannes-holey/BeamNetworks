@@ -33,6 +33,23 @@ if TYPE_CHECKING:
     import matplotlib
 
 
+def _default_ref_vectors(nodes: np.ndarray, edges: np.ndarray) -> np.ndarray:
+    """Auto-generate one reference vector per 3D element.
+
+    For each element, picks the global axis ([0,1,0], [0,0,1], or [1,0,0])
+    that is least parallel to the chord, guaranteeing a well-conditioned
+    local frame for any chord orientation.
+    """
+    e0i, e1i = edges[:, 0], edges[:, 1]
+    chord = nodes[e1i] - nodes[e0i]                          # (M, 3)
+    chord_hat = chord / np.linalg.norm(chord, axis=1, keepdims=True)
+
+    candidates = np.array([[0., 1., 0.], [0., 0., 1.], [1., 0., 0.]])
+    dots = np.abs(chord_hat @ candidates.T)                  # (M, 3)
+    best = np.argmin(dots, axis=1)                           # (M,)
+    return candidates[best]
+
+
 class ElasticNetwork(Network):
     """Elastic network of 1D structural elements. Derives from Network.
 
@@ -751,8 +768,9 @@ class ElasticNetwork(Network):
 
     def solve_nonlinear(self, n_steps: int = 100, max_iter: int = 10000,
                         tol: float = 1e-9, verbose: bool = True,
-                        callback=None, matrix: str = 'dense') -> None:
-        """Solve the geometrically nonlinear elastic system (2D only).
+                        callback=None, matrix: str = 'dense',
+                        ref_vectors=None) -> None:
+        """Solve the geometrically nonlinear elastic system.
 
         Uses a load-stepped Newton–Raphson scheme with the Crisfield (1990)
         co-rotational formulation. Large rigid-body rotations are handled
@@ -760,9 +778,13 @@ class ElasticNetwork(Network):
         Lagrangian approach is used: the reference configuration is advanced
         to the deformed state after each converged load step.
 
+        Supports both 2D networks (3 DOFs per node: ux, uy, θz) and 3D
+        networks (6 DOFs per node: ux, uy, uz, θx, θy, θz).
+
         Only Neumann (force/moment) boundary conditions are load-stepped.
-        Dirichlet (prescribed displacement) BCs are enforced as zero
-        incremental displacements throughout (fixed supports).
+        Dirichlet (prescribed displacement) BCs are ramped linearly if
+        non-zero values were provided via :meth:`add_BC`, otherwise enforced
+        as fixed supports throughout.
 
         Parameters
         ----------
@@ -780,10 +802,10 @@ class ElasticNetwork(Network):
         callback : callable or None, optional
             If provided, called at the end of each converged load step as
             ``callback(step, nodes_current, sol_total)`` where *nodes_current*
-            is the reference nodal array after committing the step (shape
-            ``(N, 2)``) and *sol_total* is the accumulated displacement from
-            the original nodes (shape ``(3*N,)``). Useful for plotting
-            intermediate deformed shapes. The default is None.
+            is the reference nodal array after committing the step and
+            *sol_total* is the accumulated displacement from the original
+            nodes. Useful for plotting intermediate deformed shapes. The
+            default is None.
         matrix : {'dense', 'bsr'}, optional
             Storage format for the element-level tangent stiffness assembly.
             ``'dense'`` uses plain NumPy arrays and ``numpy.linalg.solve``
@@ -791,24 +813,31 @@ class ElasticNetwork(Network):
             ``'bsr'`` assembles a ``scipy.sparse.bsr_array`` and uses
             ``scipy.sparse.linalg.spsolve`` for the linear step; recommended
             for large networks. The default is ``'dense'``.
+        ref_vectors : np.ndarray, shape (M, 3), or None, optional
+            *3D only.* One reference vector per element that defines the local
+            e2 (in-plane) axis. Must not be parallel to any element chord.
+            When ``None`` (default), a per-element default is chosen
+            automatically: ``[0, 1, 0]`` for elements not aligned with the
+            y-axis, ``[0, 0, 1]`` otherwise.
 
         Raises
         ------
-        NotImplementedError
-            If the network is not 2D.
         RuntimeError
             If no boundary conditions have been defined.
         """
-        if self.dim != 2:
-            raise NotImplementedError(
-                "solve_nonlinear currently supports 2D networks only.")
-
         if self._bc_changed:
             self.assemble_BCs()
 
         if not self.has_bc:
             raise RuntimeError(
                 "No boundary conditions given. Nothing to solve here.")
+
+        rv = None
+        if self.dim == 3:
+            if ref_vectors is not None:
+                rv = np.asarray(ref_vectors, dtype=float)
+            else:
+                rv = _default_ref_vectors(self._nodes, self._edges)
 
         self.sol = _solve_nonlinear(
             self._nodes,
@@ -824,6 +853,8 @@ class ElasticNetwork(Network):
             verbose=verbose,
             callback=callback,
             matrix=matrix,
+            ndim=self.dim,
+            ref_vectors=rv,
         )
         self.has_solution = True
 
