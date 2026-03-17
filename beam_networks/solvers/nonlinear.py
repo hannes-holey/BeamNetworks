@@ -15,10 +15,9 @@
 """Load-stepped Newton–Raphson solver for geometrically nonlinear beam networks.
 
 The co-rotational formulation (Crisfield 1990) is used at the element level;
-see :mod:`beam_networks.fem.corotational` for the element routines.  A Total
-Lagrangian approach is used: the assembly always references the original
-(undeformed) node positions, keeping the natural element length l0 constant
-across all load steps.
+see :mod:`beam_networks.fem.corotational` for the element routines.  An
+Updated Lagrangian approach advances the reference configuration after each
+converged load step.
 """
 import numpy as np
 import scipy.sparse as sp
@@ -53,11 +52,9 @@ def solve_nonlinear(
     Supports both 2D (*ndim* = 2) and 3D (*ndim* = 3) co-rotational beam
     elements.  The total Neumann load is divided into *n_steps* equal
     increments.  Within each increment the nonlinear equilibrium is solved by
-    Newton–Raphson iteration using the co-rotational tangent stiffness.  A
-    Total Lagrangian approach is used throughout: the assembly always
-    references the original undeformed nodes, so the natural element length
-    l0 remains constant and results are path-independent with respect to the
-    number of load steps.
+    Newton–Raphson iteration using the co-rotational tangent stiffness.  The
+    reference configuration is updated after each converged step (Updated
+    Lagrangian).
 
     Dirichlet boundary conditions support both fixed supports (zero
     displacement) and prescribed non-zero displacements via *val_D*.
@@ -98,9 +95,8 @@ def solve_nonlinear(
         the accumulated displacement from the original nodes.  The default is
         None.
     matrix : {'dense', 'bsr'}, optional
-        Assembly and linear-solve format.  ``'dense'`` uses
-        ``numpy.linalg.solve``; ``'bsr'`` assembles a
-        ``scipy.sparse.bsr_array`` and uses
+        Assembly and solve format.  ``'dense'`` uses ``numpy.linalg.solve``;
+        ``'bsr'`` assembles a ``scipy.sparse.bsr_array`` and uses
         ``scipy.sparse.linalg.spsolve``.  The default is ``'dense'``.
     out : dict or None, optional
         If a dict is provided it is populated with auxiliary results after the
@@ -139,13 +135,13 @@ def solve_nonlinear(
     dof_N = np.asarray(dof_N, dtype=int)
     val_N = np.asarray(val_N, dtype=float)
 
-    # Per-step Dirichlet increment (zero for fixed supports)
+    # Per-step prescribed Dirichlet increment (zero for fixed supports)
     d_D_step = np.zeros(ndof)
-    val_D = np.asarray(val_D, dtype=float)
     if val_D is not None and dof_D.size > 0:
+        val_D = np.asarray(val_D, dtype=float)
         d_D_step[dof_D] = val_D / n_steps
 
-    # Per-step Neumann load increment
+    # Per-step incremental Neumann load
     f_step = np.zeros(ndof)
     if dof_N.size > 0:
         f_step[dof_N] = val_N / n_steps
@@ -155,39 +151,38 @@ def solve_nonlinear(
     mask_F[dof_D] = False
     dof_F = np.where(mask_F)[0]
 
-    # Total Lagrangian: always assemble from original nodes + sol_total.
-    # l0 (natural element length) is therefore constant across all steps,
-    # eliminating the path-dependence of the reference length that arises in
-    # the Updated Lagrangian scheme for non-pure-bending problems.
+    # Updated Lagrangian: reference nodes advanced after each load step
+    nodes_ref = nodes.copy()
+
+    # Incremental displacement from current reference (reset each step)
+    sol_step = np.zeros(ndof)
+
+    # Cumulative displacement from the original nodes
     sol_total = np.zeros(ndof)
 
-    def _assemble(s):
+    def _assemble(n_ref, s):
         if ndim == 2:
             return assemble_nonlinear_system_2d(
-                nodes, edges, s, beam_prop, matrix=matrix)
+                n_ref, edges, s, beam_prop, matrix=matrix)
         return assemble_nonlinear_system_3d(
-            nodes, edges, s, beam_prop, ref_vectors, matrix=matrix)
+            n_ref, edges, s, beam_prop, ref_vectors, matrix=matrix)
 
     for step in range(n_steps):
-        # Cumulative prescribed Dirichlet displacements (linearly ramped)
-        if dof_D.size > 0:
-            sol_total[dof_D] = (step + 1) * d_D_step[dof_D]
-
-        # Cumulative target Neumann load
-        f_target = f_step * (step + 1)
+        # Initialise prescribed DOFs for this step (fixed stay 0, driven get increment)
+        sol_step[dof_D] = d_D_step[dof_D]
 
         for it in range(max_iter):
-            K, F_int = _assemble(sol_total)
+            K, F_int = _assemble(nodes_ref, sol_step)
 
             if matrix == 'bsr':
-                K_FF, _, rhs, _ = partition_stiffness(K, dof_D, f_target - F_int)
+                K_FF, _, rhs, _ = partition_stiffness(K, dof_D, f_step - F_int)
                 du_F = sp.linalg.spsolve(K_FF.tocsr(), rhs)
             else:
-                res_F = (F_int - f_target)[dof_F]
+                res_F = (F_int - f_step)[dof_F]
                 K_FF = K[np.ix_(dof_F, dof_F)]
                 du_F = np.linalg.solve(K_FF, -res_F)
 
-            sol_total[dof_F] += du_F
+            sol_step[dof_F] += du_F
 
             norm = np.linalg.norm(du_F)
             if norm < tol:
@@ -197,18 +192,25 @@ def solve_nonlinear(
             print(f"Step {step + 1:4d}/{n_steps}: converged in {it + 1:4d} iter,"
                   f" |Δu| = {norm:.3e}")
 
+        # Commit: advance reference nodes with the translational increments
+        for k in range(ndim):
+            nodes_ref[:, k] += sol_step[k::ndof_per_node]
+
+        # Accumulate total displacement from original nodes
+        for k in range(ndof_per_node):
+            sol_total[k::ndof_per_node] += sol_step[k::ndof_per_node]
+
+        sol_step = np.zeros(ndof)
+
         if callback is not None:
-            nodes_current = nodes.copy()
-            for k in range(ndim):
-                nodes_current[:, k] += sol_total[k::ndof_per_node]
-            callback(step + 1, nodes_current, sol_total.copy())
+            callback(step + 1, nodes_ref.copy(), sol_total.copy())
 
     if out is not None:
-        _, F_int_tl = _assemble(sol_total)
+        # Compute reaction forces via Total Lagrangian: original nodes + total
+        # displacement.  The UL incremental F_int from the last NR step only
+        # reflects the final load-step increment, not the accumulated load.
+        _, F_int_tl = _assemble(nodes, sol_total)
         out['F_int'] = F_int_tl
-        nodes_final = nodes.copy()
-        for k in range(ndim):
-            nodes_final[:, k] += sol_total[k::ndof_per_node]
-        out['nodes_ref'] = nodes_final
+        out['nodes_ref'] = nodes_ref.copy()
 
     return sol_total

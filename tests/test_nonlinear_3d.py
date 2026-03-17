@@ -106,19 +106,11 @@ def test_tip_rotation_circle_xy(ne, matrix):
     DOFs free gives a uniform-curvature arc (energy-minimising shape), so
     the tip must return to the origin — identical to the tip-moment case.
     """
-
-    # FIXME: should also work with exact 2pi (as in 2d)
-    twopi = (1. - 1e-12) * 2. * np.pi
-
     net, Lx, _, ref = _cantilever_3d(ne, matrix, ref_vec=(0., 0., 1.))
     net.add_BC('tip_rot', 'D', 'node', [ne],
-               [None, None, None, None, None, twopi])
-
-    net.solve_nonlinear(n_steps=100,
-                        tol=1e-9,
-                        verbose=True,
-                        matrix=matrix,
-                        ref_vectors=ref)
+               [None, None, None, None, None, 2. * np.pi])
+    net.solve_nonlinear(n_steps=100, tol=1e-9, verbose=False,
+                        matrix=matrix, ref_vectors=ref)
 
     tip = net.displaced_nodes[-1]
     np.testing.assert_allclose(tip[:2], [0., 0.], atol=1e-4)
@@ -138,11 +130,8 @@ def test_tip_rotation_semicircle_xy(ne):
     net, Lx, _, ref = _cantilever_3d(ne, 'bsr', ref_vec=(0., 0., 1.))
     net.add_BC('tip_rot', 'D', 'node', [ne],
                [None, None, None, None, None, np.pi])
-    net.solve_nonlinear(n_steps=100,
-                        tol=1e-9,
-                        verbose=False,
-                        matrix='bsr',
-                        ref_vectors=ref)
+    net.solve_nonlinear(n_steps=100, tol=1e-9, verbose=False,
+                        matrix='bsr', ref_vectors=ref)
 
     tip = net.displaced_nodes[-1]
     np.testing.assert_allclose(tip[0], 0., atol=1e-4)
@@ -173,11 +162,8 @@ def test_tip_moment_circle_xz(ne, matrix):
 
     # Moment about y (DOF index 4 per node = θy)
     net.add_BC('load', 'N', 'node', [ne], [None, None, None, None, Mref, None])
-    net.solve_nonlinear(n_steps=100,
-                        tol=1e-9,
-                        verbose=False,
-                        matrix=matrix,
-                        ref_vectors=ref)
+    net.solve_nonlinear(n_steps=100, tol=1e-9, verbose=False,
+                        matrix=matrix, ref_vectors=ref)
 
     tip = net.displaced_nodes[-1]
     np.testing.assert_allclose(tip[0], 0., atol=1e-4)
@@ -193,18 +179,11 @@ def test_tip_moment_circle_xz(ne, matrix):
 @pytest.mark.parametrize('ne', [20, 50])
 def test_tip_rotation_circle_xz(ne):
     """Prescribed tip rotation θy = 2π produces a full circle in x-z plane."""
-
-    # FIXME: should also work with exact 2pi (as in 2d)
-    twopi = (1. - 1e-12) * 2. * np.pi
-
     net, Lx, _, ref = _cantilever_3d(ne, 'bsr')
-    net.add_BC('tip_rot', 'D', 'node', [ne], [None, None, None, None, twopi, None])
-
-    net.solve_nonlinear(n_steps=100,
-                        tol=1e-9,
-                        verbose=False,
-                        matrix='bsr',
-                        ref_vectors=ref)
+    net.add_BC('tip_rot', 'D', 'node', [ne],
+               [None, None, None, None, 2. * np.pi, None])
+    net.solve_nonlinear(n_steps=100, tol=1e-9, verbose=False,
+                        matrix='bsr', ref_vectors=ref)
 
     tip = net.displaced_nodes[-1]
     np.testing.assert_allclose(tip[0], 0., atol=1e-4)

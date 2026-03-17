@@ -39,7 +39,6 @@ from beam_networks.fem.corotational import (
 # Helpers
 # ---------------------------------------------------------------------------
 
-
 def _single_element(x0, x1, ref_vec, d0=None, d1=None):
     """Minimal inputs for a single 3D element."""
     nodes = np.array([x0, x1], dtype=float)
@@ -629,7 +628,7 @@ class TestGeometricStiffness3D:
             _local_stiffness_2d, _b_matrix_2d, _rigid_body_rotation_2d,
         )
         d2d = sol2d.reshape(-1, 3)
-        alpha, l0, ln2, c, s, _, _ = _rigid_body_rotation_2d(nodes2d, d2d, edges)
+        alpha, l0, ln2, c, s = _rigid_body_rotation_2d(nodes2d, d2d, edges)
         Kl2d = _local_stiffness_2d(_BEAM_PROP, l0)
         B2d = _b_matrix_2d(c, s, ln2)
         Km2d = (B2d.transpose(0, 2, 1) @ Kl2d @ B2d)[0]

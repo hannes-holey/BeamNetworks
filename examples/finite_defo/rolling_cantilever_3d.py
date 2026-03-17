@@ -28,7 +28,7 @@ from beam_networks.geometry.geo import get_geometric_props
 # ---------------------------------------------------------------------------
 # Common geometry and material
 # ---------------------------------------------------------------------------
-ne = 20
+ne = 10
 Lx = 10.
 beam_prop = {'b': .1, 'h': .1, 'E': 2.e11, 'nu': 0., 'name': 'rectangle'}
 Iz = get_geometric_props(beam_prop)[1]
@@ -38,8 +38,8 @@ x = np.linspace(0., Lx, ne + 1)
 nodes = np.column_stack([x, np.zeros(ne + 1), np.zeros(ne + 1)])
 edges = np.column_stack([np.arange(ne), np.arange(ne) + 1])
 
-n_steps = 100
-n_snapshots = 5
+n_steps = 20
+n_snapshots = 6
 plot_every = max(n_steps // n_snapshots, 1)
 
 cmap = plt.cm.coolwarm
@@ -61,9 +61,6 @@ def make_net(matrix='bsr'):
 Mref_z = 2. * np.pi * beam_prop['E'] * Iz / Lx
 net_xy = make_net()
 net_xy.add_BC('load', 'N', 'node', [ne], [None, None, None, None, None, Mref_z])
-
-# FIXME: applying a full rotation with Dirichlet BCs fails (0.999 * 2pi works)
-# net_xy.add_BC('load', 'D', 'node', [ne], [None, None, None, None, None, 0.999 * 2. * np.pi])
 
 ref_xy = np.tile([0., 0., 1.], (ne, 1))   # e2 = z for x-y bending
 snaps_xy = []
