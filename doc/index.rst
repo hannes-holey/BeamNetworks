@@ -11,7 +11,9 @@ structures, and fibre composites.
    :hidden:
 
    self
+   tutorials/index
    api_reference
+   corotational_solver
    Github repository <https://github.com/hannes-holey/ElasticNetworks>
 
 .. include:: readme.rst

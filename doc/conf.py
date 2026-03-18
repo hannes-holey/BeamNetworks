@@ -20,7 +20,22 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.mathjax',
               'sphinx.ext.napoleon',
               'sphinx.ext.autosummary',
-              'sphinx.ext.viewcode']
+              'sphinx.ext.viewcode',
+              'myst_nb']
+
+myst_enable_extensions = ['dollarmath', 'amsmath']
+
+# Treat .py files as Jupytext percent-format notebooks
+nb_custom_formats = {
+    '.py': ['jupytext.reads', {'fmt': 'py:percent'}],
+}
+source_suffix = {
+    '.rst': 'restructuredtext',
+    '.md': 'myst-nb',
+    '.ipynb': 'myst-nb',
+    '.py': 'myst-nb',
+}
+nb_execution_timeout = 120
 
 autosummary_generate = True
 

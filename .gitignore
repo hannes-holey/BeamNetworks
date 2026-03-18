@@ -5,4 +5,4 @@ build/
 data/
 *.egg-info/
 .coverage
-examples/bench/*.txt
+bench/*.txt

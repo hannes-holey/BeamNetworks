@@ -2,9 +2,10 @@ name: Build documentation
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - '**'
     tags:
-      - '*'
+      - '**'
   pull_request:
     branches: [ main ]
 
@@ -38,6 +39,7 @@ jobs:
       # Publish built docs to gh-pages branch.
       # ===============================
       - name: Commit documentation changes
+        if: startsWith(github.ref, 'refs/tags/')
         run: |
           git clone https://github.com/hannes-holey/BeamNetworks.git --branch gh-pages --single-branch gh-pages
           cp -r doc/_build/html/* gh-pages/
@@ -46,11 +48,9 @@ jobs:
           git config --local user.name "GitHub Action"
           git add .
           git commit -m "Update documentation" -a || true
-          # The above command will fail if no changes were present, so we ignore
-          # that.
 
       - name: Push changes
-        if: github.ref == 'refs/heads/main'
+        if: startsWith(github.ref, 'refs/tags/')
         uses: ad-m/github-push-action@master
         with:
           branch: gh-pages
