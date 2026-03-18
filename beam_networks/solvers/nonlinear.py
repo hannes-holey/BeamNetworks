@@ -168,14 +168,28 @@ def solve_nonlinear(
         return assemble_nonlinear_system_3d(
             nodes, edges, s, beam_prop, ref_vectors, matrix=matrix)
 
+    # Tangent predictor (3-D only): linear extrapolation of the free DOFs from
+    # the previous step keeps Newton on the correct solution branch near
+    # co-rotational singularities (chord angle ≈ 180°).  The 2-D formulation
+    # uses scalar arctan2 angles and has no such singularity, so the predictor
+    # is not applied there.
+    prev_sol_F = sol_total[dof_F].copy()   # zero at start
+
     for step in range(n_steps):
         # Cumulative prescribed Dirichlet displacements (linearly ramped)
         if dof_D.size > 0:
             sol_total[dof_D] = (step + 1) * d_D_step[dof_D]
 
+        # Predictor: extrapolate free DOFs by the previous step's increment
+        if ndim == 3:
+            curr_sol_F = sol_total[dof_F].copy()
+            sol_total[dof_F] += curr_sol_F - prev_sol_F
+            prev_sol_F = curr_sol_F
+
         # Cumulative target Neumann load
         f_target = f_step * (step + 1)
 
+        # Newton iteration
         for it in range(max_iter):
             K, F_int = _assemble(sol_total)
 

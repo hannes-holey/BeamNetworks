@@ -767,6 +767,7 @@ def compute_element_forces_2d(
 
     theta0 = d[e0, 2]
     theta1 = d[e1, 2]
+
     ul_b0 = np.arctan2(np.sin(theta0) * cos_a - np.cos(theta0) * sin_a,
                        np.cos(theta0) * cos_a + np.sin(theta0) * sin_a)
     ul_b1 = np.arctan2(np.sin(theta1) * cos_a - np.cos(theta1) * sin_a,
@@ -828,9 +829,13 @@ def _exact_local_dofs_3d(
     s = np.linalg.norm(w, axis=1)                   # (M,) = sin(chord angle)
     c = np.einsum('mi,mi->m', e0_hat, e1_hat)       # (M,) = cos(chord angle)
 
-    # Scale = angle / sin(angle); guard against division by zero
-    safe_s = np.where(s > 1e-15, s, 1.)
-    scale = np.where(s > 1e-15, np.arctan2(s, c) / safe_s, 1.)  # (M,)
+    # Scale = angle / sin(angle); guard against exact division by zero only.
+    # For s near machine epsilon (chord ≈ 180°), the ratio phi/s * we2 is still
+    # well-conditioned because |we2| ≤ s, so the product is bounded by phi ≤ π.
+    # Using s > 0 (rather than a larger threshold) avoids the discontinuity at
+    # the old threshold that occurred when a Newton iterate landed at s ≈ 1e-15.
+    safe_s = np.where(s > 0, s, 1.)
+    scale = np.where(s > 0, np.arctan2(s, c) / safe_s, 1.)  # (M,)
 
     # Chord rotation components about e2 and e3 (generalised α)
     alpha_e2 = scale * np.einsum('mi,mi->m', w, e2_hat)    # (M,)
