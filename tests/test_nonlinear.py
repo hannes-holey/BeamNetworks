@@ -29,6 +29,40 @@ import pytest
 from beam_networks.problem import ElasticNetwork
 from beam_networks.geometry.geo import get_geometric_props
 
+NEUMANN_PARAMS = [(20,  1, 'dense'),
+                  (50,  1, 'dense'),
+                  (20,  2, 'dense'),
+                  (50,  2, 'dense'),
+                  (20,  5, 'dense'),
+                  (50,  5, 'dense'),
+                  (20,  10, 'dense'),
+                  (50,  10, 'dense'),
+                  (20,  1, 'bsr'),
+                  (50,  1, 'bsr'),
+                  (20,  2, 'bsr'),
+                  (50,  2, 'bsr'),
+                  (20,  5, 'bsr'),
+                  (50,  5, 'bsr'),
+                  (20,  10, 'bsr'),
+                  (50,  10, 'bsr'), ]
+
+DIRICHLET_PARAMS = [(20,  3, 'dense'),
+                    (50,  3, 'dense'),
+                    (20,  5, 'dense'),
+                    (50,  5, 'dense'),
+                    (20,  10, 'dense'),
+                    (50,  10, 'dense'),
+                    (20,  50, 'dense'),
+                    (50,  50, 'dense'),
+                    (20,  3, 'bsr'),
+                    (50,  3, 'bsr'),
+                    (20,  5, 'bsr'),
+                    (50,  5, 'bsr'),
+                    (20,  10, 'bsr'),
+                    (50,  10, 'bsr'),
+                    (20,  50, 'bsr'),
+                    (50,  50, 'bsr'), ]
+
 
 def _cantilever(ne, matrix):
     """Return a fresh cantilever ElasticNetwork with clamped root."""
@@ -37,38 +71,50 @@ def _cantilever(ne, matrix):
     x = np.linspace(0., Lx, ne + 1)
     nodes = np.column_stack([x, np.zeros_like(x)])
     edges = np.column_stack([np.arange(ne), np.arange(ne) + 1])
-    net = ElasticNetwork(nodes, edges, beam_prop=beam_prop,
-                         options={'vectorize': False, 'matrix': matrix,
+    net = ElasticNetwork(nodes,
+                         edges,
+                         beam_prop=beam_prop,
+                         options={'vectorize': False,
+                                  'matrix': matrix,
                                   'verbose': False},
                          assemble_on_init=False)
     net.add_BC('clamp', 'D', 'node', [0], [0., 0., 0.])
     return net, Lx, beam_prop
 
 
-@pytest.mark.parametrize('ne, matrix', [
-    (20,  'dense'),
-    (20,  'bsr'),
-    (50,  'dense'),
-    (50,  'bsr'),
-])
-def test_tip_moment_circle(ne, matrix):
+@pytest.mark.parametrize('ne, ns, matrix', NEUMANN_PARAMS)
+def test_tip_moment_circle(ne, ns, matrix):
     """Free tip must return to the origin after a full 2π tip moment."""
     net, Lx, beam_prop = _cantilever(ne, matrix)
     Iz = get_geometric_props(beam_prop)[1]
     Mref = 2. * np.pi * beam_prop['E'] * Iz / Lx
 
     net.add_BC('load', 'N', 'node', [ne], [None, None, Mref])
-    net.solve_nonlinear(n_steps=100, tol=1e-9, verbose=False, matrix=matrix)
+    net.solve_nonlinear(n_steps=ns, tol=1e-9, verbose=False, matrix=matrix)
 
     np.testing.assert_allclose(net.displaced_nodes[-1], [0., 0.], atol=1e-4)
 
 
-@pytest.mark.parametrize('ne, matrix', [
-    (20, 'dense'),
-    (20, 'bsr'),
-    (50, 'bsr'),
-])
-def test_tip_rotation_circle(ne, matrix):
+@pytest.mark.parametrize('ne, ns, matrix', NEUMANN_PARAMS)
+def test_tip_moment_semicircle(ne, ns, matrix):
+    """Must produce a semicircle for a half 2π tip moment."""
+    net, Lx, beam_prop = _cantilever(ne, matrix)
+    Iz = get_geometric_props(beam_prop)[1]
+    Mref = np.pi * beam_prop['E'] * Iz / Lx
+
+    net.add_BC('load', 'N', 'node', [ne], [None, None, Mref])
+    net.solve_nonlinear(n_steps=ns, tol=1e-9, verbose=False, matrix=matrix)
+
+    tip = net.displaced_nodes[-1]
+    y_exp = 2. * Lx / np.pi
+    x_exp = 0.
+    np.testing.assert_allclose(tip[0], x_exp, atol=1e-4)
+    # y discretisation error ~ O((L/ne)^2); 1 % of y_exp covers ne=20
+    np.testing.assert_allclose(tip[1], y_exp, rtol=1e-2)
+
+
+@pytest.mark.parametrize('ne, ns, matrix', DIRICHLET_PARAMS)
+def test_tip_rotation_circle(ne, ns, matrix):
     """Prescribed tip rotation of 2π must produce the same full circle.
 
     Prescribing the rotational DOF at the tip to 2π (360°) with the tip
@@ -78,13 +124,13 @@ def test_tip_rotation_circle(ne, matrix):
     """
     net, Lx, _ = _cantilever(ne, matrix)
     net.add_BC('tip_rot', 'D', 'node', [ne], [None, None, 2. * np.pi])
-    net.solve_nonlinear(n_steps=100, tol=1e-9, verbose=False, matrix=matrix)
+    net.solve_nonlinear(n_steps=ns, tol=1e-9, verbose=False, matrix=matrix)
 
     np.testing.assert_allclose(net.displaced_nodes[-1], [0., 0.], atol=1e-4)
 
 
-@pytest.mark.parametrize('ne', [20, 50])
-def test_tip_rotation_semicircle(ne):
+@pytest.mark.parametrize('ne, ns, matrix', NEUMANN_PARAMS)
+def test_tip_rotation_semicircle(ne, ns, matrix):
     """Prescribed tip rotation of π must produce a semicircle.
 
     For a uniform arc with total rotation θ the tip position is::
@@ -94,9 +140,9 @@ def test_tip_rotation_semicircle(ne):
 
     For θ = π: x_tip = 0, y_tip = 2L/π.
     """
-    net, Lx, _ = _cantilever(ne, 'bsr')
+    net, Lx, _ = _cantilever(ne, matrix)
     net.add_BC('tip_rot', 'D', 'node', [ne], [None, None, np.pi])
-    net.solve_nonlinear(n_steps=100, tol=1e-9, verbose=False, matrix='bsr')
+    net.solve_nonlinear(n_steps=ns, tol=1e-9, verbose=False, matrix='bsr')
 
     tip = net.displaced_nodes[-1]
     x_exp = 0.

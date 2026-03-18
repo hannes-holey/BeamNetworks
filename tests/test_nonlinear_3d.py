@@ -26,6 +26,40 @@ import pytest
 from beam_networks.problem import ElasticNetwork
 from beam_networks.geometry.geo import get_geometric_props
 
+NEUMANN_PARAMS = [(20,  1, 'dense'),
+                  (50,  1, 'dense'),
+                  (20,  2, 'dense'),
+                  (50,  2, 'dense'),
+                  (20,  5, 'dense'),
+                  (50,  5, 'dense'),
+                  (20,  10, 'dense'),
+                  (50,  10, 'dense'),
+                  (20,  1, 'bsr'),
+                  (50,  1, 'bsr'),
+                  (20,  2, 'bsr'),
+                  (50,  2, 'bsr'),
+                  (20,  5, 'bsr'),
+                  (50,  5, 'bsr'),
+                  (20,  10, 'bsr'),
+                  (50,  10, 'bsr'), ]
+
+DIRICHLET_PARAMS = [(20,  5, 'dense'),
+                    (50,  5, 'dense'),
+                    (20,  10, 'dense'),
+                    (50,  10, 'dense'),
+                    (20,  20, 'dense'),
+                    (50,  20, 'dense'),
+                    (20,  50, 'dense'),
+                    (50,  50, 'dense'),
+                    (20,  5, 'bsr'),
+                    (50,  5, 'bsr'),
+                    (20,  10, 'bsr'),
+                    (50,  10, 'bsr'),
+                    (20,  20, 'bsr'),
+                    (50,  20, 'bsr'),
+                    (20,  50, 'bsr'),
+                    (50,  50, 'bsr'), ]
+
 
 # ---------------------------------------------------------------------------
 # Shared fixture
@@ -51,7 +85,8 @@ def _cantilever_3d(ne: int, matrix: str, ref_vec=(0., 1., 0.)):
     nodes = np.column_stack([x, np.zeros(ne + 1), np.zeros(ne + 1)])
     edges = np.column_stack([np.arange(ne), np.arange(ne) + 1])
     net = ElasticNetwork(nodes, edges, beam_prop=beam_prop,
-                         options={'vectorize': False, 'matrix': matrix,
+                         options={'vectorize': True,
+                                  'matrix': matrix,
                                   'verbose': False},
                          assemble_on_init=False)
     net.add_BC('clamp', 'D', 'node', [0], [0., 0., 0., 0., 0., 0.])
@@ -63,12 +98,9 @@ def _cantilever_3d(ne: int, matrix: str, ref_vec=(0., 1., 0.)):
 # In-plane (x-y) tests — Neumann (tip moment Mz)
 # ---------------------------------------------------------------------------
 
-@pytest.mark.parametrize('ne, matrix', [
-    (20, 'dense'),
-    (20, 'bsr'),
-    (50, 'bsr'),
-])
-def test_tip_moment_circle_xy(ne, matrix):
+
+@pytest.mark.parametrize('ne, ns, matrix', NEUMANN_PARAMS)
+def test_tip_moment_circle_xy(ne, ns, matrix):
     """Tip moment Mz = 2π EI/L bends beam into a full circle in x-y plane.
 
     The free tip must return to the clamped-end origin after the full 2π
@@ -81,8 +113,11 @@ def test_tip_moment_circle_xy(ne, matrix):
 
     # Neumann BC: moment about z (DOF index 5 per node = θz)
     net.add_BC('load', 'N', 'node', [ne], [None, None, None, None, None, Mref])
-    net.solve_nonlinear(n_steps=100, tol=1e-9, verbose=False,
-                        matrix=matrix, ref_vectors=ref)
+    net.solve_nonlinear(n_steps=ns,
+                        tol=1e-9,
+                        verbose=False,
+                        matrix=matrix,
+                        ref_vectors=ref)
 
     tip = net.displaced_nodes[-1]
     np.testing.assert_allclose(tip[:2], [0., 0.], atol=1e-4)
@@ -94,12 +129,8 @@ def test_tip_moment_circle_xy(ne, matrix):
 # In-plane (x-y) tests — Dirichlet (prescribed tip rotation θz)
 # ---------------------------------------------------------------------------
 
-@pytest.mark.parametrize('ne, matrix', [
-    (20, 'dense'),
-    (20, 'bsr'),
-    (50, 'bsr'),
-])
-def test_tip_rotation_circle_xy(ne, matrix):
+@pytest.mark.parametrize('ne, ns, matrix', DIRICHLET_PARAMS)
+def test_tip_rotation_circle_xy(ne, ns, matrix):
     """Prescribed tip rotation θz = 2π produces a full circle in x-y plane.
 
     Prescribing the rotational DOF θz = 2π at the tip with translational
@@ -107,16 +138,15 @@ def test_tip_rotation_circle_xy(ne, matrix):
     the tip must return to the origin — identical to the tip-moment case.
     """
 
-    # FIXME: should also work with exact 2pi (as in 2d)
-    twopi = (1. - 1e-12) * 2. * np.pi
+    twopi = 2. * np.pi
 
     net, Lx, _, ref = _cantilever_3d(ne, matrix, ref_vec=(0., 0., 1.))
     net.add_BC('tip_rot', 'D', 'node', [ne],
                [None, None, None, None, None, twopi])
 
-    net.solve_nonlinear(n_steps=100,
+    net.solve_nonlinear(n_steps=ns,
                         tol=1e-9,
-                        verbose=True,
+                        verbose=False,
                         matrix=matrix,
                         ref_vectors=ref)
 
@@ -125,8 +155,8 @@ def test_tip_rotation_circle_xy(ne, matrix):
     np.testing.assert_allclose(tip[2], 0., atol=1e-8)
 
 
-@pytest.mark.parametrize('ne', [20, 50])
-def test_tip_rotation_semicircle_xy(ne):
+@pytest.mark.parametrize('ne, ns, matrix', DIRICHLET_PARAMS)
+def test_tip_rotation_semicircle_xy(ne, ns, matrix):
     """Prescribed θz = π produces a semicircle: tip at (0, 2L/π, 0).
 
     For a uniform arc of total rotation θ::
@@ -138,7 +168,7 @@ def test_tip_rotation_semicircle_xy(ne):
     net, Lx, _, ref = _cantilever_3d(ne, 'bsr', ref_vec=(0., 0., 1.))
     net.add_BC('tip_rot', 'D', 'node', [ne],
                [None, None, None, None, None, np.pi])
-    net.solve_nonlinear(n_steps=100,
+    net.solve_nonlinear(n_steps=ns,
                         tol=1e-9,
                         verbose=False,
                         matrix='bsr',
@@ -155,12 +185,8 @@ def test_tip_rotation_semicircle_xy(ne):
 # Out-of-plane (x-z) tests — Neumann (tip moment My)
 # ---------------------------------------------------------------------------
 
-@pytest.mark.parametrize('ne, matrix', [
-    (20, 'dense'),
-    (20, 'bsr'),
-    (50, 'bsr'),
-])
-def test_tip_moment_circle_xz(ne, matrix):
+@pytest.mark.parametrize('ne, ns, matrix', NEUMANN_PARAMS)
+def test_tip_moment_circle_xz(ne, ns, matrix):
     """Tip moment My = 2π EI/L bends beam into a full circle in x-z plane.
 
     Mirrors the x-y test using the second transverse bending plane.
@@ -173,7 +199,7 @@ def test_tip_moment_circle_xz(ne, matrix):
 
     # Moment about y (DOF index 4 per node = θy)
     net.add_BC('load', 'N', 'node', [ne], [None, None, None, None, Mref, None])
-    net.solve_nonlinear(n_steps=100,
+    net.solve_nonlinear(n_steps=ns,
                         tol=1e-9,
                         verbose=False,
                         matrix=matrix,
@@ -190,17 +216,16 @@ def test_tip_moment_circle_xz(ne, matrix):
 # Out-of-plane (x-z) — Dirichlet (prescribed tip rotation θy)
 # ---------------------------------------------------------------------------
 
-@pytest.mark.parametrize('ne', [20, 50])
-def test_tip_rotation_circle_xz(ne):
+@pytest.mark.parametrize('ne, ns, matrix', DIRICHLET_PARAMS)
+def test_tip_rotation_circle_xz(ne, ns, matrix):
     """Prescribed tip rotation θy = 2π produces a full circle in x-z plane."""
 
-    # FIXME: should also work with exact 2pi (as in 2d)
-    twopi = (1. - 1e-12) * 2. * np.pi
+    twopi = 2. * np.pi
 
     net, Lx, _, ref = _cantilever_3d(ne, 'bsr')
     net.add_BC('tip_rot', 'D', 'node', [ne], [None, None, None, None, twopi, None])
 
-    net.solve_nonlinear(n_steps=100,
+    net.solve_nonlinear(n_steps=ns,
                         tol=1e-9,
                         verbose=False,
                         matrix='bsr',
@@ -216,8 +241,8 @@ def test_tip_rotation_circle_xz(ne):
 # 3D vs 2D consistency
 # ---------------------------------------------------------------------------
 
-@pytest.mark.parametrize('ne', [20])
-def test_3d_matches_2d_inplane(ne):
+@pytest.mark.parametrize('ne, ns, matrix', NEUMANN_PARAMS)
+def test_3d_matches_2d_inplane(ne, ns, matrix):
     """3D in-plane solution must match the 2D solution exactly.
 
     The 3D cantilever with tip moment Mz should give the same tip x, y
@@ -237,18 +262,24 @@ def test_3d_matches_2d_inplane(ne):
         np.column_stack([x, np.zeros(ne + 1)]),
         np.column_stack([np.arange(ne), np.arange(ne) + 1]),
         beam_prop=beam_prop,
-        options={'vectorize': False, 'matrix': 'bsr', 'verbose': False},
+        options={'vectorize': True, 'matrix': matrix, 'verbose': False},
         assemble_on_init=False,
     )
     net2d.add_BC('clamp', 'D', 'node', [0], [0., 0., 0.])
     net2d.add_BC('load', 'N', 'node', [ne], [None, None, Mref])
-    net2d.solve_nonlinear(n_steps=100, tol=1e-9, verbose=False, matrix='bsr')
+    net2d.solve_nonlinear(n_steps=ns,
+                          tol=1e-9,
+                          verbose=False,
+                          matrix=matrix)
 
     # 3D network — ref=[0,0,1] to avoid frame singularity in x-y bending
     net3d, _, _, ref = _cantilever_3d(ne, 'bsr', ref_vec=(0., 0., 1.))
     net3d.add_BC('load', 'N', 'node', [ne], [None, None, None, None, None, Mref])
-    net3d.solve_nonlinear(n_steps=100, tol=1e-9, verbose=False,
-                          matrix='bsr', ref_vectors=ref)
+    net3d.solve_nonlinear(n_steps=ns,
+                          tol=1e-9,
+                          verbose=False,
+                          matrix=matrix,
+                          ref_vectors=ref)
 
     tip2d = net2d.displaced_nodes[-1]    # (x, y)
     tip3d = net3d.displaced_nodes[-1]    # (x, y, z)
