@@ -32,7 +32,9 @@ tests = [
     'pytest-cov']
 doc = [
     'sphinx',
-    'sphinx_book_theme']
+    'sphinx-book-theme',
+    'myst-nb',
+    'jupytext']
 cholesky = [
     'scikit-sparse']
 amg = [
