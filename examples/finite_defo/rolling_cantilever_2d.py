@@ -34,7 +34,7 @@ x = np.linspace(0., Lx, ne + 1)
 nodes = np.column_stack([x, np.zeros_like(x)])
 edges = np.column_stack([np.arange(ne), np.arange(ne) + 1])
 
-n_steps = 10
+n_steps = 3
 n_snapshots = 5
 plot_every = max(n_steps // n_snapshots, 1)
 

@@ -28,7 +28,7 @@ from beam_networks.geometry.geo import get_geometric_props
 # ---------------------------------------------------------------------------
 # Common geometry and material
 # ---------------------------------------------------------------------------
-ne = 20
+ne = 10
 Lx = 10.
 beam_prop = {'b': .1, 'h': .1, 'E': 2.e11, 'nu': 0., 'name': 'rectangle'}
 Iz = get_geometric_props(beam_prop)[1]
@@ -38,7 +38,7 @@ x = np.linspace(0., Lx, ne + 1)
 nodes = np.column_stack([x, np.zeros(ne + 1), np.zeros(ne + 1)])
 edges = np.column_stack([np.arange(ne), np.arange(ne) + 1])
 
-n_steps = 100
+n_steps = 1
 n_snapshots = 5
 plot_every = max(n_steps // n_snapshots, 1)
 

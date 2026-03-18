@@ -34,7 +34,7 @@ def run(matrix='bsr', Fz=0.):
     net.add_BC('load', 'N', 'node', [ne], [None, None, Fz, None, None, None])
 
     net.solve_nonlinear(n_steps=n_steps,
-                        tol=1e-3,
+                        tol=1e-9,
                         verbose=True,
                         callback=None,
                         ref_vectors=None)
@@ -58,10 +58,10 @@ except OSError:
 
 fig, ax = plt.subplots(1, subplot_kw={'projection': '3d'}, figsize=(7, 5))
 
-crisfield_ref = [[70.71, -29.29, 0.],
-                 [58.53, -22.16, 40.53],
-                 [51.93, -18.43, 48.79],
-                 [46.84, -15.61, 53.71]]
+crisfield_ref = np.array([[70.71, -29.29, 0.],
+                          [58.53, -22.16, 40.53],
+                          [51.93, -18.43, 48.79],
+                          [46.84, -15.61, 53.71]])
 
 
 for i, Fz in enumerate([0., 300., 450., 600.]):
@@ -73,11 +73,18 @@ for i, Fz in enumerate([0., 300., 450., 600.]):
     tip_xy = net_xy.displaced_nodes[-1]
 
     print('Present: ', f"({tip_xy[0]:.2f}, {tip_xy[1]:.2f}, {tip_xy[2]:.2f})")
-    print('Expected:', f"({crisfield_ref[i][0]:.2f}, {crisfield_ref[i][1]:.2f}, {crisfield_ref[i][2]:.2f})")
+    print('Expected:', f"({crisfield_ref[i, 0]:.2f}, {crisfield_ref[i, 1]:.2f}, {crisfield_ref[i, 2]:.2f})")
 
     draw_3d(ax, net_xy, c=f'C{i}')
     ax.plot([], [], color=f'C{i}', label=f'{Fz:.0f}')
 
+    ax.scatter(*crisfield_ref[i],
+               marker='o',
+               facecolor='none',
+               linewidths=1.,
+               edgecolors='0.0',
+               label='Crisfield (1990)' if i == 3 else None,
+               zorder=-10)
 
 ax.set_xlabel('x')
 ax.set_ylabel('y')
