@@ -14,7 +14,7 @@ structures, and fibre composites.
    tutorials/index
    api_reference
    corotational_solver
-   Github repository <https://github.com/hannes-holey/ElasticNetworks>
+   Github repository <https://github.com/hannes-holey/BeamNetworks>
 
 .. include:: readme.rst
 
