@@ -28,6 +28,10 @@ from beam_networks.geometry.selection import _remove_isolated_nodes_edges, _mic
 from beam_networks.postprocess.viz import _plot_network
 from beam_networks.io.formats import _to_vtk, _to_vtk_periodic, _to_stl, _from_tar, _to_tar
 from beam_networks.solvers.nonlinear import solve_nonlinear as _solve_nonlinear
+from beam_networks.fem.corotational import (
+    element_mises_stress_2d as _corot_mises_2d,
+    element_mises_stress_3d as _corot_mises_3d,
+)
 
 if TYPE_CHECKING:
     import matplotlib
@@ -857,6 +861,11 @@ class ElasticNetwork(Network):
             ref_vectors=rv,
         )
         self.has_solution = True
+
+        if self.dim == 2:
+            self._sVM = _corot_mises_2d(self._nodes, self._edges, self.sol, self._beam_prop)
+        else:
+            self._sVM = _corot_mises_3d(self._nodes, self._edges, self.sol, self._beam_prop, rv)
 
     def _get_reaction_forces(self, F):
         """Extract reaction forces from global force vector

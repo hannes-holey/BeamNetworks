@@ -949,6 +949,65 @@ def element_mises_stress_2d(
     return np.abs(sigma_a) + np.maximum(sigma_b0, sigma_b1)
 
 
+def element_mises_stress_3d(
+        nodes: np.ndarray,
+        edges: np.ndarray,
+        sol: np.ndarray,
+        beam_prop: dict,
+        ref_vectors: np.ndarray,
+) -> np.ndarray:
+    """Von Mises equivalent stress per element from 3D co-rotational forces.
+
+    Evaluates the stress at both element ends and returns the maximum.
+
+    At each end the normal stress is the superposition of axial and both
+    bending contributions evaluated at the extreme fibre::
+
+        σ_i = |N / A| + |My_i| * y_max / Iy + |Mz_i| * y_max / Iz
+
+    The torsional shear stress at the extreme fibre is::
+
+        τ_i = |Tx_i| * y_max / Ip
+
+    and von Mises reduces to::
+
+        σ_VM,i = sqrt(σ_i² + 3 τ_i²)
+
+    Local force ordering (output of :func:`compute_element_forces_3d`)::
+
+        [N, Tx0, My0, Mz0, Tx1, My1, Mz1]
+
+    where *My* is the moment about the local e2 axis (uses Iy) and *Mz* is
+    the moment about the local e3 axis (uses Iz).
+
+    Parameters
+    ----------
+    nodes, edges, sol, beam_prop, ref_vectors :
+        Same as :func:`compute_element_forces_3d`.
+
+    Returns
+    -------
+    svm : np.ndarray, shape (M,)
+        Von Mises equivalent stress per element.
+    """
+    from beam_networks.geometry.geo import get_geometric_props
+    Iy, Iz, Ip, A, _, ymax = get_geometric_props(beam_prop)
+    forces = compute_element_forces_3d(nodes, edges, sol, beam_prop, ref_vectors)
+    N   = forces[:, 0]
+    Tx0 = forces[:, 1];  My0 = forces[:, 2];  Mz0 = forces[:, 3]
+    Tx1 = forces[:, 4];  My1 = forces[:, 5];  Mz1 = forces[:, 6]
+
+    sigma_a = np.abs(N) / A
+    sigma_0 = sigma_a + np.abs(My0) * ymax / Iy + np.abs(Mz0) * ymax / Iz
+    sigma_1 = sigma_a + np.abs(My1) * ymax / Iy + np.abs(Mz1) * ymax / Iz
+    tau_0 = np.abs(Tx0) * ymax / Ip
+    tau_1 = np.abs(Tx1) * ymax / Ip
+
+    svm_0 = np.sqrt(sigma_0**2 + 3. * tau_0**2)
+    svm_1 = np.sqrt(sigma_1**2 + 3. * tau_1**2)
+    return np.maximum(svm_0, svm_1)
+
+
 def assemble_nonlinear_system_2d(
         nodes: np.ndarray,
         edges: np.ndarray,

@@ -136,3 +136,64 @@ def test_compute_principal_stresses_3d():
     assert pS.shape == (p.num_edges, 3)
     assert np.all(pS[:, 0] >= pS[:, 1] - 1e-12)
     assert np.all(pS[:, 1] >= pS[:, 2] - 1e-12)
+
+
+# ---------------------------------------------------------------------------
+# Co-rotational vs linear von Mises stress convergence
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize('ndim', [2, 3])
+def test_corot_stress_converges_to_linear(ndim):
+    """Co-rotational von Mises stress converges to the analytic limit as load -> 0.
+
+    For a cantilever with a transverse tip load P the exact (small-rotation)
+    bending stress at a cross-section located at arc-length coordinate x from
+    the fixed end is::
+
+        sigma(x) = P * (L - x) * y_max / Iz
+
+    As the tip load increases the nonlinear solver accounts for geometric
+    stiffening, so the actual bending moments — and thus stresses — are lower
+    than the linear prediction.  The test verifies that the relative error < 0.01%
+    at a very small load.
+
+    """
+    from beam_networks.geometry.geo import get_geometric_props
+
+    ne = 10
+    length = 10.
+    props = {'name': 'circle', 'radius': 0.05, 'E': 2e11, 'nu': 0.}
+    opts = {'matrix': 'bsr', 'vectorize': True, 'verbose': False}
+
+    _, Iz, _, _, _, _ = get_geometric_props(props)
+    ymax = props['radius']
+    P_ref = 2. * np.pi * props['E'] * Iz / length**2   # tip-force scale
+
+    x = np.linspace(0., length, ne + 1)
+    edges = np.column_stack([np.arange(ne), np.arange(ne) + 1])
+    # Analytic bending stress per element: maximum at the left (stiffer) end
+    sigma_scale = (length - x[:-1]) * ymax / Iz
+
+    load_fraction = 1e-4
+
+    P = load_fraction * P_ref
+    sigma_analytic = P * sigma_scale
+
+    if ndim == 2:
+        nodes = np.column_stack([x, np.zeros(ne + 1)])
+        net_nl = ElasticNetwork(nodes, edges, beam_prop=props, valid=True, options=opts)
+        net_nl.add_BC('fix', 'D', 'node', [0], [0., 0., 0.])
+        net_nl.add_BC('load', 'N', 'node', [ne], [0., P, 0.])
+        net_nl.solve_nonlinear(n_steps=5, tol=1e-12, verbose=False)
+    else:
+        nodes = np.column_stack([x, np.zeros(ne + 1), np.zeros(ne + 1)])
+        ref_vecs = np.tile([0., 0., 1.], (ne, 1))
+        net_nl = ElasticNetwork(nodes, edges, beam_prop=props, valid=True, options=opts)
+        net_nl.add_BC('fix', 'D', 'node', [0], [0., 0., 0., 0., 0., 0.])
+        net_nl.add_BC('load', 'N', 'node', [ne], [0., P, 0., 0., 0., 0.])
+        net_nl.solve_nonlinear(n_steps=5, tol=1e-12, verbose=False,
+                               ref_vectors=ref_vecs)
+
+    error = np.max(np.abs(net_nl._sVM - sigma_analytic) / sigma_analytic)
+
+    assert error < 1e-4, f"Small-load error too large: {error:.2e}"
