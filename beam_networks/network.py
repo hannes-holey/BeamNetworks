@@ -457,7 +457,8 @@ class Network:
             Bounding box dimensions ``[Lx, Ly, Lz]``. The default is
             ``[1., 1., 1.]``.
         lattice_type : str, optional
-            Name of the lattice type: ``'sc'``, ``'bcc'``, or ``'fcc'``.
+            Name of the lattice type: ``'sc'``, ``'bcc'``, ``'fcc'``,
+            ``'dia'`` (diamond), or ``'sc-bcc'``.
             The default is ``'sc'``.
 
         Returns
@@ -485,8 +486,8 @@ class Network:
         bbox : array-like, optional
             Bounding box dimensions ``[Lx, Ly]``. The default is ``[1., 1.]``.
         lattice_type : str, optional
-            Name of the lattice type: ``'sc'`` (simple square) or ``'fcc'``
-            (face-centred, equivalent to a triangular lattice).
+            Name of the lattice type: ``'sc'``, ``'fcc'``,
+            ``'triangular'``/``'hex'``, or ``'kagome'``.
             The default is ``'sc'``.
 
         Returns

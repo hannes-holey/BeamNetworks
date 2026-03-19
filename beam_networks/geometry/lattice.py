@@ -33,7 +33,9 @@ def generate_cubic_lattice(a=1.,
     bbox : array-like
         Size of the bounding box, filled with repeated unit cells
     lattice_type : str, optional
-        Name of the lattice type ['sc', 'bcc', 'fcc'] (the default is 'sc')
+        Name of the lattice type: ``'sc'``, ``'bcc'``, ``'fcc'``, ``'dia'``
+        (diamond), or ``'sc-bcc'`` (simple-cubic + BCC bonds).
+        The default is ``'sc'``.
 
     Returns
     -------
@@ -87,8 +89,36 @@ def generate_cubic_lattice(a=1.,
             * a
         )
         a0 = a * np.sqrt(3) / 2
+    elif lattice_type == "dia":
+        basis = (
+            np.array(
+                [
+                    [0, 0, 0],      # FCC sub-lattice A
+                    [0.5, 0.5, 0],
+                    [0.5, 0, 0.5],
+                    [0, 0.5, 0.5],
+                    [0.25, 0.25, 0.25],  # FCC sub-lattice B (shifted by a/4)
+                    [0.75, 0.75, 0.25],
+                    [0.75, 0.25, 0.75],
+                    [0.25, 0.75, 0.75],
+                ]
+            )
+            * a
+        )
+        a0 = a * np.sqrt(3) / 4
+    elif lattice_type == "sc-bcc":
+        basis = (
+            np.array(
+                [
+                    [0, 0, 0],      # SC corners
+                    [0.5, 0.5, 0.5],  # BCC body centre
+                ]
+            )
+            * a
+        )
+        a0 = None  # special: two bond lengths
     else:
-        raise RuntimeError("Lattice must be one of ['sc', 'fcc', 'bcc']")
+        raise RuntimeError("Lattice must be one of ['sc', 'fcc', 'bcc', 'dia', 'sc-bcc']")
 
     bbox = tuple(bbox)
 
@@ -119,7 +149,13 @@ def generate_cubic_lattice(a=1.,
     )
     lattice_coords = lattice_coords[mask]
 
-    connections = _get_connections(lattice_coords, a0)
+    if lattice_type == "sc-bcc":
+        connections = np.vstack([
+            _get_connections(lattice_coords, a),           # SC edges
+            _get_connections(lattice_coords, a * np.sqrt(3) / 2),  # BCC edges
+        ])
+    else:
+        connections = _get_connections(lattice_coords, a0)
 
     for d in np.arange(3)[pbc]:
 
@@ -139,6 +175,11 @@ def generate_cubic_lattice(a=1.,
         connections = new_connections
 
     connections = np.unique(connections, axis=0)
+
+    # Lattice types with a multi-atom basis can produce boundary nodes whose
+    # all neighbours fall outside the bounding box — prune them now.
+    if lattice_type in ("dia", "sc-bcc"):
+        lattice_coords, connections = _remove_isolated(lattice_coords, connections)
 
     # Need to delete obsolete nodes for pbc, thus set valid to false
     if np.any(pbc):
@@ -163,8 +204,14 @@ def generate_square_lattice(a=1.0,
         Size of the bounding box ``(Lx, Ly)``, filled with repeated unit cells.
         The default is ``(1.0, 1.0)``.
     lattice_type : str, optional
-        Name of the lattice type: ``'sc'`` (simple square) or ``'fcc'``
-        (face-centred, equivalent to triangular). The default is ``'sc'``.
+        Name of the lattice type:
+
+        * ``'sc'`` – simple square (coordination 4)
+        * ``'fcc'`` – rotated-square (coordination 4, kept for compatibility)
+        * ``'triangular'`` / ``'hex'`` – true triangular / hexagonal (coordination 6)
+        * ``'kagome'`` – corner-sharing triangles (coordination 4)
+
+        The default is ``'sc'``.
 
     Returns
     -------
@@ -174,37 +221,62 @@ def generate_square_lattice(a=1.0,
         Edge connectivity
     """
 
-    a0 = a
-
     if lattice_type == "sc":
-        basis = np.array([[0, 0]]) * a
+        cell = np.array([a, a])
+        basis = np.array([[0., 0.]])
+        a0 = a
     elif lattice_type == "fcc":
-        basis = (
-            np.array(
-                [
-                    [0, 0],  # Corner of the cube
-                    [0.5, 0.5],  # Center of the cube
-                ]
-            )
-            * a
-        )
+        # Rotated-square lattice (kept for backward compatibility).
+        cell = np.array([a, a])
+        basis = np.array([[0., 0.], [0.5 * a, 0.5 * a]])
         a0 = a * np.sqrt(2) / 2
+    elif lattice_type in ("triangular", "hex"):
+        # True triangular (hexagonal close-packed) lattice, coordination 6.
+        # Rectangular supercell of height a*sqrt(3) contains 2 atoms.
+        cell = np.array([a, a * np.sqrt(3)])
+        basis = np.array([[0., 0.], [0.5 * a, 0.5 * a * np.sqrt(3)]])
+        a0 = a
+    elif lattice_type == "kagome":
+        # Kagome lattice: corner-sharing triangles, coordination 4.
+        # Uses a non-orthogonal primitive cell with lattice vectors
+        #   A1 = (2a, 0),  A2 = (a, a*sqrt(3))
+        # and three basis atoms at the midpoints of the cell's triangle edges.
+        bbox = tuple(bbox)
+        A1 = np.array([2. * a, 0.])
+        A2 = np.array([a, a * np.sqrt(3)])
+        basis = np.array([[a, 0.],
+                          [0.5 * a, 0.5 * a * np.sqrt(3)],
+                          [1.5 * a, 0.5 * a * np.sqrt(3)]])
+        nj = int(bbox[1] / (a * np.sqrt(3))) + 2
+        ni = int(bbox[0] / (2. * a)) + 2
+        # A2 has an x-component (a), so cells with negative i can still
+        # contribute nodes inside the bbox; start at i = -nj to be safe.
+        gi, gj = np.meshgrid(np.arange(-nj, ni + nj), np.arange(nj), indexing="ij")
+        grid_origins = (gi[..., None] * A1 + gj[..., None] * A2).reshape(-1, 2)
+        lattice_coords = (grid_origins[:, None, :] + basis).reshape(-1, 2)
+        mask = np.logical_and(
+            np.all(lattice_coords <= bbox, axis=-1),
+            np.all(lattice_coords >= 0.0, axis=-1),
+        )
+        lattice_coords = lattice_coords[mask]
+        connections = _get_connections(lattice_coords, a)
+        return lattice_coords, connections
     else:
-        raise RuntimeError("Lattice must be one of ['sc', 'fcc']")
+        raise RuntimeError(
+            "Lattice must be one of ['sc', 'fcc', 'triangular', 'hex', 'kagome']"
+        )
 
     bbox = tuple(bbox)
 
-    nx, ny = (
-        np.array(bbox) / np.maximum(np.ones(2) * a, np.amax(basis, axis=0))
-    ).astype(int) + 1
+    nx, ny = (np.array(bbox) / cell).astype(int) + 1
 
     # Generate the grid of unit cells
     grid_x, grid_y = np.meshgrid(
         np.arange(nx), np.arange(ny), indexing="ij"
     )
 
-    # Stack the grid into vectors of unit cell origins and scale by a
-    grid_coords = np.stack((grid_x, grid_y), axis=-1).reshape(-1, 2) * a
+    # Stack the grid into vectors of unit cell origins and scale by cell
+    grid_coords = np.stack((grid_x, grid_y), axis=-1).reshape(-1, 2) * cell
 
     # Add the basis atoms to the grid
     lattice_coords = grid_coords[:, None, :] + basis
@@ -301,6 +373,31 @@ def generate_bowtie_lattice(a=1.0,
     )
 
     return lattice_coords, connections
+
+
+def _remove_isolated(coords, edges):
+    """Remove nodes not referenced by any edge and re-index edge array.
+
+    Parameters
+    ----------
+    coords : np.ndarray
+        Node coordinates, shape (N, dim).
+    edges : np.ndarray
+        Edge connectivity, shape (M, 2).
+
+    Returns
+    -------
+    np.ndarray
+        Pruned node coordinates.
+    np.ndarray
+        Re-indexed edge connectivity.
+    """
+    used = np.unique(edges)
+    if len(used) == len(coords):
+        return coords, edges
+    remap = np.full(len(coords), -1, dtype=int)
+    remap[used] = np.arange(len(used))
+    return coords[used], remap[edges]
 
 
 def _get_connections(coords, d):
