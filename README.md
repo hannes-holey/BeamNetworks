@@ -51,7 +51,7 @@ plt.show()
 
 ```
 
-More examples can be found in the [examples](./examples) directory, for instance for quasi-static problems
+More examples can be found in the [tutorials](./doc/tutorials) directory, for instance for quasi-static problems
 of 2D and 3D lattice structures, or for elastic-brittle fracture problems.
 
 ## Tests
