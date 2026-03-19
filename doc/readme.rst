@@ -48,7 +48,7 @@ Minimal example
    ax.scatter(*problem.displaced_nodes[:, :2].T)
    plt.show()
 
-More examples can be found in the `examples <https://github.com/hannes-holey/ElasticNetworks/tree/main/examples>`__ directory.
+For more examples can be found in the `tutorials <https://github.com/hannes-holey/BeamNetworks/tree/main/doc/tutorials>`__.
 
 Tests
 -----
