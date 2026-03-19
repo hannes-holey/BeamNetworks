@@ -33,7 +33,7 @@ jobs:
     - name: Install beam_networks
       run: |
         python3 -m pip install --upgrade pip
-        python3 -m pip install .[tests]
+        python3 -m pip install .[io,tests]
 
     - name: Test with pytest
       run:

@@ -40,6 +40,12 @@ doc = [
 solvers = [
     'scikit-sparse',
     'pyamg']
+all = [
+    'beam_networks[io]',
+    'beam_networks[viz]',
+    'beam_networks[tests]',
+    'beam_networks[doc]',
+    'beam_networks[solvers]']
 
 [tool.setuptools.packages.find]
 where = ["."]
