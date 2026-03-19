@@ -39,7 +39,7 @@ def solve_nonlinear(
         val_N: list,
         val_D=None,
         n_steps: int = 100,
-        max_iter: int = 10000,
+        max_iter: int = 100,
         tol: float = 1e-9,
         verbose: bool = True,
         callback=None,
@@ -85,7 +85,7 @@ def solve_nonlinear(
         Number of load increments.  The default is 100.
     max_iter : int, optional
         Maximum Newton–Raphson iterations per load step.  The default is
-        10 000.
+        100.
     tol : float, optional
         Convergence tolerance on the Euclidean norm of the incremental
         displacement correction ``|Δu|``.  The default is 1e-9.
