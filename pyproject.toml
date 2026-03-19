@@ -18,15 +18,17 @@ requires-python = ">=3.10"
 dynamic = ["version"]
 dependencies = [
     "numpy",
-    "matplotlib",
     "scipy",
-    "tqdm",
-    "pandas[hdf5]",
-    "trimesh[easy]",
-    "meshio",
     "PyYAML"]
 
 [project.optional-dependencies]
+io = [
+    'meshio',
+    'trimesh[easy]',
+    'pandas[hdf5]']
+viz = [
+    'matplotlib',
+    'pyvista']
 tests = [
     'pytest',
     'pytest-cov']
@@ -35,16 +37,9 @@ doc = [
     'sphinx-book-theme',
     'myst-nb',
     'jupytext']
-cholesky = [
-    'scikit-sparse']
-amg = [
-    'pyamg']
 solvers = [
     'scikit-sparse',
     'pyamg']
-
-[project.scripts]
-vtk2img = "beam_networks.viz:vtk2img"
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -55,5 +50,4 @@ version_scheme = "guess-next-dev"
 local_scheme = "dirty-tag"
 
 [tool.pytest.ini_options]
-addopts = "-v"
 testpaths = ["tests"]

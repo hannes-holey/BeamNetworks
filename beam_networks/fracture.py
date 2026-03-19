@@ -14,7 +14,6 @@
 #
 import os
 import numpy as np
-import pandas as pd
 
 from .problem import ElasticNetwork
 from beam_networks.fem.assembly import assemble_global_system
@@ -237,12 +236,13 @@ class FractureProblem(ElasticNetwork):
                                                   self._edge_vectors[i][None, :],
                                                   self._beam_prop,
                                                   vectorize=self._options['vectorize'],
-                                                  matrix=self._options['matrix'],
-                                                  verbose=False)
+                                                  matrix=self._options['matrix'])
 
     def _write_hdf5(self):
         """Write output buffer to HDF5 file.
         """
+
+        import pandas as pd
 
         fname = os.path.join(self._outdir, 'data.h5')
         if os.path.exists(fname):

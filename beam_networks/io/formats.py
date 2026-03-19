@@ -17,9 +17,6 @@ import numpy as np
 import tarfile
 import shutil
 import yaml
-from meshio import Mesh
-from meshio.xdmf import TimeSeriesWriter
-import trimesh
 import scipy.sparse as sp
 
 from beam_networks.io.validation import zero_pad_2d_array
@@ -189,6 +186,7 @@ def _write_vtk(file, nodes, edges, disp, rot, stress):
     stress : numpy.ndarray
         Element von Mises stress
     """
+    from meshio import Mesh
 
     cells = [
         ("line", edges),
@@ -330,6 +328,7 @@ def _to_vtk(file, coords, adj,
 
     """
 
+    from meshio import Mesh
     #
     n_nodes, ndim = coords.shape
     if dof_per_node is None:
@@ -394,6 +393,7 @@ def _to_xdmf(file,
         list of length n_tsteps+1 with stresses of each beam shape (n_beams)
 
     """
+    from meshio.xdmf import TimeSeriesWriter
 
     #
     n_nodes, ndim = coords.shape
@@ -436,6 +436,7 @@ def _to_xdmf(file,
 
 
 def _to_stl(file, coords, edges, props):
+    import trimesh
 
     meshes = []
     dim = coords.shape[1]

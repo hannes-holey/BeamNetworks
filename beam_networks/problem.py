@@ -25,7 +25,7 @@ from beam_networks.postprocess.stress import get_element_mises_stress, get_eleme
 from beam_networks.fem.bc import _get_bc_dof, _assemble_BCs
 from beam_networks.io.validation import check_input_dict
 from beam_networks.geometry.selection import _remove_isolated_nodes_edges, _mic
-from beam_networks.postprocess.viz import _plot_network
+from beam_networks.postprocess.viz import _plot_network, _plot_network_3d
 from beam_networks.io.formats import _to_vtk, _to_vtk_periodic, _to_stl, _from_tar, _to_tar
 from beam_networks.solvers.nonlinear import solve_nonlinear as _solve_nonlinear
 from beam_networks.fem.corotational import (
@@ -555,7 +555,6 @@ class ElasticNetwork(Network):
                                          beam_prop,
                                          vectorize=self._options['vectorize'],
                                          matrix=self._options['matrix'],
-                                         verbose=self._verbose,
                                          n_elems=n_elems,
                                          fem_poly_order=self._options['fem_poly_order'],
                                          fem_n_gauss=self._options['fem_n_gauss'],
@@ -992,61 +991,201 @@ class ElasticNetwork(Network):
         """
         self.sol *= scale_factor
 
-    def plot(self, ax, node_ids: bool = False, contour: np.ndarray | None = None,
-             cax=None, aspect: float = 1., lim: tuple | None = None,
-             lw: float = 2., scale: float = 1.) -> "matplotlib.axes.Axes":
-        """Generate a 2D plot of the deformed network structure.
-
-        Draws the undeformed network in grey and, if a solution is available,
-        overlays the deformed network optionally coloured by a scalar field.
+    def _resolve_contour(self, contour):
+        """Resolve a contour specification to a ``(array, label)`` pair.
 
         Parameters
         ----------
-        ax : matplotlib.axes.Axes
-            Axes object to draw into.
-        node_ids : bool, optional
-            If True, print node indices next to each node in the undeformed
-            configuration. The default is False.
-        contour : numpy.ndarray or None, optional
-            Per-edge scalar field used to colour the deformed network
-            (e.g. von Mises stress). The default is None (no colouring).
-        cax : matplotlib.axes.Axes or None, optional
-            Axes for the colourbar when *contour* is given. The default is
-            None, which steals space from *ax*.
-        aspect : float, optional
-            Aspect ratio of the axes. The default is 1.
-        lim : tuple or None, optional
-            Colourbar limits ``(vmin, vmax)``. The default is None, which
-            uses the range of *contour*.
-        lw : float, optional
-            Line width for the beam edges. The default is 2.
-        scale : float, optional
-            Scale factor applied to displacements before plotting (for
-            visualisation purposes only). The default is 1.
+        contour : np.ndarray, str, or None
+            If an ndarray it is returned with an empty label.
+            Supported string keys:
+
+            Per-edge quantities
+              * ``'stress'`` / ``'svm'``  — von Mises equivalent stress
+              * ``'ratio'``               — bending-to-total stress ratio (2D only)
+              * ``'p1'``, ``'p2'``, ``'p3'`` — principal stresses (descending)
+
+            Per-node quantities (averaged over the two endpoint nodes)
+              * ``'u'``                        — displacement magnitude
+              * ``'ux'``, ``'uy'``, ``'uz'``  — displacement components
+              * ``'r'``                        — rotation magnitude
+              * ``'rz'``                       — rotation θz (2D and 3D)
+              * ``'rx'``, ``'ry'``             — rotations θx, θy (3D only)
 
         Returns
         -------
-        matplotlib.axes.Axes
-            The axes with the network drawn into it.
+        data : np.ndarray or None
+        label : str
+            Human-readable name suitable for a colourbar title.
         """
+        if contour is None:
+            return None, ''
 
-        # periodic_box = [L if p else p for (
-        #     L, p) in zip(self._boxsize, self._periodic)]
+        if isinstance(contour, np.ndarray):
+            return contour, ''
 
-        # undeformed
-        ax = _plot_network(ax, self.nodes, self.edges, self.edge_vectors, color='0.7',
-                           node_ids=node_ids, lw=lw)
+        if not isinstance(contour, str):
+            raise TypeError(f"contour must be an ndarray, str, or None; got {type(contour)}")
 
-        # deformed
-        ax = _plot_network(ax, self.displaced_nodes, self.edges, self.displaced_edge_vectors, contour,
-                           cax=cax, lim=lim, lw=lw)
+        key = contour.lower().strip()
 
-        ax.set_xlabel(r'$x$')
-        ax.set_ylabel(r'$y$')
+        # --- per-edge quantities -----------------------------------------
+        if key in ('stress', 'svm'):
+            if self._sVM is None:
+                raise RuntimeError("No stress available; call solve() or solve_nonlinear() first.")
+            return self._sVM, 'von Mises stress'
 
-        ax.set_aspect(aspect)
+        if key == 'ratio':
+            return self.compute_ratio(), 'bending ratio'
 
-        return ax
+        if key in ('p1', 'p2', 'p3'):
+            idx = {'p1': 0, 'p2': 1, 'p3': 2}[key]
+            labels = {'p1': 'principal stress 1',
+                      'p2': 'principal stress 2',
+                      'p3': 'principal stress 3'}
+            return self.compute_principal_stresses()[:, idx], labels[key]
+
+        # --- per-node quantities averaged to edges -----------------------
+        disp = self.displacement  # (N, dim)
+
+        if key == 'u':
+            node_data, label = np.linalg.norm(disp, axis=1), 'U (magnitude)'
+        elif key == 'ux':
+            node_data, label = disp[:, 0], 'UX'
+        elif key == 'uy':
+            node_data, label = disp[:, 1], 'UY'
+        elif key == 'uz':
+            if self.dim < 3:
+                raise ValueError("'uz' is only available for 3D networks.")
+            node_data, label = disp[:, 2], 'UZ'
+        elif key in ('r', 'rx', 'ry', 'rz'):
+            rot = self.rotation  # (N, n_rot): 2D→(N,1), 3D→(N,3)
+            if key == 'r':
+                node_data, label = np.linalg.norm(rot, axis=1), 'R (magnitude)'
+            elif key == 'rz':
+                # rz is the only rotation in 2D (index 0); last column in 3D
+                node_data, label = rot[:, -1], 'RZ'
+            else:
+                if self.dim < 3:
+                    raise ValueError(f"'{key}' is only available for 3D networks.")
+                idx = {'rx': 0, 'ry': 1}[key]
+                node_data, label = rot[:, idx], key.upper()
+        else:
+            valid = ("'stress'/'svm', 'ratio', 'p1', 'p2', 'p3', "
+                     "'u', 'ux', 'uy', 'uz', 'r', 'rx', 'ry', 'rz'")
+            raise ValueError(f"Unknown contour key '{contour}'. Valid options: {valid}")
+
+        # Average the per-node scalar to per-edge
+        return 0.5 * (node_data[self.edges[:, 0]] + node_data[self.edges[:, 1]]), label
+
+    def plot(self,
+             ax=None,
+             contour: np.ndarray | str | None = None,
+             lim: tuple | None = None,
+             scale: float = 1.,
+             show_undeformed: bool = False,
+             lw: float = 3.,
+             cmap: str = 'plasma',
+             # 2-D only
+             node_ids: bool = False,
+             cax=None,
+             aspect: float = 1.,
+             # 3-D only
+             plotter=None,
+             scalar_bar_args: dict | None = None):
+        """Plot the network, dispatching to 2-D (matplotlib) or 3-D (PyVista).
+
+        The backend is chosen automatically from the network dimension
+        (``self.dim``).  Common parameters work identically in both backends;
+        backend-specific parameters are silently ignored when they do not apply.
+
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes or None, optional
+            *(2-D only)* Axes to draw into.  A new figure with one axes is
+            created when None.
+        contour : numpy.ndarray, str, or None, optional
+            Per-edge scalar used to colour the deformed network.  Accepts a
+            raw array or any string key recognised by :meth:`_resolve_contour`
+            (``'stress'``, ``'u'``, ``'ux'``, ``'uy'``, ``'uz'``,
+            ``'r'``, ``'rx'``, ``'ry'``, ``'rz'``,
+            ``'ratio'``, ``'p1'``, ``'p2'``, ``'p3'``).
+            Default is None (uniform colour).
+        lim : tuple or None, optional
+            Colour-bar limits ``(vmin, vmax)``.  None uses the data range.
+        scale : float, optional
+            Displacement magnification factor.  Default is 1.
+        show_undeformed : bool, optional
+            Overlay the undeformed network in grey.  Default is False.
+        lw : float, optional
+            Line width (points for 2-D, screen pixels for 3-D).  Default is 3.
+        cmap : str, optional
+            Colormap name.  Default is ``'plasma'``.
+        node_ids : bool, optional
+            *(2-D only)* Annotate nodes with their index.  Default is False.
+        cax : matplotlib.axes.Axes or None, optional
+            *(2-D only)* Axes for the colour bar.  None steals space from *ax*.
+        aspect : float, optional
+            *(2-D only)* Axes aspect ratio.  Default is 1.
+        plotter : pyvista.Plotter or None, optional
+            *(3-D only)* Existing plotter to draw into.  A new one is created
+            when None.
+        scalar_bar_args : dict or None, optional
+            *(3-D only)* Extra kwargs forwarded to the PyVista scalar bar.
+
+        Returns
+        -------
+        matplotlib.axes.Axes  (2-D networks)
+            Call ``plt.show()`` or ``fig.savefig()`` as usual.
+        pyvista.Plotter  (3-D networks)
+            Call ``.show()`` to open the interactive window.
+        """
+        contour, label = self._resolve_contour(contour)
+        disp_nodes = self.nodes + scale * self.displacement
+
+        if self.dim == 2:
+            import matplotlib.pyplot as plt
+            if ax is None:
+                _, ax = plt.subplots()
+
+            if show_undeformed:
+                ax = _plot_network(ax, self.nodes, self.edges, self.edge_vectors,
+                                   color='0.7', node_ids=node_ids, lw=lw)
+
+            disp_dr = _mic(disp_nodes[self.edges[:, 1]] - disp_nodes[self.edges[:, 0]],
+                           self._boxsize, self._periodic)
+            ax = _plot_network(ax, disp_nodes, self.edges, disp_dr, contour,
+                               cax=cax, lim=lim, lw=lw, cmap=cmap)
+            ax.set_xlabel(r'$x$')
+            ax.set_ylabel(r'$y$')
+            ax.set_aspect(aspect)
+            return ax
+
+        else:
+            try:
+                import pyvista as pv
+            except ImportError as exc:
+                raise ImportError(
+                    "3-D plotting requires pyvista: pip install beam_networks[viz]"
+                ) from exc
+
+            if plotter is None:
+                plotter = pv.Plotter()
+
+            if show_undeformed:
+                _plot_network_3d(plotter, self.nodes, self.edges, line_width=lw)
+
+            sba = dict(scalar_bar_args) if scalar_bar_args else {}
+            if label and 'title' not in sba:
+                sba['title'] = label
+
+            _plot_network_3d(plotter, disp_nodes, self.edges,
+                             edge_data=contour, cmap=cmap, lim=lim,
+                             line_width=lw, color='steelblue',
+                             scalar_bar_args=sba)
+            plotter.set_background('white')
+            plotter.add_axes()
+            return plotter
 
     def to_vtk(self, file: str = "foo.vtk") -> None:
         """Write the network structure and solution to a VTK file.

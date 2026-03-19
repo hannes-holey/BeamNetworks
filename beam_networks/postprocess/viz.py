@@ -13,15 +13,8 @@
 # beam_networks. If not, see <https://www.gnu.org/licenses/>.
 #
 import os
-import meshio
-import tqdm
 import numpy as np
 from argparse import ArgumentParser
-
-import matplotlib.pyplot as plt
-from matplotlib.collections import LineCollection
-from matplotlib.colors import Normalize
-import matplotlib
 
 
 def _plot_network(ax, nodes, edges, dr,
@@ -67,6 +60,9 @@ def _plot_network(ax, nodes, edges, dr,
     cmap: str
         Name of the matlpotlib colormap (default is 'plasma')
     """
+
+    import matplotlib.pyplot as plt
+    from matplotlib.collections import LineCollection
 
     segments = []
 
@@ -193,6 +189,9 @@ def _array_to_colors(arr, lim=None, cmap='plasma'):
     np.ndarray
         colors
     """
+    import matplotlib
+    from matplotlib.colors import Normalize
+
     if lim is not None:
         vmin, vmax = lim
     else:
@@ -215,10 +214,66 @@ def _array_to_colors(arr, lim=None, cmap='plasma'):
     return sm, colors
 
 
+def _plot_network_3d(plotter, nodes, edges, edge_data=None, color='lightgrey',
+                     cmap='plasma', lim=None, line_width=3.,
+                     scalar_bar_args=None):
+    """Add a 3D network to an existing PyVista plotter.
+
+    Parameters
+    ----------
+    plotter : pyvista.Plotter
+        Plotter instance to draw into.
+    nodes : np.ndarray, shape (N, 3)
+        Node positions.
+    edges : np.ndarray, shape (M, 2)
+        Edge connectivity (node index pairs).
+    edge_data : np.ndarray or None, optional
+        Per-edge scalar for colour mapping.  When None the network is drawn
+        uniformly in *color*.
+    color : str, optional
+        Uniform colour used when *edge_data* is None.
+    cmap : str, optional
+        Matplotlib-compatible colormap name.
+    lim : tuple or None, optional
+        ``(vmin, vmax)`` for the scalar bar.  None uses the data range.
+    line_width : float, optional
+        Line width in screen pixels.
+    scalar_bar_args : dict or None, optional
+        Keyword arguments forwarded to ``pyvista.Plotter.add_mesh`` as
+        ``scalar_bar_args``.  Only used when *edge_data* is given.
+    """
+    import pyvista as pv
+
+    n_edges = len(edges)
+    lines = np.empty((n_edges, 3), dtype=int)
+    lines[:, 0] = 2
+    lines[:, 1] = edges[:, 0]
+    lines[:, 2] = edges[:, 1]
+
+    if nodes.shape[1] == 2:
+        pts = np.column_stack([nodes, np.zeros(len(nodes))])
+    else:
+        pts = nodes
+
+    mesh = pv.PolyData(pts, lines=lines.ravel())
+
+    if edge_data is not None:
+        mesh.cell_data['scalar'] = edge_data
+        clim = list(lim) if lim is not None else None
+        sba = scalar_bar_args or {}
+        plotter.add_mesh(mesh, scalars='scalar', cmap=cmap, clim=clim,
+                         line_width=line_width, scalar_bar_args=sba)
+    else:
+        plotter.add_mesh(mesh, color=color, line_width=line_width,
+                         show_scalar_bar=False)
+
+
 # Command-line scripts
 
 
 def vtk2img(wdir=None, dpi=300, cbar_global_lim=False, ftype='png'):
+    import meshio
+    import matplotlib.pyplot as plt
 
     if wdir is None:
         parser = ArgumentParser()
@@ -246,7 +301,7 @@ def vtk2img(wdir=None, dpi=300, cbar_global_lim=False, ftype='png'):
     else:
         lim = None
 
-    for file in tqdm.tqdm(all_vtk_files):
+    for file in all_vtk_files:
         fig, ax = plt.subplots(1)
 
         mesh = meshio.read(file)

@@ -116,6 +116,7 @@ def test_crack_edge_updates_stiffness():
 
 def test_fracture_run_completes(tmp_path, monkeypatch):
     """After run(), the original network is restored; during run it disconnected."""
+    pytest.importorskip('meshio')
     monkeypatch.chdir(tmp_path)
 
     p = _make_square_fracture_problem()
@@ -133,6 +134,7 @@ def test_fracture_run_completes(tmp_path, monkeypatch):
 
 def test_fracture_run_vtk_written(tmp_path, monkeypatch):
     """VTK files should be created in the working directory during run()."""
+    pytest.importorskip('meshio')
     monkeypatch.chdir(tmp_path)
 
     p = _make_square_fracture_problem()

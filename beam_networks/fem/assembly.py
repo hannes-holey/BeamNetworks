@@ -12,7 +12,6 @@
 # You should have received a copy of the GNU General Public License along with
 # beam_networks. If not, see <https://www.gnu.org/licenses/>.
 #
-from tqdm import tqdm
 import numpy as np
 import scipy.sparse as sp
 
@@ -56,7 +55,6 @@ def assemble_global_system(nodes_positions: np.ndarray,
                            sorted_edges: bool = True,
                            vectorize: bool = True,
                            matrix: str = 'bsr',
-                           verbose: bool = False,
                            n_elems: np.ndarray | None = None,
                            fem_poly_order: int = 3,
                            fem_n_gauss: int | None = None):
@@ -83,8 +81,6 @@ def assemble_global_system(nodes_positions: np.ndarray,
         'bsr' : Block sparse row matrix (Default)
         'lil' : List of lists
         'dense': Only for small matrices
-    verbose : bool, optional
-        Verbosity (the default is False which hides the progress bar)
     n_elems : np.ndarray or None, optional
         Per-edge number of FEM sub-elements, shape (num_edges,).
         When None (default), uses the exact Timoshenko stiffness matrix.
@@ -124,8 +120,7 @@ def assemble_global_system(nodes_positions: np.ndarray,
                                                         beam_prop,
                                                         n_elems,
                                                         fem_poly_order=fem_poly_order,
-                                                        fem_n_gauss=fem_n_gauss,
-                                                        verbose=verbose)
+                                                        fem_n_gauss=fem_n_gauss)
             elif matrix == 'lil':
                 K_global = _assemble_sparse_lil_fem_vec(nodes_positions,
                                                         edges_indices,
@@ -133,8 +128,7 @@ def assemble_global_system(nodes_positions: np.ndarray,
                                                         beam_prop,
                                                         n_elems,
                                                         fem_poly_order=fem_poly_order,
-                                                        fem_n_gauss=fem_n_gauss,
-                                                        verbose=verbose)
+                                                        fem_n_gauss=fem_n_gauss)
             elif matrix == 'dense':
                 K_global = _assemble_dense_fem_vec(nodes_positions,
                                                    edges_indices,
@@ -142,8 +136,7 @@ def assemble_global_system(nodes_positions: np.ndarray,
                                                    beam_prop,
                                                    n_elems,
                                                    fem_poly_order=fem_poly_order,
-                                                   fem_n_gauss=fem_n_gauss,
-                                                   verbose=verbose)
+                                                   fem_n_gauss=fem_n_gauss)
             else:
                 raise ValueError
 
@@ -155,8 +148,7 @@ def assemble_global_system(nodes_positions: np.ndarray,
                                                 beam_prop,
                                                 n_elems,
                                                 fem_poly_order=fem_poly_order,
-                                                fem_n_gauss=fem_n_gauss,
-                                                verbose=verbose)
+                                                fem_n_gauss=fem_n_gauss)
         elif matrix == 'lil':
             K_global = _assemble_sparse_lil_fem(nodes_positions,
                                                 edges_indices,
@@ -164,8 +156,7 @@ def assemble_global_system(nodes_positions: np.ndarray,
                                                 beam_prop,
                                                 n_elems,
                                                 fem_poly_order=fem_poly_order,
-                                                fem_n_gauss=fem_n_gauss,
-                                                verbose=verbose)
+                                                fem_n_gauss=fem_n_gauss)
         elif matrix == 'dense':
             K_global = _assemble_dense_fem(nodes_positions,
                                            edges_indices,
@@ -173,8 +164,7 @@ def assemble_global_system(nodes_positions: np.ndarray,
                                            beam_prop,
                                            n_elems,
                                            fem_poly_order=fem_poly_order,
-                                           fem_n_gauss=fem_n_gauss,
-                                           verbose=verbose)
+                                           fem_n_gauss=fem_n_gauss)
         else:
             raise ValueError
 
@@ -184,20 +174,17 @@ def assemble_global_system(nodes_positions: np.ndarray,
             K_global = _assemble_sparse_bsr_vec(nodes_positions,
                                                 edges_indices,
                                                 dr,
-                                                beam_prop,
-                                                verbose=verbose)
+                                                beam_prop)
         elif matrix == 'lil':
             K_global = _assemble_sparse_lil_vec(nodes_positions,
                                                 edges_indices,
                                                 dr,
-                                                beam_prop,
-                                                verbose=verbose)
+                                                beam_prop)
         elif matrix == 'dense':
             K_global = _assemble_dense_vec(nodes_positions,
                                            edges_indices,
                                            dr,
-                                           beam_prop,
-                                           verbose=verbose)
+                                           beam_prop)
         else:
             raise ValueError
     else:
@@ -205,27 +192,24 @@ def assemble_global_system(nodes_positions: np.ndarray,
             K_global = _assemble_sparse_bsr(nodes_positions,
                                             edges_indices,
                                             dr,
-                                            beam_prop,
-                                            verbose=verbose)
+                                            beam_prop)
         elif matrix == 'lil':
             K_global = _assemble_sparse_lil(nodes_positions,
                                             edges_indices,
                                             dr,
-                                            beam_prop,
-                                            verbose=verbose)
+                                            beam_prop)
         elif matrix == 'dense':
             K_global = _assemble_dense(nodes_positions,
                                        edges_indices,
                                        dr,
-                                       beam_prop,
-                                       verbose=verbose)
+                                       beam_prop)
         else:
             raise ValueError
 
     return K_global
 
 
-def _assemble_sparse_bsr(nodes, edges, dr, beam_prop, verbose=True):
+def _assemble_sparse_bsr(nodes, edges, dr, beam_prop):
     """Assemble global stiffness matrix in BSR format.
 
     Parameters
@@ -238,8 +222,6 @@ def _assemble_sparse_bsr(nodes, edges, dr, beam_prop, verbose=True):
         Edge vectors
     beam_prop : dict
         Beam properties (cross section and elastic properties)
-    verbose : bool, optional
-        Verbosity (the default is False which hides the progress bar)
 
     Returns
     -------
@@ -247,8 +229,6 @@ def _assemble_sparse_bsr(nodes, edges, dr, beam_prop, verbose=True):
         The global stiffness matrix
     """
 
-    if verbose:
-        pbar = tqdm(desc="Assemble BSR matrix", total=edges.shape[0], ncols=100)
 
     num_nodes, ndim = nodes.shape
     num_dof_per_node = _dof_per_node(ndim, beam_prop)
@@ -283,8 +263,6 @@ def _assemble_sparse_bsr(nodes, edges, dr, beam_prop, verbose=True):
             data[indptr[n1]] += Ke11 / 2.
             data[indptr[n0] + k + 1] += Ke01
             i += 1
-            if verbose:
-                pbar.update(1)
 
     # Create block sparse array (upper triangular)
     K_global = sp.bsr_array((data, indices, indptr),
@@ -297,7 +275,7 @@ def _assemble_sparse_bsr(nodes, edges, dr, beam_prop, verbose=True):
     return K_global
 
 
-def _assemble_sparse_bsr_vec(nodes, edges, dr, beam_prop, verbose=True):
+def _assemble_sparse_bsr_vec(nodes, edges, dr, beam_prop):
     """Assemble global stiffness matrix in BSR format.
 
     All element stiffness matrices are computed at once, then scattered into
@@ -313,8 +291,6 @@ def _assemble_sparse_bsr_vec(nodes, edges, dr, beam_prop, verbose=True):
         Edge vectors
     beam_prop : dict
         Beam properties (cross section and elastic properties)
-    verbose : bool, optional
-        Unused; kept for API compatibility.
 
     Returns
     -------
@@ -363,7 +339,7 @@ def _assemble_sparse_bsr_vec(nodes, edges, dr, beam_prop, verbose=True):
     return K_global + K_global.T
 
 
-def _assemble_sparse_lil(nodes, edges, dr, beam_prop, verbose=True):
+def _assemble_sparse_lil(nodes, edges, dr, beam_prop):
     """Assemble global stiffness matrix in LIL format.
 
     Parameters
@@ -376,8 +352,6 @@ def _assemble_sparse_lil(nodes, edges, dr, beam_prop, verbose=True):
         Edge vectors
     beam_prop : dict
         Beam properties (cross section and elastic properties)
-    verbose : bool, optional
-        Verbosity (the default is False which hides the progress bar)
 
     Returns
     -------
@@ -385,8 +359,6 @@ def _assemble_sparse_lil(nodes, edges, dr, beam_prop, verbose=True):
         The global stiffness matrix
     """
 
-    if verbose:
-        pbar = tqdm(desc="Assemble LIL matrix", total=edges.shape[0], ncols=100)
 
     num_nodes, ndim = nodes.shape
     num_dof_per_node = _dof_per_node(ndim, beam_prop)
@@ -407,15 +379,13 @@ def _assemble_sparse_lil(nodes, edges, dr, beam_prop, verbose=True):
         K_global[s1, s1] += Ke[:num_dof_per_node, :num_dof_per_node] / 2.
         K_global[s1, s2] += Ke[:num_dof_per_node, num_dof_per_node:]
         K_global[s2, s2] += Ke[num_dof_per_node:, num_dof_per_node:] / 2.
-        if verbose:
-            pbar.update(1)
 
     K_global = K_global + K_global.T
 
     return K_global.tobsr()
 
 
-def _assemble_sparse_lil_vec(nodes, edges, dr, beam_prop, verbose=True):
+def _assemble_sparse_lil_vec(nodes, edges, dr, beam_prop):
     """Assemble global stiffness matrix in LIL format.
 
     Vectorized version
@@ -430,8 +400,6 @@ def _assemble_sparse_lil_vec(nodes, edges, dr, beam_prop, verbose=True):
         Edge vectors
     beam_prop : dict
         Beam properties (cross section and elastic properties)
-    verbose : bool, optional
-        Verbosity (the default is False which hides the progress bar)
 
     Returns
     -------
@@ -439,8 +407,6 @@ def _assemble_sparse_lil_vec(nodes, edges, dr, beam_prop, verbose=True):
         The global stiffness matrix
     """
 
-    if verbose:
-        pbar = tqdm(desc="Assemble LIL matrix (vectorized)", total=edges.shape[0], ncols=100)
 
     num_nodes, ndim = nodes.shape
     num_dof_per_node = _dof_per_node(ndim, beam_prop)
@@ -463,15 +429,13 @@ def _assemble_sparse_lil_vec(nodes, edges, dr, beam_prop, verbose=True):
         K_global[s1, s1] += Ke[i, :num_dof_per_node, :num_dof_per_node] / 2.
         K_global[s1, s2] += Ke[i, :num_dof_per_node, num_dof_per_node:]
         K_global[s2, s2] += Ke[i, num_dof_per_node:, num_dof_per_node:] / 2.
-        if verbose:
-            pbar.update(1)
 
     K_global = K_global + K_global.T
 
     return K_global.tobsr()
 
 
-def _assemble_dense(nodes, edges, dr, beam_prop, verbose=True):
+def _assemble_dense(nodes, edges, dr, beam_prop):
     """Assemble global stiffness matrix as dense array.
 
     Parameters
@@ -484,8 +448,6 @@ def _assemble_dense(nodes, edges, dr, beam_prop, verbose=True):
         Edge vectors
     beam_prop : dict
         Beam properties (cross section and elastic properties)
-    verbose : bool, optional
-        Verbosity (the default is False which hides the progress bar)
 
     Returns
     -------
@@ -493,8 +455,6 @@ def _assemble_dense(nodes, edges, dr, beam_prop, verbose=True):
         The global stiffness matrix
     """
 
-    if verbose:
-        pbar = tqdm(desc="Assemble dense matrix", total=edges.shape[0], ncols=100)
 
     num_nodes, ndim = nodes.shape
     num_dof_per_node = _dof_per_node(ndim, beam_prop)
@@ -516,13 +476,11 @@ def _assemble_dense(nodes, edges, dr, beam_prop, verbose=True):
         K_global[s1, s2] += Ke[:num_dof_per_node, num_dof_per_node:]
         K_global[s2, s1] += Ke[num_dof_per_node:, :num_dof_per_node]
         K_global[s2, s2] += Ke[num_dof_per_node:, num_dof_per_node:]
-        if verbose:
-            pbar.update(1)
 
     return K_global
 
 
-def _assemble_dense_vec(nodes, edges, dr, beam_prop, verbose=True):
+def _assemble_dense_vec(nodes, edges, dr, beam_prop):
     """Assemble global stiffness matrix as dense array.
 
     Vectorized version.
@@ -537,8 +495,6 @@ def _assemble_dense_vec(nodes, edges, dr, beam_prop, verbose=True):
         Edge vectors
     beam_prop : dict
         Beam properties (cross section and elastic properties)
-    verbose : bool, optional
-        Verbosity (the default is False which hides the progress bar)
 
     Returns
     -------
@@ -546,8 +502,6 @@ def _assemble_dense_vec(nodes, edges, dr, beam_prop, verbose=True):
         The global stiffness matrix
     """
 
-    if verbose:
-        pbar = tqdm(desc="Assemble dense matrix (vectorized)", total=edges.shape[0], ncols=100)
 
     num_nodes, ndim = nodes.shape
     num_dof_per_node = _dof_per_node(ndim, beam_prop)
@@ -570,18 +524,14 @@ def _assemble_dense_vec(nodes, edges, dr, beam_prop, verbose=True):
         K_global[s1, s2] += Ke[i, :num_dof_per_node, num_dof_per_node:]
         K_global[s2, s1] += Ke[i, num_dof_per_node:, :num_dof_per_node]
         K_global[s2, s2] += Ke[i, num_dof_per_node:, num_dof_per_node:]
-        if verbose:
-            pbar.update(1)
 
     return K_global
 
 
 def _assemble_sparse_bsr_fem(nodes, edges, dr, beam_prop, n_elems,
-                             fem_poly_order=1, fem_n_gauss=None, verbose=True):
+                             fem_poly_order=1, fem_n_gauss=None):
     """Assemble global stiffness matrix in BSR format using FEM sub-elements."""
 
-    if verbose:
-        pbar = tqdm(desc="Assemble BSR matrix (FEM)", total=edges.shape[0], ncols=100)
 
     num_nodes, ndim = nodes.shape
     num_dof_per_node = _dof_per_node(ndim, beam_prop)
@@ -617,8 +567,6 @@ def _assemble_sparse_bsr_fem(nodes, edges, dr, beam_prop, n_elems,
             data[indptr[n1]] += Ke11 / 2.
             data[indptr[n0] + k + 1] += Ke01
             i += 1
-            if verbose:
-                pbar.update(1)
 
     K_global = sp.bsr_array((data, indices, indptr),
                             shape=(num_dof, num_dof),
@@ -629,11 +577,9 @@ def _assemble_sparse_bsr_fem(nodes, edges, dr, beam_prop, n_elems,
 
 
 def _assemble_sparse_lil_fem(nodes, edges, dr, beam_prop, n_elems,
-                             fem_poly_order=1, fem_n_gauss=None, verbose=True):
+                             fem_poly_order=1, fem_n_gauss=None):
     """Assemble global stiffness matrix in LIL format using FEM sub-elements."""
 
-    if verbose:
-        pbar = tqdm(desc="Assemble LIL matrix (FEM)", total=edges.shape[0], ncols=100)
 
     num_nodes, ndim = nodes.shape
     num_dof_per_node = _dof_per_node(ndim, beam_prop)
@@ -654,8 +600,6 @@ def _assemble_sparse_lil_fem(nodes, edges, dr, beam_prop, n_elems,
         K_global[s1, s1] += Ke[:num_dof_per_node, :num_dof_per_node] / 2.
         K_global[s1, s2] += Ke[:num_dof_per_node, num_dof_per_node:]
         K_global[s2, s2] += Ke[num_dof_per_node:, num_dof_per_node:] / 2.
-        if verbose:
-            pbar.update(1)
 
     K_global = K_global + K_global.T
 
@@ -663,11 +607,9 @@ def _assemble_sparse_lil_fem(nodes, edges, dr, beam_prop, n_elems,
 
 
 def _assemble_dense_fem(nodes, edges, dr, beam_prop, n_elems,
-                        fem_poly_order=1, fem_n_gauss=None, verbose=True):
+                        fem_poly_order=1, fem_n_gauss=None):
     """Assemble global stiffness matrix as dense array using FEM sub-elements."""
 
-    if verbose:
-        pbar = tqdm(desc="Assemble dense matrix (FEM)", total=edges.shape[0], ncols=100)
 
     num_nodes, ndim = nodes.shape
     num_dof_per_node = _dof_per_node(ndim, beam_prop)
@@ -689,14 +631,12 @@ def _assemble_dense_fem(nodes, edges, dr, beam_prop, n_elems,
         K_global[s1, s2] += Ke[:num_dof_per_node, num_dof_per_node:]
         K_global[s2, s1] += Ke[num_dof_per_node:, :num_dof_per_node]
         K_global[s2, s2] += Ke[num_dof_per_node:, num_dof_per_node:]
-        if verbose:
-            pbar.update(1)
 
     return K_global
 
 
 def _assemble_sparse_bsr_fem_vec(nodes, edges, dr, beam_prop, n_elems,
-                                 fem_poly_order=1, fem_n_gauss=None, verbose=True):
+                                 fem_poly_order=1, fem_n_gauss=None):
     """Assemble BSR stiffness (FEM sub-elements): batch computation + scatter via np.add.at."""
     num_nodes, ndim = nodes.shape
     num_dof_per_node = _dof_per_node(ndim, beam_prop)
@@ -739,14 +679,12 @@ def _assemble_sparse_bsr_fem_vec(nodes, edges, dr, beam_prop, n_elems,
 
 
 def _assemble_sparse_lil_fem_vec(nodes, edges, dr, beam_prop, n_elems,
-                                 fem_poly_order=1, fem_n_gauss=None, verbose=True):
+                                 fem_poly_order=1, fem_n_gauss=None):
     """Assemble global stiffness matrix in LIL format using FEM sub-elements.
 
     Vectorized version.
     """
 
-    if verbose:
-        pbar = tqdm(desc="Assemble LIL matrix (FEM, vectorized)", total=edges.shape[0], ncols=100)
 
     num_nodes, ndim = nodes.shape
     num_dof_per_node = _dof_per_node(ndim, beam_prop)
@@ -770,8 +708,6 @@ def _assemble_sparse_lil_fem_vec(nodes, edges, dr, beam_prop, n_elems,
         K_global[s1, s1] += Ke[i, :num_dof_per_node, :num_dof_per_node] / 2.
         K_global[s1, s2] += Ke[i, :num_dof_per_node, num_dof_per_node:]
         K_global[s2, s2] += Ke[i, num_dof_per_node:, num_dof_per_node:] / 2.
-        if verbose:
-            pbar.update(1)
 
     K_global = K_global + K_global.T
 
@@ -779,14 +715,12 @@ def _assemble_sparse_lil_fem_vec(nodes, edges, dr, beam_prop, n_elems,
 
 
 def _assemble_dense_fem_vec(nodes, edges, dr, beam_prop, n_elems,
-                            fem_poly_order=1, fem_n_gauss=None, verbose=True):
+                            fem_poly_order=1, fem_n_gauss=None):
     """Assemble global stiffness matrix as dense array using FEM sub-elements.
 
     Vectorized version.
     """
 
-    if verbose:
-        pbar = tqdm(desc="Assemble dense matrix (FEM, vectorized)", total=edges.shape[0], ncols=100)
 
     num_nodes, ndim = nodes.shape
     num_dof_per_node = _dof_per_node(ndim, beam_prop)
@@ -811,7 +745,5 @@ def _assemble_dense_fem_vec(nodes, edges, dr, beam_prop, n_elems,
         K_global[s1, s2] += Ke[i, :num_dof_per_node, num_dof_per_node:]
         K_global[s2, s1] += Ke[i, num_dof_per_node:, :num_dof_per_node]
         K_global[s2, s2] += Ke[i, num_dof_per_node:, num_dof_per_node:]
-        if verbose:
-            pbar.update(1)
 
     return K_global

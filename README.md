@@ -61,18 +61,26 @@ pytest
 ```
 
 ## Dependencies
-The software relies on a couple of external dependecies.
 
-For assembly and solution of the elastic problem:
+The core solver requires only:
 - [__numpy__](https://numpy.org)
 - [__scipy__](https://scipy.org)
-
-For post-processing and visualization:
-- [__matplotlib__](https://matplotlib.org)
-- [__pandas__](https://pandas.pydata.org)
-- [__meshio__](https://github.com/nschloe/meshio)
-- [__trimesh__](https://trimesh.org)
 - [__PyYAML__](https://pyyaml.org/)
+
+All other dependencies are optional and can be installed via extras:
+
+```
+pip install .[viz]   # matplotlib + pyvista (2-D and 3-D plotting)
+pip install .[io]    # meshio, trimesh, pandas (VTK/STL/HDF5 output)
+pip install .[solvers]  # scikit-sparse, pyamg (alternative linear solvers)
+pip install .[viz,io]   # everything needed to run the examples
+```
+
+| Extra | Packages | Purpose |
+|-------|----------|---------|
+| `viz` | [matplotlib](https://matplotlib.org), [pyvista](https://pyvista.org) | 2-D and 3-D network plots |
+| `io` | [meshio](https://github.com/nschloe/meshio), [trimesh](https://trimesh.org), [pandas](https://pandas.pydata.org) | VTK, STL and HDF5 file output |
+| `solvers` | [scikit-sparse](https://scikit-sparse.readthedocs.io), [pyamg](https://pyamg.readthedocs.io) | Sparse Cholesky and AMG linear solvers |
 
 
 ## Funding
