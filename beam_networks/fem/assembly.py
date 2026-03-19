@@ -229,7 +229,6 @@ def _assemble_sparse_bsr(nodes, edges, dr, beam_prop):
         The global stiffness matrix
     """
 
-
     num_nodes, ndim = nodes.shape
     num_dof_per_node = _dof_per_node(ndim, beam_prop)
     num_dof = num_nodes * num_dof_per_node
@@ -359,7 +358,6 @@ def _assemble_sparse_lil(nodes, edges, dr, beam_prop):
         The global stiffness matrix
     """
 
-
     num_nodes, ndim = nodes.shape
     num_dof_per_node = _dof_per_node(ndim, beam_prop)
     num_dof = num_nodes * num_dof_per_node
@@ -406,7 +404,6 @@ def _assemble_sparse_lil_vec(nodes, edges, dr, beam_prop):
     scipy.sparse.bsr_array
         The global stiffness matrix
     """
-
 
     num_nodes, ndim = nodes.shape
     num_dof_per_node = _dof_per_node(ndim, beam_prop)
@@ -455,7 +452,6 @@ def _assemble_dense(nodes, edges, dr, beam_prop):
         The global stiffness matrix
     """
 
-
     num_nodes, ndim = nodes.shape
     num_dof_per_node = _dof_per_node(ndim, beam_prop)
     num_dof = num_nodes * num_dof_per_node
@@ -502,7 +498,6 @@ def _assemble_dense_vec(nodes, edges, dr, beam_prop):
         The global stiffness matrix
     """
 
-
     num_nodes, ndim = nodes.shape
     num_dof_per_node = _dof_per_node(ndim, beam_prop)
     num_dof = num_nodes * num_dof_per_node
@@ -531,7 +526,6 @@ def _assemble_dense_vec(nodes, edges, dr, beam_prop):
 def _assemble_sparse_bsr_fem(nodes, edges, dr, beam_prop, n_elems,
                              fem_poly_order=1, fem_n_gauss=None):
     """Assemble global stiffness matrix in BSR format using FEM sub-elements."""
-
 
     num_nodes, ndim = nodes.shape
     num_dof_per_node = _dof_per_node(ndim, beam_prop)
@@ -580,7 +574,6 @@ def _assemble_sparse_lil_fem(nodes, edges, dr, beam_prop, n_elems,
                              fem_poly_order=1, fem_n_gauss=None):
     """Assemble global stiffness matrix in LIL format using FEM sub-elements."""
 
-
     num_nodes, ndim = nodes.shape
     num_dof_per_node = _dof_per_node(ndim, beam_prop)
     num_dof = num_nodes * num_dof_per_node
@@ -609,7 +602,6 @@ def _assemble_sparse_lil_fem(nodes, edges, dr, beam_prop, n_elems,
 def _assemble_dense_fem(nodes, edges, dr, beam_prop, n_elems,
                         fem_poly_order=1, fem_n_gauss=None):
     """Assemble global stiffness matrix as dense array using FEM sub-elements."""
-
 
     num_nodes, ndim = nodes.shape
     num_dof_per_node = _dof_per_node(ndim, beam_prop)
@@ -685,7 +677,6 @@ def _assemble_sparse_lil_fem_vec(nodes, edges, dr, beam_prop, n_elems,
     Vectorized version.
     """
 
-
     num_nodes, ndim = nodes.shape
     num_dof_per_node = _dof_per_node(ndim, beam_prop)
     num_dof = num_nodes * num_dof_per_node
@@ -720,7 +711,6 @@ def _assemble_dense_fem_vec(nodes, edges, dr, beam_prop, n_elems,
 
     Vectorized version.
     """
-
 
     num_nodes, ndim = nodes.shape
     num_dof_per_node = _dof_per_node(ndim, beam_prop)

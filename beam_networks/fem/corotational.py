@@ -993,9 +993,13 @@ def element_mises_stress_3d(
     from beam_networks.geometry.geo import get_geometric_props
     Iy, Iz, Ip, A, _, ymax = get_geometric_props(beam_prop)
     forces = compute_element_forces_3d(nodes, edges, sol, beam_prop, ref_vectors)
-    N   = forces[:, 0]
-    Tx0 = forces[:, 1];  My0 = forces[:, 2];  Mz0 = forces[:, 3]
-    Tx1 = forces[:, 4];  My1 = forces[:, 5];  Mz1 = forces[:, 6]
+    N = forces[:, 0]
+    Tx0 = forces[:, 1]
+    My0 = forces[:, 2]
+    Mz0 = forces[:, 3]
+    Tx1 = forces[:, 4]
+    My1 = forces[:, 5]
+    Mz1 = forces[:, 6]
 
     sigma_a = np.abs(N) / A
     sigma_0 = sigma_a + np.abs(My0) * ymax / Iy + np.abs(Mz0) * ymax / Iz

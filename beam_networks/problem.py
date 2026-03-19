@@ -14,8 +14,6 @@
 #
 import os
 import warnings
-from typing import TYPE_CHECKING
-
 import numpy as np
 
 from beam_networks.network import Network
@@ -32,9 +30,6 @@ from beam_networks.fem.corotational import (
     element_mises_stress_2d as _corot_mises_2d,
     element_mises_stress_3d as _corot_mises_3d,
 )
-
-if TYPE_CHECKING:
-    import matplotlib
 
 
 def _default_ref_vectors(nodes: np.ndarray, edges: np.ndarray) -> np.ndarray:
