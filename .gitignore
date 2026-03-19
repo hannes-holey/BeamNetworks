@@ -6,3 +6,5 @@ data/
 *.egg-info/
 .coverage
 bench/*.txt
+*.vtk
+*.stl

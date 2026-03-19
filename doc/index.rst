@@ -1,4 +1,4 @@
-ElasticNetworks
+BeamNetworks
 ============
 
 A Python package for the elastic deformation of Timoshenko beam networks in 2D
