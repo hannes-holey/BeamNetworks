@@ -3,7 +3,7 @@
 ```{toctree}
 :maxdepth: 1
 
-lattice_zoo.ipynb
+lattice_zoo
 generate_stl
 reflect2D
 ```

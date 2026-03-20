@@ -37,12 +37,6 @@ source_suffix = {
 }
 nb_execution_timeout = 120
 
-# lattice_zoo.ipynb uses PyVista for 3-D rendering; PyVista/VTK requires
-# OpenGL/EGL/OSMesa which is not available on CI.  Exclude the notebook from
-# execution so Sphinx shows its static source.  Run it interactively to see
-# the live 3-D plots.
-nb_execution_excludepatterns = ["**/lattice_zoo.ipynb"]
-
 autosummary_generate = True
 
 templates_path = ['_templates']
