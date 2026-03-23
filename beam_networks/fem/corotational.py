@@ -41,6 +41,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from beam_networks.geometry.geo import get_geometric_props
+from beam_networks.fem.topology import _build_bsr_node_sparsity
 
 
 # ---------------------------------------------------------------------------
@@ -184,7 +185,8 @@ def _local_stiffness_3d(beam_prop: dict, l0: np.ndarray) -> np.ndarray:
     E = beam_prop['E']
     nu = beam_prop['nu']
     G = E / (2. * (1. + nu))
-    Iy, Iz, J, A, kappa, _ = get_geometric_props(beam_prop)
+    Iy, Iz, J, A, kappa, _ = (beam_prop.get('_geom_props')
+                              or get_geometric_props(beam_prop))
 
     kGA = kappa * G * A
 
@@ -243,7 +245,8 @@ def _local_stiffness_2d(beam_prop: dict, l0: np.ndarray) -> np.ndarray:
     E = beam_prop['E']
     nu = beam_prop['nu']
     G = E / (2. * (1. + nu))
-    _, Iz, _, A, kappa, _ = get_geometric_props(beam_prop)
+    _, Iz, _, A, kappa, _ = (beam_prop.get('_geom_props')
+                             or get_geometric_props(beam_prop))
 
     EA = E * A
     EI = E * Iz
@@ -651,38 +654,199 @@ def _assemble_dense_nonlinear_2d(
     return K, F_int
 
 
+_build_bsr_sparsity_2d = _build_bsr_node_sparsity
+
+
+def _build_kff_sparsity_2d(
+        nodes: np.ndarray,
+        edges: np.ndarray,
+        dof_F: np.ndarray,
+) -> tuple:
+    """Build a CSR sparsity pattern and scatter indices for direct K_FF assembly.
+
+    Rather than assembling the full global stiffness K and then extracting the
+    free–free block K_FF via BSR→CSR conversion and index slicing, this
+    function pre-computes everything needed to scatter element stiffness
+    contributions directly into K_FF.
+
+    All quantities depend only on the mesh topology and the Dirichlet boundary
+    conditions, so they should be computed once before the Newton loop.
+
+    Parameters
+    ----------
+    nodes : np.ndarray, shape (N, 2)
+        Nodal coordinates (used for topology only).
+    edges : np.ndarray, shape (M, 2)
+        Edge connectivity.
+    dof_F : np.ndarray of int
+        Indices of unconstrained (free) DOFs.
+
+    Returns
+    -------
+    edges_sorted : np.ndarray, shape (M, 2)
+        Edges sorted in the same order used by :func:`_build_bsr_sparsity_2d`.
+    kff_indptr : np.ndarray, shape (nF+1,)
+        CSR row-pointer for K_FF.
+    kff_indices : np.ndarray, shape (nnz_FF,)
+        CSR column indices for K_FF.
+    scatter_pos : np.ndarray of intp, shape (S,)
+        Position in K_FF.data for each contribution.
+    scatter_m : np.ndarray of intp, shape (S,)
+        Edge index for each contribution.
+    scatter_i : np.ndarray of intp, shape (S,)
+        Local row in the 6×6 element stiffness for each contribution.
+    scatter_j : np.ndarray of intp, shape (S,)
+        Local column in the 6×6 element stiffness for each contribution.
+    fint_pos : np.ndarray of intp, shape (T,)
+        Position in the F_int_F vector for each internal-force contribution.
+    fint_m : np.ndarray of intp, shape (T,)
+        Edge index for each internal-force contribution.
+    fint_local : np.ndarray of intp, shape (T,)
+        Local index in the 6-element force vector for each contribution.
+    """
+    ndof = nodes.shape[0] * 3
+    nF = len(dof_F)
+
+    # Inverse map: global DOF -> rank in dof_F (-1 if constrained)
+    dof_rank = -np.ones(ndof, dtype=np.intp)
+    dof_rank[dof_F] = np.arange(nF, dtype=np.intp)
+
+    edges_sorted = _build_bsr_node_sparsity(nodes, edges)[0]
+    e0s, e1s = edges_sorted[:, 0], edges_sorted[:, 1]
+
+    # Element DOFs: shape (ne, 6)
+    elem_dofs = np.column_stack([
+        3 * e0s, 3 * e0s + 1, 3 * e0s + 2,
+        3 * e1s, 3 * e1s + 1, 3 * e1s + 2,
+    ])
+
+    # K_FF scatter: enumerate all 36 (i, j) local pairs per element
+    ii = np.repeat(np.arange(6), 6)   # [0,0,...,0,1,1,...,5]  length 36
+    jj = np.tile(np.arange(6), 6)     # [0,1,...,5,0,1,...,5]  length 36
+
+    # K_FF row / col rank for each (edge, i, j): shape (ne, 36)
+    kff_row = dof_rank[elem_dofs[:, ii]]  # (ne, 36)
+    kff_col = dof_rank[elem_dofs[:, jj]]  # (ne, 36)
+
+    # Keep only free-free pairs
+    free_mask = (kff_row >= 0) & (kff_col >= 0)
+
+    sel = np.flatnonzero(free_mask)
+    edge_idx = sel // 36
+    pair_idx = sel % 36
+    rows = kff_row.ravel()[sel]
+    cols = kff_col.ravel()[sel]
+    scatter_m = edge_idx.astype(np.intp)
+    scatter_i = ii[pair_idx].astype(np.intp)
+    scatter_j = jj[pair_idx].astype(np.intp)
+
+    # Build K_FF CSR from COO, then map (row, col) → data index
+    kff_csr = sp.csr_array(
+        (np.ones(len(rows)), (rows, cols)),
+        shape=(nF, nF),
+    )
+    kff_csr.sum_duplicates()
+    kff_indptr = kff_csr.indptr
+    kff_indices = kff_csr.indices
+
+    row_arr = np.repeat(np.arange(nF), np.diff(kff_indptr))
+    pos_of_kff = dict(zip(zip(row_arr.tolist(), kff_indices.tolist()),
+                          range(len(kff_indices))))
+    scatter_pos = np.array([pos_of_kff[r, c] for r, c in zip(rows.tolist(), cols.tolist())],
+                           dtype=np.intp)
+
+    # F_int scatter: which element DOFs map to a free global DOF?
+    # elem_dofs shape (ne, 6); for each (m, k) where dof_rank[elem_dofs[m,k]] >= 0
+    elem_rank = dof_rank[elem_dofs]          # (ne, 6), -1 if constrained
+    free_fint = np.flatnonzero(elem_rank >= 0)
+    fint_m = (free_fint // 6).astype(np.intp)
+    fint_local = (free_fint % 6).astype(np.intp)
+    fint_pos = elem_rank.ravel()[free_fint].astype(np.intp)
+
+    return (edges_sorted,
+            kff_indptr, kff_indices,
+            scatter_pos, scatter_m, scatter_i, scatter_j,
+            fint_pos, fint_m, fint_local)
+
+
+def _assemble_kff_nonlinear_2d(
+        nodes: np.ndarray,
+        sol: np.ndarray,
+        beam_prop: dict,
+        kff_pattern: tuple,
+) -> tuple[sp.csr_array, np.ndarray]:
+    """Assemble K_FF and F_int_F directly without building the full stiffness.
+
+    Parameters
+    ----------
+    nodes : np.ndarray, shape (N, 2)
+        Reference nodal coordinates.
+    sol : np.ndarray, shape (3*N,)
+        Current displacement vector.
+    beam_prop : dict
+        Beam properties (with ``'_geom_props'`` pre-cached).
+    kff_pattern : tuple
+        Pre-computed pattern as returned by :func:`_build_kff_sparsity_2d`.
+
+    Returns
+    -------
+    K_FF : scipy.sparse.csr_array, shape (nF, nF)
+        Free–free tangent stiffness, ready for ``spsolve``.
+    F_int_F : np.ndarray, shape (nF,)
+        Internal force vector at free DOFs.
+    """
+    (edges_sorted,
+     kff_indptr, kff_indices,
+     scatter_pos, scatter_m, scatter_i, scatter_j,
+     fint_pos, fint_m, fint_local) = kff_pattern
+
+    nF = len(kff_indptr) - 1
+
+    Kt_all, fg_all = _element_tangent_2d(nodes, edges_sorted, sol, beam_prop)
+
+    data = np.zeros(len(kff_indices))
+    np.add.at(data, scatter_pos, Kt_all[scatter_m, scatter_i, scatter_j])
+
+    F_int_F = np.zeros(nF)
+    np.add.at(F_int_F, fint_pos, fg_all[fint_m, fint_local])
+
+    return sp.csr_array((data, kff_indices, kff_indptr), shape=(nF, nF)), F_int_F
+
+
 def _assemble_bsr_nonlinear_2d(
         nodes: np.ndarray,
         edges: np.ndarray,
         sol: np.ndarray,
         beam_prop: dict,
+        bsr_pattern: tuple | None = None,
 ) -> tuple[sp.bsr_array, np.ndarray]:
     """BSR sparse assembly of global tangent stiffness and internal force.
 
-    Mirrors the structure of the linear BSR assembler in
-    ``beam_networks.fem.assembly``. Edges must be sorted so that
-    ``edges[:, 0] < edges[:, 1]`` and rows are ordered by the first column;
-    this is the convention used throughout ``ElasticNetwork``. The symmetric
-    tangent stiffness is built as upper-triangle + diagonal blocks and then
-    symmetrised with ``K + K.T``.
+    Assembles the full symmetric tangent stiffness by scattering both the
+    upper and lower off-diagonal blocks directly into the pre-allocated data
+    array, avoiding a separate ``K + K.T`` symmetrisation step.
+
+    Parameters
+    ----------
+    bsr_pattern : tuple or None, optional
+        Pre-built sparsity pattern as returned by
+        :func:`_build_bsr_sparsity_2d`.  When provided, all topology-
+        dependent computations are skipped.
     """
     num_nodes = nodes.shape[0]
     ndof_per_node = 3
     ndof = num_nodes * ndof_per_node
 
-    # Ensure n0 < n1 and rows are sorted by n0 (matches the linear assembler)
-    edges_sorted = np.sort(edges, axis=1)
-    edges_sorted = edges_sorted[np.lexsort((edges_sorted[:, 1], edges_sorted[:, 0]))]
-    e0s, e1s = edges_sorted[:, 0], edges_sorted[:, 1]
+    if bsr_pattern is None:
+        (edges_sorted, indices, indptr,
+         diag_pos_n0, diag_pos_n1,
+         offdiag_pos_upper, offdiag_pos_lower) = _build_bsr_sparsity_2d(nodes, edges)
+    else:
+        (edges_sorted, indices, indptr,
+         diag_pos_n0, diag_pos_n1,
+         offdiag_pos_upper, offdiag_pos_lower) = bsr_pattern
 
-    # Build sparsity pattern: upper triangle (off-diagonal edges) + diagonal
-    aux = sp.csr_array(
-        (np.ones(len(edges_sorted)), (e0s, e1s)),
-        shape=(num_nodes, num_nodes),
-    )
-    aux = aux + sp.eye_array(num_nodes)
-    indices = aux.indices
-    indptr = aux.indptr
+    e0s, e1s = edges_sorted[:, 0], edges_sorted[:, 1]
 
     data = np.zeros((len(indices), ndof_per_node, ndof_per_node))
     F_int = np.zeros(ndof)
@@ -690,37 +854,22 @@ def _assemble_bsr_nonlinear_2d(
     # Compute all element tangent stiffnesses and internal forces at once
     Kt_all, fg_all = _element_tangent_2d(nodes, edges_sorted, sol, beam_prop)
 
-    # Precompute BSR data-array positions for each edge
-    # Diagonal block of n0 is always the first entry in its CSR row (n0 < n1)
-    diag_pos_n0 = indptr[e0s]                       # (M,)
-    diag_pos_n1 = indptr[e1s]                       # (M,)
-
-    # Off-diagonal block (n0, n1): within row n0 it is the (k+1)-th entry,
-    # where k is the 0-indexed rank of this edge among all edges from n0.
-    _, first_occ, c0s = np.unique(e0s, return_index=True, return_counts=True)
-    k_per_edge = np.arange(len(e0s)) - np.repeat(first_occ, c0s)
-    offdiag_pos = indptr[e0s] + 1 + k_per_edge      # (M,)
-
-    # Scatter diagonal blocks (factor 1/2; symmetrised by K + K.T below)
-    np.add.at(data, diag_pos_n0, Kt_all[:, :3, :3] / 2.)
-    np.add.at(data, diag_pos_n1, Kt_all[:, 3:, 3:] / 2.)
-
-    # Scatter off-diagonal blocks
-    np.add.at(data, offdiag_pos, Kt_all[:, :3, 3:])
+    # Scatter all four block types directly — no K + K.T needed
+    np.add.at(data, diag_pos_n0,       Kt_all[:, :3, :3])
+    np.add.at(data, diag_pos_n1,       Kt_all[:, 3:, 3:])
+    np.add.at(data, offdiag_pos_upper, Kt_all[:, :3, 3:])
+    np.add.at(data, offdiag_pos_lower, Kt_all[:, 3:, :3])
 
     # Scatter internal forces
     for i in range(3):
         np.add.at(F_int, e0s * 3 + i, fg_all[:, i])
         np.add.at(F_int, e1s * 3 + i, fg_all[:, 3 + i])
 
-    K = sp.bsr_array(
+    return sp.bsr_array(
         (data, indices, indptr),
         shape=(ndof, ndof),
         blocksize=(ndof_per_node, ndof_per_node),
-    )
-    K = K + K.T
-
-    return K, F_int
+    ), F_int
 
 
 # ---------------------------------------------------------------------------
@@ -1018,6 +1167,7 @@ def assemble_nonlinear_system_2d(
         sol: np.ndarray,
         beam_prop: dict,
         matrix: str = 'dense',
+        bsr_pattern: tuple | None = None,
 ) -> tuple[np.ndarray | sp.bsr_array, np.ndarray]:
     """Assemble global tangent stiffness and internal force for a 2D network.
 
@@ -1050,7 +1200,8 @@ def assemble_nonlinear_system_2d(
     if matrix == 'dense':
         return _assemble_dense_nonlinear_2d(nodes, edges, sol, beam_prop)
     elif matrix == 'bsr':
-        return _assemble_bsr_nonlinear_2d(nodes, edges, sol, beam_prop)
+        return _assemble_bsr_nonlinear_2d(nodes, edges, sol, beam_prop,
+                                          bsr_pattern=bsr_pattern)
     else:
         raise ValueError(f"Unknown matrix format '{matrix}'. Choose 'dense' or 'bsr'.")
 
@@ -1090,39 +1241,220 @@ def _assemble_dense_nonlinear_3d(
     return K, F_int
 
 
+def _build_bsr_sparsity_3d(
+        nodes: np.ndarray,
+        edges: np.ndarray,
+        ref_vectors: np.ndarray,
+) -> tuple:
+    """Build the full-symmetric BSR sparsity pattern for a 3D network.
+
+    Analogous to :func:`_build_bsr_sparsity_2d` but also returns the
+    ref_vectors array sorted to match the re-ordered edges.
+
+    Returns
+    -------
+    edges_sorted : np.ndarray, shape (M, 2)
+    ref_sorted : np.ndarray, shape (M, 3)
+    indices : np.ndarray, shape (nnz,)
+    indptr : np.ndarray, shape (N+1,)
+    diag_pos_n0 : np.ndarray, shape (M,)
+    diag_pos_n1 : np.ndarray, shape (M,)
+    offdiag_pos_upper : np.ndarray, shape (M,)
+    offdiag_pos_lower : np.ndarray, shape (M,)
+    """
+    edges_s = np.sort(edges, axis=1)
+    sort_order = np.lexsort((edges_s[:, 1], edges_s[:, 0]))
+    ref_sorted = ref_vectors[sort_order]
+
+    (edges_sorted, indices, indptr,
+     diag_pos_n0, diag_pos_n1,
+     offdiag_pos_upper, offdiag_pos_lower) = _build_bsr_node_sparsity(nodes, edges)
+
+    return (edges_sorted, ref_sorted, indices, indptr,
+            diag_pos_n0, diag_pos_n1,
+            offdiag_pos_upper, offdiag_pos_lower)
+
+
+def _build_kff_sparsity_3d(
+        nodes: np.ndarray,
+        edges: np.ndarray,
+        ref_vectors: np.ndarray,
+        dof_F: np.ndarray,
+) -> tuple:
+    """Build a CSR sparsity pattern and scatter indices for direct K_FF assembly (3D).
+
+    3D analogue of :func:`_build_kff_sparsity_2d`: 6 DOFs per node, 12 per
+    element, 144 local (i, j) pairs.  Also stores ``ref_sorted`` (reference
+    vectors reordered to match the sorted edge order) so that
+    :func:`_assemble_kff_nonlinear_3d` can call ``_element_tangent_3d``
+    without rebuilding it.
+
+    Parameters
+    ----------
+    nodes : np.ndarray, shape (N, 3)
+        Nodal coordinates (only the row count N is used).
+    edges : np.ndarray, shape (M, 2)
+        Edge connectivity.
+    ref_vectors : np.ndarray, shape (M, 3)
+        Reference vectors defining the local e2 axis per element.
+    dof_F : np.ndarray of int
+        Indices of unconstrained (free) DOFs.
+
+    Returns
+    -------
+    edges_sorted : np.ndarray, shape (M, 2)
+    ref_sorted : np.ndarray, shape (M, 3)
+    kff_indptr : np.ndarray, shape (nF+1,)
+    kff_indices : np.ndarray, shape (nnz_FF,)
+    scatter_pos : np.ndarray of intp, shape (S,)
+    scatter_m : np.ndarray of intp, shape (S,)
+    scatter_i : np.ndarray of intp, shape (S,)
+    scatter_j : np.ndarray of intp, shape (S,)
+    fint_pos : np.ndarray of intp, shape (T,)
+    fint_m : np.ndarray of intp, shape (T,)
+    fint_local : np.ndarray of intp, shape (T,)
+    """
+    ndof = nodes.shape[0] * 6
+    nF = len(dof_F)
+
+    dof_rank = -np.ones(ndof, dtype=np.intp)
+    dof_rank[dof_F] = np.arange(nF, dtype=np.intp)
+
+    (edges_sorted, ref_sorted, _, _,
+     _, _, _, _) = _build_bsr_sparsity_3d(nodes, edges, ref_vectors)
+    e0s, e1s = edges_sorted[:, 0], edges_sorted[:, 1]
+
+    # Element DOFs: shape (ne, 12)
+    elem_dofs = np.column_stack([
+        6 * e0s,     6 * e0s + 1, 6 * e0s + 2,
+        6 * e0s + 3, 6 * e0s + 4, 6 * e0s + 5,
+        6 * e1s,     6 * e1s + 1, 6 * e1s + 2,
+        6 * e1s + 3, 6 * e1s + 4, 6 * e1s + 5,
+    ])
+
+    ii = np.repeat(np.arange(12), 12)
+    jj = np.tile(np.arange(12), 12)
+
+    kff_row = dof_rank[elem_dofs[:, ii]]  # (ne, 144)
+    kff_col = dof_rank[elem_dofs[:, jj]]  # (ne, 144)
+
+    free_mask = (kff_row >= 0) & (kff_col >= 0)
+
+    sel = np.flatnonzero(free_mask)
+    edge_idx = sel // 144
+    pair_idx = sel % 144
+    rows = kff_row.ravel()[sel]
+    cols = kff_col.ravel()[sel]
+    scatter_m = edge_idx.astype(np.intp)
+    scatter_i = ii[pair_idx].astype(np.intp)
+    scatter_j = jj[pair_idx].astype(np.intp)
+
+    kff_csr = sp.csr_array(
+        (np.ones(len(rows)), (rows, cols)),
+        shape=(nF, nF),
+    )
+    kff_csr.sum_duplicates()
+    kff_indptr = kff_csr.indptr
+    kff_indices = kff_csr.indices
+
+    row_arr = np.repeat(np.arange(nF), np.diff(kff_indptr))
+    pos_of_kff = dict(zip(zip(row_arr.tolist(), kff_indices.tolist()),
+                          range(len(kff_indices))))
+    scatter_pos = np.array([pos_of_kff[r, c] for r, c in zip(rows.tolist(), cols.tolist())],
+                           dtype=np.intp)
+
+    elem_rank = dof_rank[elem_dofs]
+    free_fint = np.flatnonzero(elem_rank >= 0)
+    fint_m = (free_fint // 12).astype(np.intp)
+    fint_local = (free_fint % 12).astype(np.intp)
+    fint_pos = elem_rank.ravel()[free_fint].astype(np.intp)
+
+    return (edges_sorted, ref_sorted,
+            kff_indptr, kff_indices,
+            scatter_pos, scatter_m, scatter_i, scatter_j,
+            fint_pos, fint_m, fint_local)
+
+
+def _assemble_kff_nonlinear_3d(
+        nodes: np.ndarray,
+        sol: np.ndarray,
+        beam_prop: dict,
+        kff_pattern: tuple,
+) -> tuple[sp.csr_array, np.ndarray]:
+    """Assemble K_FF and F_int_F directly without building the full stiffness (3D).
+
+    Parameters
+    ----------
+    nodes : np.ndarray, shape (N, 3)
+        Reference nodal coordinates.
+    sol : np.ndarray, shape (6*N,)
+        Current displacement vector.
+    beam_prop : dict
+        Beam properties (with ``'_geom_props'`` pre-cached).
+    kff_pattern : tuple
+        Pre-computed pattern as returned by :func:`_build_kff_sparsity_3d`.
+
+    Returns
+    -------
+    K_FF : scipy.sparse.csr_array, shape (nF, nF)
+        Free–free tangent stiffness, ready for ``spsolve``.
+    F_int_F : np.ndarray, shape (nF,)
+        Internal force vector at free DOFs.
+    """
+    (edges_sorted, ref_sorted,
+     kff_indptr, kff_indices,
+     scatter_pos, scatter_m, scatter_i, scatter_j,
+     fint_pos, fint_m, fint_local) = kff_pattern
+
+    nF = len(kff_indptr) - 1
+
+    Kt_all, fg_all = _element_tangent_3d(
+        nodes, edges_sorted, sol, beam_prop, ref_sorted)
+
+    data = np.zeros(len(kff_indices))
+    np.add.at(data, scatter_pos, Kt_all[scatter_m, scatter_i, scatter_j])
+
+    F_int_F = np.zeros(nF)
+    np.add.at(F_int_F, fint_pos, fg_all[fint_m, fint_local])
+
+    return sp.csr_array((data, kff_indices, kff_indptr), shape=(nF, nF)), F_int_F
+
+
 def _assemble_bsr_nonlinear_3d(
         nodes: np.ndarray,
         edges: np.ndarray,
         sol: np.ndarray,
         beam_prop: dict,
         ref_vectors: np.ndarray,
+        bsr_pattern: tuple | None = None,
 ) -> tuple[sp.bsr_array, np.ndarray]:
     """BSR sparse assembly of global tangent stiffness and internal force (3D).
 
     Mirrors the 2D BSR assembler with 6×6 blocks instead of 3×3.
+
+    Parameters
+    ----------
+    bsr_pattern : tuple or None, optional
+        Pre-built sparsity pattern as returned by
+        :func:`_build_bsr_sparsity_3d`.  When provided, all topology-
+        dependent computations (edge sorting, sparsity pattern, ref_vectors
+        reordering, scatter position arrays) are skipped.
     """
     num_nodes = nodes.shape[0]
     ndof_per_node = 6
     ndof = num_nodes * ndof_per_node
 
-    # Ensure n0 < n1 and rows are sorted by n0
-    edges_sorted = np.sort(edges, axis=1)
-    edges_sorted = edges_sorted[np.lexsort((edges_sorted[:, 1], edges_sorted[:, 0]))]
+    if bsr_pattern is None:
+        (edges_sorted, ref_sorted, indices, indptr,
+         diag_pos_n0, diag_pos_n1,
+         offdiag_pos_upper, offdiag_pos_lower) = \
+            _build_bsr_sparsity_3d(nodes, edges, ref_vectors)
+    else:
+        (edges_sorted, ref_sorted, indices, indptr,
+         diag_pos_n0, diag_pos_n1,
+         offdiag_pos_upper, offdiag_pos_lower) = bsr_pattern
+
     e0s, e1s = edges_sorted[:, 0], edges_sorted[:, 1]
-
-    # Sort ref_vectors to match the re-ordered edges
-    orig_order = np.lexsort((np.sort(edges, axis=1)[:, 1],
-                             np.sort(edges, axis=1)[:, 0]))
-    ref_sorted = ref_vectors[orig_order]
-
-    # Build sparsity pattern: upper triangle + diagonal
-    aux = sp.csr_array(
-        (np.ones(len(edges_sorted)), (e0s, e1s)),
-        shape=(num_nodes, num_nodes),
-    )
-    aux = aux + sp.eye_array(num_nodes)
-    indices = aux.indices
-    indptr = aux.indptr
 
     data = np.zeros((len(indices), ndof_per_node, ndof_per_node))
     F_int = np.zeros(ndof)
@@ -1130,29 +1462,20 @@ def _assemble_bsr_nonlinear_3d(
     Kt_all, fg_all = _element_tangent_3d(
         nodes, edges_sorted, sol, beam_prop, ref_sorted)
 
-    diag_pos_n0 = indptr[e0s]
-    diag_pos_n1 = indptr[e1s]
-
-    _, first_occ, c0s = np.unique(e0s, return_index=True, return_counts=True)
-    k_per_edge = np.arange(len(e0s)) - np.repeat(first_occ, c0s)
-    offdiag_pos = indptr[e0s] + 1 + k_per_edge
-
-    np.add.at(data, diag_pos_n0, Kt_all[:, :6, :6] / 2.)
-    np.add.at(data, diag_pos_n1, Kt_all[:, 6:, 6:] / 2.)
-    np.add.at(data, offdiag_pos, Kt_all[:, :6, 6:])
+    np.add.at(data, diag_pos_n0,       Kt_all[:, :6, :6])
+    np.add.at(data, diag_pos_n1,       Kt_all[:, 6:, 6:])
+    np.add.at(data, offdiag_pos_upper, Kt_all[:, :6, 6:])
+    np.add.at(data, offdiag_pos_lower, Kt_all[:, 6:, :6])
 
     for i in range(6):
         np.add.at(F_int, e0s * 6 + i, fg_all[:, i])
         np.add.at(F_int, e1s * 6 + i, fg_all[:, 6 + i])
 
-    K = sp.bsr_array(
+    return sp.bsr_array(
         (data, indices, indptr),
         shape=(ndof, ndof),
         blocksize=(ndof_per_node, ndof_per_node),
-    )
-    K = K + K.T
-
-    return K, F_int
+    ), F_int
 
 
 def assemble_nonlinear_system_3d(
@@ -1162,6 +1485,7 @@ def assemble_nonlinear_system_3d(
         beam_prop: dict,
         ref_vectors: np.ndarray,
         matrix: str = 'dense',
+        bsr_pattern: tuple | None = None,
 ) -> tuple[np.ndarray | sp.bsr_array, np.ndarray]:
     """Assemble global tangent stiffness and internal force for a 3D network.
 
@@ -1196,7 +1520,7 @@ def assemble_nonlinear_system_3d(
                                             ref_vectors)
     elif matrix == 'bsr':
         return _assemble_bsr_nonlinear_3d(nodes, edges, sol, beam_prop,
-                                          ref_vectors)
+                                          ref_vectors, bsr_pattern=bsr_pattern)
     else:
         raise ValueError(
             f"Unknown matrix format '{matrix}'. Choose 'dense' or 'bsr'."

@@ -26,8 +26,15 @@ import scipy.sparse as sp
 from beam_networks.fem.corotational import (
     assemble_nonlinear_system_2d,
     assemble_nonlinear_system_3d,
+    _build_bsr_sparsity_3d,
+    _build_kff_sparsity_2d,
+    _assemble_kff_nonlinear_2d,
+    _build_kff_sparsity_3d,
+    _assemble_kff_nonlinear_3d,
 )
+from beam_networks.fem.topology import _build_bsr_node_sparsity
 from beam_networks.fem.partitioning import partition_stiffness
+from beam_networks.geometry.geo import get_geometric_props
 
 
 def solve_nonlinear(
@@ -161,12 +168,38 @@ def solve_nonlinear(
     # the Updated Lagrangian scheme for non-pure-bending problems.
     sol_total = np.zeros(ndof)
 
+    # Pre-compute topology-invariant quantities once before the Newton loop.
+    # -----------------------------------------------------------------------
+    # (a) Geometric cross-section properties are constant throughout the solve;
+    #     store them in a local copy of beam_prop so the local-stiffness
+    #     routines can read them without repeating the dict-lookup arithmetic.
+    beam_prop = dict(beam_prop)
+    beam_prop['_geom_props'] = get_geometric_props(beam_prop)
+
+    # (b) For BSR format, the sparsity pattern (edge sorting, CSR indices/
+    #     indptr, and scatter-position arrays) depends only on mesh topology
+    #     and never changes during the solve.  Build it once here.
+    # (c) For the 2-D BSR path, also pre-build the K_FF sparsity so that the
+    #     free–free stiffness block can be assembled directly without a full-K
+    #     build followed by BSR→CSR conversion and index slicing.
+    bsr_pattern = None
+    kff_pattern = None
+    if matrix == 'bsr':
+        if ndim == 2:
+            bsr_pattern = _build_bsr_node_sparsity(nodes, edges)
+            kff_pattern = _build_kff_sparsity_2d(nodes, edges, dof_F)
+        else:
+            bsr_pattern = _build_bsr_sparsity_3d(nodes, edges, ref_vectors)
+            kff_pattern = _build_kff_sparsity_3d(nodes, edges, ref_vectors, dof_F)
+
     def _assemble(s):
         if ndim == 2:
             return assemble_nonlinear_system_2d(
-                nodes, edges, s, beam_prop, matrix=matrix)
+                nodes, edges, s, beam_prop, matrix=matrix,
+                bsr_pattern=bsr_pattern)
         return assemble_nonlinear_system_3d(
-            nodes, edges, s, beam_prop, ref_vectors, matrix=matrix)
+            nodes, edges, s, beam_prop, ref_vectors, matrix=matrix,
+            bsr_pattern=bsr_pattern)
 
     # Tangent predictor (3-D only): linear extrapolation of the free DOFs from
     # the previous step keeps Newton on the correct solution branch near
@@ -186,18 +219,27 @@ def solve_nonlinear(
             sol_total[dof_F] += curr_sol_F - prev_sol_F
             prev_sol_F = curr_sol_F
 
-        # Cumulative target Neumann load
-        f_target = f_step * (step + 1)
+        # Cumulative target Neumann load at free DOFs
+        f_target_F = f_step[dof_F] * (step + 1)
 
         # Newton iteration
         for it in range(max_iter):
-            K, F_int = _assemble(sol_total)
-
-            if matrix == 'bsr':
-                K_FF, _, rhs, _ = partition_stiffness(K, dof_D, f_target - F_int)
+            if kff_pattern is not None:
+                if ndim == 2:
+                    K_FF, F_int_F = _assemble_kff_nonlinear_2d(
+                        nodes, sol_total, beam_prop, kff_pattern)
+                else:
+                    K_FF, F_int_F = _assemble_kff_nonlinear_3d(
+                        nodes, sol_total, beam_prop, kff_pattern)
+                du_F = sp.linalg.spsolve(K_FF, f_target_F - F_int_F)
+            elif matrix == 'bsr':
+                K, F_int = _assemble(sol_total)
+                K_FF, _, rhs, _ = partition_stiffness(
+                    K, dof_D, f_step * (step + 1) - F_int)
                 du_F = sp.linalg.spsolve(K_FF.tocsr(), rhs)
             else:
-                res_F = (F_int - f_target)[dof_F]
+                K, F_int = _assemble(sol_total)
+                res_F = (F_int - f_step * (step + 1))[dof_F]
                 K_FF = K[np.ix_(dof_F, dof_F)]
                 du_F = np.linalg.solve(K_FF, -res_F)
 

@@ -15,6 +15,7 @@
 import numpy as np
 import scipy.sparse as sp
 
+from beam_networks.fem.topology import _build_bsr_node_sparsity
 from beam_networks.fem.stiffness import (
     global_element_stiffness_timoshenko_exact_single,
     global_element_stiffness_timoshenko_exact_all,
@@ -233,45 +234,32 @@ def _assemble_sparse_bsr(nodes, edges, dr, beam_prop):
     num_dof_per_node = _dof_per_node(ndim, beam_prop)
     num_dof = num_nodes * num_dof_per_node
 
-    aux = sp.csr_array((np.ones_like(edges[:, 0]),
-                        (edges[:, 0], edges[:, 1])), shape=(num_nodes, num_nodes))
-    aux = aux + sp.eye_array(num_nodes)
+    (edges_sorted, indices, indptr,
+     diag_pos_n0, diag_pos_n1,
+     offdiag_pos_upper, offdiag_pos_lower) = _build_bsr_node_sparsity(nodes, edges)
 
-    indices = aux.indices
-    indptr = aux.indptr
+    sort_idx = np.lexsort((edges[:, 1], edges[:, 0]))
+    dr_s = dr[sort_idx]
+
     data = np.zeros((len(indices), num_dof_per_node, num_dof_per_node))
+    ndpn = num_dof_per_node
 
-    i = 0
-    n0s, c0s = np.unique(edges[:, 0], return_counts=True)
+    for i in range(len(edges_sorted)):
+        if beam_prop.get('truss', False):
+            Ke = global_element_stiffness_truss_exact_single(beam_prop, dr_s[i])
+        elif beam_prop.get('euler_bernoulli', False):
+            Ke = global_element_stiffness_euler_exact_single(beam_prop, dr_s[i])
+        else:
+            Ke = global_element_stiffness_timoshenko_exact_single(beam_prop, dr_s[i])
 
-    for n0, c0 in zip(n0s, c0s):
-        for k, n1 in enumerate(edges[i + np.arange(c0), 1]):
-            if beam_prop.get('truss', False):
-                Ke = global_element_stiffness_truss_exact_single(beam_prop, dr[i])
-            elif beam_prop.get('euler_bernoulli', False):
-                Ke = global_element_stiffness_euler_exact_single(beam_prop, dr[i])
-            else:
-                Ke = global_element_stiffness_timoshenko_exact_single(beam_prop, dr[i])
+        data[diag_pos_n0[i]] += Ke[:ndpn, :ndpn]
+        data[diag_pos_n1[i]] += Ke[ndpn:, ndpn:]
+        data[offdiag_pos_upper[i]] += Ke[:ndpn, ndpn:]
+        data[offdiag_pos_lower[i]] += Ke[ndpn:, :ndpn]
 
-            Ke00 = Ke[:num_dof_per_node, :num_dof_per_node]
-            Ke01 = Ke[:num_dof_per_node, num_dof_per_node:]
-            Ke11 = Ke[num_dof_per_node:, num_dof_per_node:]
-
-            # factor 1/2 to make symmetric later
-            data[indptr[n0]] += Ke00 / 2.
-            data[indptr[n1]] += Ke11 / 2.
-            data[indptr[n0] + k + 1] += Ke01
-            i += 1
-
-    # Create block sparse array (upper triangular)
-    K_global = sp.bsr_array((data, indices, indptr),
-                            shape=(num_dof, num_dof),
-                            blocksize=(num_dof_per_node, num_dof_per_node)
-                            )
-    # Make symmetric
-    K_global = K_global + K_global.T
-
-    return K_global
+    return sp.bsr_array((data, indices, indptr),
+                        shape=(num_dof, num_dof),
+                        blocksize=(num_dof_per_node, num_dof_per_node))
 
 
 def _assemble_sparse_bsr_vec(nodes, edges, dr, beam_prop):
@@ -300,42 +288,31 @@ def _assemble_sparse_bsr_vec(nodes, edges, dr, beam_prop):
     num_dof_per_node = _dof_per_node(ndim, beam_prop)
     num_dof = num_nodes * num_dof_per_node
 
-    aux = sp.csr_array((np.ones_like(edges[:, 0]),
-                        (edges[:, 0], edges[:, 1])), shape=(num_nodes, num_nodes))
-    aux = aux + sp.eye_array(num_nodes)
+    (edges_sorted, indices, indptr,
+     diag_pos_n0, diag_pos_n1,
+     offdiag_pos_upper, offdiag_pos_lower) = _build_bsr_node_sparsity(nodes, edges)
 
-    indices = aux.indices
-    indptr = aux.indptr
-    data = np.zeros((len(indices), num_dof_per_node, num_dof_per_node))
+    # Reorder dr to match the lexsorted edge order used by _build_bsr_node_sparsity
+    sort_idx = np.lexsort((edges[:, 1], edges[:, 0]))
+    dr_s = dr[sort_idx]
 
     if beam_prop.get('truss', False):
-        Ke = global_element_stiffness_truss_exact_all(beam_prop, dr)
+        Ke = global_element_stiffness_truss_exact_all(beam_prop, dr_s)
     elif beam_prop.get('euler_bernoulli', False):
-        Ke = global_element_stiffness_euler_exact_all(beam_prop, dr)
+        Ke = global_element_stiffness_euler_exact_all(beam_prop, dr_s)
     else:
-        Ke = global_element_stiffness_timoshenko_exact_all(beam_prop, dr)
+        Ke = global_element_stiffness_timoshenko_exact_all(beam_prop, dr_s)
 
-    e0s, e1s = edges[:, 0], edges[:, 1]
-
-    # Diagonal block positions (diagonal is always the first entry in each row
-    # because e0 < e1 for all edges, making the diagonal the smallest column)
-    diag_pos_n0 = indptr[e0s]
-    diag_pos_n1 = indptr[e1s]
-
-    # Off-diagonal block positions: rank of each edge within its source row
-    _, first_occ, counts = np.unique(e0s, return_index=True, return_counts=True)
-    k_per_edge = np.arange(len(e0s)) - np.repeat(first_occ, counts)
-    offdiag_pos = indptr[e0s] + 1 + k_per_edge
-
+    data = np.zeros((len(indices), num_dof_per_node, num_dof_per_node))
     ndpn = num_dof_per_node
-    np.add.at(data, diag_pos_n0, Ke[:, :ndpn, :ndpn] / 2.)
-    np.add.at(data, diag_pos_n1, Ke[:, ndpn:, ndpn:] / 2.)
-    np.add.at(data, offdiag_pos, Ke[:, :ndpn, ndpn:])
+    np.add.at(data, diag_pos_n0,       Ke[:, :ndpn, :ndpn])
+    np.add.at(data, diag_pos_n1,       Ke[:, ndpn:, ndpn:])
+    np.add.at(data, offdiag_pos_upper, Ke[:, :ndpn, ndpn:])
+    np.add.at(data, offdiag_pos_lower, Ke[:, ndpn:, :ndpn])
 
-    K_global = sp.bsr_array((data, indices, indptr),
-                            shape=(num_dof, num_dof),
-                            blocksize=(num_dof_per_node, num_dof_per_node))
-    return K_global + K_global.T
+    return sp.bsr_array((data, indices, indptr),
+                        shape=(num_dof, num_dof),
+                        blocksize=(num_dof_per_node, num_dof_per_node))
 
 
 def _assemble_sparse_lil(nodes, edges, dr, beam_prop):
@@ -531,43 +508,35 @@ def _assemble_sparse_bsr_fem(nodes, edges, dr, beam_prop, n_elems,
     num_dof_per_node = _dof_per_node(ndim, beam_prop)
     num_dof = num_nodes * num_dof_per_node
 
-    aux = sp.csr_array((np.ones_like(edges[:, 0]),
-                        (edges[:, 0], edges[:, 1])), shape=(num_nodes, num_nodes))
-    aux = aux + sp.eye_array(num_nodes)
+    (edges_sorted, indices, indptr,
+     diag_pos_n0, diag_pos_n1,
+     offdiag_pos_upper, offdiag_pos_lower) = _build_bsr_node_sparsity(nodes, edges)
 
-    indices = aux.indices
-    indptr = aux.indptr
+    sort_idx = np.lexsort((edges[:, 1], edges[:, 0]))
+    dr_s = dr[sort_idx]
+    n_elems_s = n_elems[sort_idx]
+
     data = np.zeros((len(indices), num_dof_per_node, num_dof_per_node))
+    ndpn = num_dof_per_node
 
-    i = 0
-    n0s, c0s = np.unique(edges[:, 0], return_counts=True)
+    for i in range(len(edges_sorted)):
+        if beam_prop.get('euler_bernoulli', False):
+            Ke = global_element_stiffness_euler_numeric_single(
+                beam_prop, dr_s[i], n_elems_s[i])
+        else:
+            Ke = global_element_stiffness_timoshenko_numeric_single(
+                beam_prop, dr_s[i], n_elems_s[i],
+                poly_order=fem_poly_order,
+                n_gauss=fem_n_gauss)
 
-    for n0, c0 in zip(n0s, c0s):
-        for k, n1 in enumerate(edges[i + np.arange(c0), 1]):
-            if beam_prop.get('euler_bernoulli', False):
-                Ke = global_element_stiffness_euler_numeric_single(
-                    beam_prop, dr[i], n_elems[i])
-            else:
-                Ke = global_element_stiffness_timoshenko_numeric_single(
-                    beam_prop, dr[i], n_elems[i],
-                    poly_order=fem_poly_order,
-                    n_gauss=fem_n_gauss)
+        data[diag_pos_n0[i]] += Ke[:ndpn, :ndpn]
+        data[diag_pos_n1[i]] += Ke[ndpn:, ndpn:]
+        data[offdiag_pos_upper[i]] += Ke[:ndpn, ndpn:]
+        data[offdiag_pos_lower[i]] += Ke[ndpn:, :ndpn]
 
-            Ke00 = Ke[:num_dof_per_node, :num_dof_per_node]
-            Ke01 = Ke[:num_dof_per_node, num_dof_per_node:]
-            Ke11 = Ke[num_dof_per_node:, num_dof_per_node:]
-
-            data[indptr[n0]] += Ke00 / 2.
-            data[indptr[n1]] += Ke11 / 2.
-            data[indptr[n0] + k + 1] += Ke01
-            i += 1
-
-    K_global = sp.bsr_array((data, indices, indptr),
-                            shape=(num_dof, num_dof),
-                            blocksize=(num_dof_per_node, num_dof_per_node))
-    K_global = K_global + K_global.T
-
-    return K_global
+    return sp.bsr_array((data, indices, indptr),
+                        shape=(num_dof, num_dof),
+                        blocksize=(num_dof_per_node, num_dof_per_node))
 
 
 def _assemble_sparse_lil_fem(nodes, edges, dr, beam_prop, n_elems,
@@ -634,40 +603,32 @@ def _assemble_sparse_bsr_fem_vec(nodes, edges, dr, beam_prop, n_elems,
     num_dof_per_node = _dof_per_node(ndim, beam_prop)
     num_dof = num_nodes * num_dof_per_node
 
-    aux = sp.csr_array((np.ones_like(edges[:, 0]),
-                        (edges[:, 0], edges[:, 1])), shape=(num_nodes, num_nodes))
-    aux = aux + sp.eye_array(num_nodes)
+    (edges_sorted, indices, indptr,
+     diag_pos_n0, diag_pos_n1,
+     offdiag_pos_upper, offdiag_pos_lower) = _build_bsr_node_sparsity(nodes, edges)
 
-    indices = aux.indices
-    indptr = aux.indptr
-    data = np.zeros((len(indices), num_dof_per_node, num_dof_per_node))
+    sort_idx = np.lexsort((edges[:, 1], edges[:, 0]))
+    dr_s = dr[sort_idx]
+    n_elems_s = n_elems[sort_idx]
 
     if beam_prop.get('euler_bernoulli', False):
-        Ke = global_element_stiffness_euler_numeric_all(beam_prop, dr, n_elems)
+        Ke = global_element_stiffness_euler_numeric_all(beam_prop, dr_s, n_elems_s)
     else:
         Ke = global_element_stiffness_timoshenko_numeric_all(
-            beam_prop, dr, n_elems,
+            beam_prop, dr_s, n_elems_s,
             poly_order=fem_poly_order,
             n_gauss=fem_n_gauss)
 
-    e0s, e1s = edges[:, 0], edges[:, 1]
-
-    diag_pos_n0 = indptr[e0s]
-    diag_pos_n1 = indptr[e1s]
-
-    _, first_occ, counts = np.unique(e0s, return_index=True, return_counts=True)
-    k_per_edge = np.arange(len(e0s)) - np.repeat(first_occ, counts)
-    offdiag_pos = indptr[e0s] + 1 + k_per_edge
-
+    data = np.zeros((len(indices), num_dof_per_node, num_dof_per_node))
     ndpn = num_dof_per_node
-    np.add.at(data, diag_pos_n0, Ke[:, :ndpn, :ndpn] / 2.)
-    np.add.at(data, diag_pos_n1, Ke[:, ndpn:, ndpn:] / 2.)
-    np.add.at(data, offdiag_pos, Ke[:, :ndpn, ndpn:])
+    np.add.at(data, diag_pos_n0,       Ke[:, :ndpn, :ndpn])
+    np.add.at(data, diag_pos_n1,       Ke[:, ndpn:, ndpn:])
+    np.add.at(data, offdiag_pos_upper, Ke[:, :ndpn, ndpn:])
+    np.add.at(data, offdiag_pos_lower, Ke[:, ndpn:, :ndpn])
 
-    K_global = sp.bsr_array((data, indices, indptr),
-                            shape=(num_dof, num_dof),
-                            blocksize=(num_dof_per_node, num_dof_per_node))
-    return K_global + K_global.T
+    return sp.bsr_array((data, indices, indptr),
+                        shape=(num_dof, num_dof),
+                        blocksize=(num_dof_per_node, num_dof_per_node))
 
 
 def _assemble_sparse_lil_fem_vec(nodes, edges, dr, beam_prop, n_elems,
