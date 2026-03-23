@@ -50,7 +50,7 @@ def solve_nonlinear(
         tol: float = 1e-9,
         verbose: bool = True,
         callback=None,
-        matrix: str = 'dense',
+        matrix: str = 'bsr',
         out: dict | None = None,
         ndim: int = 2,
         ref_vectors: np.ndarray | None = None,
@@ -108,7 +108,7 @@ def solve_nonlinear(
         Assembly and linear-solve format.  ``'dense'`` uses
         ``numpy.linalg.solve``; ``'bsr'`` assembles a
         ``scipy.sparse.bsr_array`` and uses
-        ``scipy.sparse.linalg.spsolve``.  The default is ``'dense'``.
+        ``scipy.sparse.linalg.spsolve``.  The default is ``'bsr'``.
     out : dict or None, optional
         If a dict is provided it is populated with auxiliary results after the
         final load step:
