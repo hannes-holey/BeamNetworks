@@ -22,7 +22,7 @@ from beam_networks import ElasticNetwork
 
 # %%
 nodes_positions = np.loadtxt('../resources/jammed.nodes')
-edges_indices   = np.loadtxt('../resources/jammed.edges').astype(int)
+edges_indices = np.loadtxt('../resources/jammed.edges').astype(int)
 
 E = 2.1e11
 nu = 0.3

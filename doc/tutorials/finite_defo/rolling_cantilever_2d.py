@@ -87,6 +87,7 @@ def draw_snapshots(ax, edges, snapshots):
 # It substantially over-predicts the tip displacement because it ignores
 # chord-rotation stiffening.
 
+
 # %%
 net_pi = make_net()
 net_pi.add_BC('tip_rot', 'D', 'node', [ne], [None, None, np.pi])
@@ -155,7 +156,7 @@ net_2pi.solve_nonlinear(n_steps=n_steps, tol=1e-9, verbose=False, callback=cb_2p
 
 tip_2pi = net_2pi.displaced_nodes[-1]
 print(f"θ = 2π → tip = ({tip_2pi[0]:.4e}, {tip_2pi[1]:.4e})")
-print(f"          expected (0, 0)")
+print("          expected (0, 0)")
 
 # %%
 fig, ax = plt.subplots(figsize=(5, 5))

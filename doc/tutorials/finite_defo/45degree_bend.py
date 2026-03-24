@@ -35,7 +35,6 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Line3DCollection
 
 from beam_networks.problem import ElasticNetwork
-from beam_networks.geometry.geo import get_geometric_props
 
 # %% [markdown]
 # ## Geometry and material
@@ -52,10 +51,10 @@ edges = np.column_stack([np.arange(ne), np.arange(ne) + 1])
 
 n_steps = 8
 
-crisfield_ref = np.array([[70.71, -29.29,  0.  ],
-                           [58.53, -22.16, 40.53],
-                           [51.93, -18.43, 48.79],
-                           [46.84, -15.61, 53.71]])
+crisfield_ref = np.array([[70.71, -29.29,  0.],
+                          [58.53, -22.16, 40.53],
+                          [51.93, -18.43, 48.79],
+                          [46.84, -15.61, 53.71]])
 
 # %% [markdown]
 # ## Solving for each load level
@@ -66,6 +65,8 @@ crisfield_ref = np.array([[70.71, -29.29,  0.  ],
 # used in the original Crisfield paper.
 
 # %%
+
+
 def run(Fz=0.):
     net = ElasticNetwork(nodes, edges, beam_prop=beam_prop,
                          options={'vectorize': True,
@@ -103,6 +104,8 @@ for i, Fz in enumerate([0., 300., 450., 600.]):
 # mark the Crisfield reference tip positions.
 
 # %%
+
+
 def draw_3d(ax, net, c='C0'):
     nodes_cur = net.displaced_nodes
     segs = [(nodes_cur[e0], nodes_cur[e1]) for e0, e1 in net.edges]

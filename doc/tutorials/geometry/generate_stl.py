@@ -27,10 +27,10 @@ nu = 0.3
 props_2d = {'name': 'rectangle', 'b': 10 * R, 'h': R, 'E': E, 'nu': nu}
 
 nodes_positions = np.loadtxt('../resources/jammed.nodes')
-edges_indices   = np.loadtxt('../resources/jammed.edges').astype(int)
+edges_indices = np.loadtxt('../resources/jammed.edges').astype(int)
 
 actuator_2d = ElasticNetwork(nodes_positions, edges_indices,
-                              beam_prop=props_2d, valid=True)
+                             beam_prop=props_2d, valid=True)
 actuator_2d.to_stl('mesh_2d.stl')
 print('2D STL written to mesh_2d.stl')
 
@@ -44,6 +44,6 @@ lattice = ElasticNetwork.generate_cubic_lattice(
     a=1., bbox=(3., 3., 3.), lattice_type='fcc')
 
 actuator_3d = ElasticNetwork(lattice.nodes, lattice.edges,
-                              beam_prop=props_3d, valid=True)
+                             beam_prop=props_3d, valid=True)
 actuator_3d.to_stl('mesh_3d.stl')
 print('3D STL written to mesh_3d.stl')

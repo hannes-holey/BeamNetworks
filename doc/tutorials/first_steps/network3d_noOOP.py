@@ -53,13 +53,13 @@ bc = {}
 
 bc['0'] = {'type': 'D', 'active': True}
 bc['0'].update(_get_bc_dof(lattice.nodes, 'box',
-                            [None, 0.01, None, None, None, None],
-                            [0., 0., 0., 0., 0., 0.]))
+                           [None, 0.01, None, None, None, None],
+                           [0., 0., 0., 0., 0., 0.]))
 
 bc['1'] = {'type': 'N', 'active': True}
 bc['1'].update(_get_bc_dof(lattice.nodes, 'point',
-                            [5., 1.5, 1.5],
-                            [None, -1, None, None, None, None]))
+                           [5., 1.5, 1.5],
+                           [None, -1, None, None, None, None]))
 
 dof_D, val_D, dof_N, val_N = _assemble_BCs(bc)
 

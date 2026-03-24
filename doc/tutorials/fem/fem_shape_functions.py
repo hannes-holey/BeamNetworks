@@ -47,8 +47,9 @@ fig, axes = plt.subplots(2, 3, figsize=(12, 6))
 N_lag, dN_lag = [], []
 for xi_i in xi:
     Ni, dNi = _lagrange_basis(P + 1, xi_i)
-    N_lag.append(Ni); dN_lag.append(dNi)
-N_lag  = np.array(N_lag).T
+    N_lag.append(Ni)
+    dN_lag.append(dNi)
+N_lag = np.array(N_lag).T
 dN_lag = np.array(dN_lag).T
 
 for i, (Ni, dNi) in enumerate(zip(N_lag, dN_lag)):
@@ -64,8 +65,9 @@ axes[0, 0].legend(fontsize=7, ncol=2)
 N_her, dN_her = [], []
 for xi_i in xi:
     Ni, dNi = _hermite_basis(xi_i)
-    N_her.append(Ni); dN_her.append(dNi)
-N_her  = np.array(N_her).T
+    N_her.append(Ni)
+    dN_her.append(dNi)
+N_her = np.array(N_her).T
 dN_her = np.array(dN_her).T
 
 her_labels = ['$H_1$', '$H_2$', '$H_3$', '$H_4$']

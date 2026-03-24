@@ -33,7 +33,7 @@ mean = 0.1
 props['strength'] = mean * props['E']
 
 nodes_positions = np.loadtxt('../resources/jammed.nodes')
-edges_indices   = np.loadtxt('../resources/jammed.edges').astype(int)
+edges_indices = np.loadtxt('../resources/jammed.edges').astype(int)
 size = edges_indices.shape[0]
 
 sign = -1   # compression

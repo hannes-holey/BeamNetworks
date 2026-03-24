@@ -90,6 +90,7 @@ def draw_3d(ax3, snaps, color_override=None):
 # With `ref_vec = (0, 0, 1)` the local $\hat{\mathbf{e}}_2$ axis is fixed along
 # $\hat{z}$, which is always perpendicular to any chord in the x-y plane.
 
+
 # %%
 Mref_z = 2. * np.pi * beam_prop['E'] * Iz / Lx
 net_xy = make_net()
@@ -110,7 +111,7 @@ net_xy.solve_nonlinear(n_steps=n_steps, tol=1e-9, verbose=False,
 
 tip_xy = net_xy.displaced_nodes[-1]
 print(f"x-y circle → tip = ({tip_xy[0]:.4e}, {tip_xy[1]:.4e}, {tip_xy[2]:.4e})")
-print(f"              expected (0, 0, 0)")
+print("              expected (0, 0, 0)")
 
 # %%
 theta_ref = np.linspace(0, 2 * np.pi, 400)
@@ -159,7 +160,7 @@ net_xz.solve_nonlinear(n_steps=n_steps, tol=1e-9, verbose=False,
 
 tip_xz = net_xz.displaced_nodes[-1]
 print(f"x-z circle → tip = ({tip_xz[0]:.4e}, {tip_xz[1]:.4e}, {tip_xz[2]:.4e})")
-print(f"              expected (0, 0, 0)")
+print("              expected (0, 0, 0)")
 
 # %%
 fig, ax = plt.subplots(figsize=(5, 5))

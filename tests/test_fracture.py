@@ -152,7 +152,6 @@ def test_write_hdf5(tmp_path, monkeypatch):
     """write() produces a valid HDF5 file with one group per run."""
     pytest.importorskip('meshio')
     h5py = pytest.importorskip('h5py')
-    import numpy as np
 
     monkeypatch.chdir(tmp_path)
 

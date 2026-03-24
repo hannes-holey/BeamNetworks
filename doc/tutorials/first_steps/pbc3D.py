@@ -24,6 +24,8 @@ from beam_networks.geometry.selection import get_edges_from_disks
 # ## Helper functions
 
 # %%
+
+
 def get_problem(pbcx, pbcy):
     nodes, edges, Lx, Ly = get_edges_from_disks('../resources/hard_disks.txt')
     nodes = np.hstack([nodes, np.zeros(nodes.shape[0])[:, None]])
@@ -62,10 +64,11 @@ def get_rotation_edge(p):
 # %% [markdown]
 # ## Solve all three cases
 
+
 # %%
 pxy = get_problem(True,  True)
-px  = get_problem(True,  False)
-py  = get_problem(False, True)
+px = get_problem(True,  False)
+py = get_problem(False, True)
 
 # %% [markdown]
 # ## Visualisation
@@ -82,7 +85,8 @@ repeat = 2
 
 xx, yy = np.meshgrid(np.arange(repeat), np.arange(repeat))
 zz = np.zeros_like(xx.flatten())
-uxy = get_disp_magnitude_edge(pxy);  txy = get_rotation_edge(pxy)
+uxy = get_disp_magnitude_edge(pxy)
+txy = get_rotation_edge(pxy)
 
 for _shift in zip(xx.flatten(), yy.flatten(), zz):
     shift = np.array(_shift) * np.array(pxy.boxsize)
@@ -93,8 +97,11 @@ for _shift in zip(xx.flatten(), yy.flatten(), zz):
     _plot_network(ax[2, 0], (pxy.nodes + shift)[:, :2], pxy.edges,
                   pxy.edge_vectors[:, :2], boxsize=pxy._boxsize[:2], lw=2.5, edge_data=pxy._sVM)
 
-xx = np.arange(repeat);  yy = np.zeros_like(xx);  zz = np.zeros_like(xx)
-ux = get_disp_magnitude_edge(px);  tx = get_rotation_edge(px)
+xx = np.arange(repeat)
+yy = np.zeros_like(xx)
+zz = np.zeros_like(xx)
+ux = get_disp_magnitude_edge(px)
+tx = get_rotation_edge(px)
 
 for _shift in zip(xx, yy, zz):
     shift = np.array(_shift) * np.array(pxy.boxsize)
@@ -105,8 +112,11 @@ for _shift in zip(xx, yy, zz):
     _plot_network(ax[2, 1], (px.nodes + shift)[:, :2], px.edges,
                   px.edge_vectors[:, :2], boxsize=px._boxsize[:2], lw=2.5, edge_data=px._sVM)
 
-yy = np.arange(repeat);  xx = np.zeros_like(yy);  zz = np.zeros_like(yy)
-uy = get_disp_magnitude_edge(py);  ty = get_rotation_edge(py)
+yy = np.arange(repeat)
+xx = np.zeros_like(yy)
+zz = np.zeros_like(yy)
+uy = get_disp_magnitude_edge(py)
+ty = get_rotation_edge(py)
 
 for _shift in zip(xx, yy, zz):
     shift = np.array(_shift) * np.array(pxy.boxsize)

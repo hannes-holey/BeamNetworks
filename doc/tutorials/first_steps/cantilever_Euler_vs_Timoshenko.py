@@ -64,6 +64,7 @@ def _analytic(x, length, P, euler_bernoulli=False):
 # Shear deformation is most visible at low slenderness. At $L/R = 5$ the
 # Timoshenko tip deflection is noticeably larger than the EB prediction.
 
+
 # %%
 try:
     plt.style.use('../beams.mplstyle')
@@ -112,7 +113,7 @@ ratio_num, ratio_ana = [], []
 for slend in slenderness:
     L = slend * R
     v_timo = _solve_cantilever(L, euler_bernoulli=False)[0][1::3][-1]
-    v_eb   = _solve_cantilever(L, euler_bernoulli=True)[0][1::3][-1]
+    v_eb = _solve_cantilever(L, euler_bernoulli=True)[0][1::3][-1]
     ratio_num.append(v_timo / v_eb)
     Phi = 12. * E * Iz / (kappa * G * A * L**2)
     ratio_ana.append(1. + Phi / 4.)

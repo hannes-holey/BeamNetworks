@@ -38,7 +38,7 @@ props = {'name': 'circle', 'radius': R, 'E': E, 'nu': nu}
 phi_z_deg = 45.
 phi_y_deg = 0.
 rot = Rotation.from_euler('zy', [phi_z_deg / 180 * np.pi,
-                                  phi_y_deg / 180 * np.pi]).as_matrix()
+                                 phi_y_deg / 180 * np.pi]).as_matrix()
 
 Iy, Iz, _, A, kappa, ymax = get_geometric_props(props)
 _Fext = np.array([0.05 * E * A / length, 0.1 * E * Iz / length**3, 0.])
