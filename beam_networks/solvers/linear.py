@@ -363,8 +363,8 @@ def _solve_dense(K_global, bc_D, d_D, bc_N, F_N):
     # Solution all DOFs
     d = np.dot(LE, d_D) + np.dot(LF, dF)
 
-    # Reaction forces
-    F = LE.T.dot(K_global.dot(d))
+    # Reaction forces (full DOF vector, consistent with the sparse path)
+    F = K_global.dot(d)
 
     info = 0
 
