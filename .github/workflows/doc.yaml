@@ -27,7 +27,7 @@ jobs:
       - name: install_package
         run: |
           sudo apt-get update
-          sudo apt-get install libhdf5-dev
+          sudo apt-get install libhdf5-dev libegl1 libosmesa6
           sudo pip install --upgrade --ignore-installed .[doc,io,viz]
 
       - name: build_doc
