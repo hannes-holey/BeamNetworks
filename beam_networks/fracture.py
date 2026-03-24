@@ -240,16 +240,22 @@ class FractureProblem(ElasticNetwork):
 
     def _write_hdf5(self):
         """Write output buffer to HDF5 file.
+
+        Each call to :meth:`run` appends one group ``NNNN`` (zero-padded run
+        index) containing one dataset per output key.
         """
 
-        import pandas as pd
+        import h5py
 
         fname = os.path.join(self._outdir, 'data.h5')
         if os.path.exists(fname):
             os.rename(fname, fname + '.bak')
 
-        df = pd.DataFrame(data=self._output)
-        df.to_hdf(fname, key='data')
+        with h5py.File(fname, 'w') as f:
+            for i, run_data in enumerate(zip(*self._output.values())):
+                grp = f.create_group(f'{i:04d}')
+                for key, val in zip(self._output.keys(), run_data):
+                    grp.create_dataset(key, data=np.asarray(val))
 
     def _pop_output_buffer(self, index=-1):
         """Pop index from output buffer.

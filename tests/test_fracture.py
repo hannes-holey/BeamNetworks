@@ -142,3 +142,36 @@ def test_fracture_run_vtk_written(tmp_path, monkeypatch):
 
     vtk_files = list(tmp_path.glob('fracture-*.vtk'))
     assert len(vtk_files) >= 1
+
+
+# ---------------------------------------------------------------------------
+# write() / _write_hdf5
+# ---------------------------------------------------------------------------
+
+def test_write_hdf5(tmp_path, monkeypatch):
+    """write() produces a valid HDF5 file with one group per run."""
+    pytest.importorskip('meshio')
+    h5py = pytest.importorskip('h5py')
+    import numpy as np
+
+    monkeypatch.chdir(tmp_path)
+
+    p = _make_square_fracture_problem()
+    p._outdir = str(tmp_path)
+    p.run(mode='cascade', sign=-1)
+    p.run(mode='cascade', sign=-1)
+    p.write()
+
+    hdf_file = tmp_path / 'data.h5'
+    assert hdf_file.exists()
+
+    expected_keys = {'fracture_energy', 'stress_strain', 'avalanche_size',
+                     'removed_edges', 'cracked_edges'}
+
+    with h5py.File(hdf_file, 'r') as f:
+        assert len(f) == 2                          # two runs
+        for grp_name in f:
+            assert set(f[grp_name].keys()) == expected_keys
+        # stress_strain must be 2-column
+        ss = f['0000']['stress_strain'][()]
+        assert ss.ndim == 2 and ss.shape[1] == 2

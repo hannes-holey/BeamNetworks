@@ -25,7 +25,7 @@ dependencies = [
 io = [
     'meshio',
     'trimesh[easy]',
-    'pandas[hdf5]']
+    'h5py']
 viz = [
     'matplotlib',
     'pyvista']

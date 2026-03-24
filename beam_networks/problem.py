@@ -24,7 +24,7 @@ from beam_networks.fem.bc import _get_bc_dof, _assemble_BCs
 from beam_networks.io.validation import check_input_dict
 from beam_networks.geometry.selection import _remove_isolated_nodes_edges, _mic
 from beam_networks.postprocess.viz import _plot_network, _plot_network_3d
-from beam_networks.io.formats import _to_vtk, _to_vtk_periodic, _to_stl, _from_tar, _to_tar
+from beam_networks.io.formats import _to_vtk, _to_vtk_periodic, _to_stl, _from_tar, _to_npz, _from_npz
 from beam_networks.solvers.nonlinear import solve_nonlinear as _solve_nonlinear
 from beam_networks.fem.corotational import (
     element_mises_stress_2d as _corot_mises_2d,
@@ -161,18 +161,30 @@ class ElasticNetwork(Network):
         self.has_solution = False
 
     def save(self, filename: str) -> None:
-        """Save the current state of the solver as a gzipped tar archive.
+        """Save the current state of the solver to a compressed NumPy archive.
+
+        The file is written in ``.npz`` format (a zip of named ``.npy``
+        arrays).  If *filename* does not already end in ``.npz``, NumPy
+        appends the suffix automatically.
 
         Parameters
         ----------
         filename : str
             Path to the output archive file.
         """
-        _to_tar(filename, self)
+        _to_npz(filename, self)
 
     @classmethod
     def load(cls, filename: str, recompute: bool = True) -> "ElasticNetwork":
-        """Create a class instance from a tar archive.
+        """Create a class instance from a saved archive.
+
+        Both the current ``.npz`` format and the legacy ``.tar.gz`` format
+        are supported.  Format detection is based on the file extension:
+        files ending in ``.npz`` are read with :func:`_from_npz`; everything
+        else falls back to the legacy :func:`_from_tar` reader.  If
+        *filename* does not end in ``.npz`` and does not exist on disk,
+        ``filename + '.npz'`` is tried first (to handle the case where NumPy
+        appended the suffix automatically during :meth:`save`).
 
         Parameters
         ----------
@@ -188,8 +200,14 @@ class ElasticNetwork(Network):
         ElasticNetwork
             A new instance restored from the archive.
         """
+        path = str(filename)
+        if not path.endswith('.npz') and not os.path.exists(path):
+            path = path + '.npz'
 
-        nodes, edges, active_edges, beam_prop, K, bc, sol, sVM, misc = _from_tar(filename)
+        if path.endswith('.npz'):
+            nodes, edges, active_edges, beam_prop, K, bc, sol, sVM, misc = _from_npz(path)
+        else:
+            nodes, edges, active_edges, beam_prop, K, bc, sol, sVM, misc = _from_tar(path)
 
         new = cls(nodes, edges,
                   beam_prop=beam_prop,

@@ -23,8 +23,102 @@ from beam_networks.io.validation import zero_pad_2d_array
 from beam_networks.postprocess.stress import get_element_mises_stress
 
 
+def _to_npz(filename, problem):
+    """Save an ElasticNetwork instance to a compressed NumPy archive (.npz).
+
+    Arrays are stored as named datasets; dict metadata (boundary conditions,
+    beam properties, solver options) are stored as YAML-encoded strings.
+    ``np.savez_compressed`` appends ``.npz`` to *filename* if the suffix is
+    absent.
+
+    Parameters
+    ----------
+    filename : str or path-like
+        Destination file.  The ``.npz`` extension is added automatically if
+        not already present.
+    problem : ElasticNetwork
+        Instance to serialise.
+    """
+    arrays = dict(
+        nodes=problem._nodes,
+        edges=problem._edges,
+        active_edges=problem._active_edges,
+    )
+
+    if problem._options['matrix'] == 'dense':
+        arrays['K'] = problem._K
+    else:
+        arrays['K_data'] = problem._K.data
+        arrays['K_indices'] = problem._K.indices
+        arrays['K_indptr'] = problem._K.indptr
+
+    if problem.has_solution:
+        arrays['sol'] = problem.sol
+        arrays['sVM'] = problem._sVM
+
+    misc = problem._options.copy()
+    misc['outdir'] = problem._outdir
+    misc['boxsize'] = problem._boxsize.tolist()
+    misc['periodic'] = problem._periodic.tolist()
+    misc['has_solution'] = problem.has_solution
+
+    arrays['bc'] = np.array(yaml.dump(problem._bc))
+    arrays['beam_prop'] = np.array(yaml.dump(problem._beam_prop))
+    arrays['misc'] = np.array(yaml.dump(misc))
+
+    np.savez_compressed(filename, **arrays)
+
+
+def _from_npz(filename):
+    """Restore ElasticNetwork state from a .npz archive.
+
+    Parameters
+    ----------
+    filename : str or path-like
+        Archive written by :func:`_to_npz`.
+
+    Returns
+    -------
+    Same nine-tuple as :func:`_from_tar`.
+    """
+    data = np.load(filename, allow_pickle=False)
+
+    nodes = data['nodes']
+    edges = data['edges']
+    active_edges = data['active_edges']
+
+    bc = yaml.safe_load(str(data['bc']))
+    beam_prop = yaml.safe_load(str(data['beam_prop']))
+    misc = yaml.safe_load(str(data['misc']))
+
+    if misc['has_solution']:
+        sol = data['sol']
+        sVM = data['sVM']
+    else:
+        sol = None
+        sVM = None
+
+    if misc['matrix'] == 'dense':
+        K = data['K']
+    else:
+        num_nodes, dim = nodes.shape
+        dof_per_node = dim if beam_prop.get('truss', False) else 3 * (dim - 1)
+        num_dof = num_nodes * dof_per_node
+        K = sp.bsr_array(
+            (data['K_data'], data['K_indices'], data['K_indptr']),
+            shape=(num_dof, num_dof),
+            blocksize=(dof_per_node, dof_per_node),
+        )
+
+    return nodes, edges, active_edges, beam_prop, K, bc, sol, sVM, misc
+
+
 def _to_tar(filename, problem):
     """Create gzipped tar archive from an instance of the ElasticNetwork class.
+
+    .. deprecated::
+        Use :func:`_to_npz` for new code.  This function is kept for
+        generating files that test backward-compatible loading.
 
     Parameters
     ----------
@@ -33,50 +127,46 @@ def _to_tar(filename, problem):
     problem : ElasticNetwork
         Class instance
     """
+    import tempfile
 
-    tmp_dir = 'tmp'
-    if not os.path.exists(tmp_dir):
-        os.makedirs(tmp_dir)
-
-    np.save(os.path.join(tmp_dir, 'nodes.npy'), problem._nodes)
-    np.save(os.path.join(tmp_dir, 'edges.npy'), problem._edges)
-    np.save(os.path.join(tmp_dir, 'active_edges.npy'), problem._active_edges)
-
-    if problem._options['matrix'] == 'dense':
-        np.save(os.path.join(tmp_dir, 'K.npy'), problem._K)
-    else:
-        np.save(os.path.join(tmp_dir, 'K_data.npy'), problem._K.data)
-        np.save(os.path.join(tmp_dir, 'K_indices.npy'), problem._K.indices)
-        np.save(os.path.join(tmp_dir, 'K_indptr.npy'), problem._K.indptr)
-
-    with open(os.path.join(tmp_dir, 'bc.yaml'), 'w') as f:
-        yaml.dump(problem._bc, f)
-
-    with open(os.path.join(tmp_dir, 'prop.yaml'), 'w') as f:
-        yaml.dump(problem._beam_prop, f)
-
-    misc = problem._options
+    misc = problem._options.copy()
     misc['outdir'] = problem._outdir
     misc['boxsize'] = problem._boxsize.tolist()
     misc['periodic'] = problem._periodic.tolist()
 
-    if problem.has_solution:
-        np.save(os.path.join(tmp_dir, 'sol.npy'), problem.sol)
-        np.save(os.path.join(tmp_dir, 'sVM.npy'), problem._sVM)
-        misc['has_solution'] = True
-    else:
-        misc['has_solution'] = False
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        np.save(os.path.join(tmp_dir, 'nodes.npy'), problem._nodes)
+        np.save(os.path.join(tmp_dir, 'edges.npy'), problem._edges)
+        np.save(os.path.join(tmp_dir, 'active_edges.npy'), problem._active_edges)
 
-    with open(os.path.join(tmp_dir, 'misc.yaml'), 'w') as f:
-        yaml.dump(misc, f)
+        if problem._options['matrix'] == 'dense':
+            np.save(os.path.join(tmp_dir, 'K.npy'), problem._K)
+        else:
+            np.save(os.path.join(tmp_dir, 'K_data.npy'), problem._K.data)
+            np.save(os.path.join(tmp_dir, 'K_indices.npy'), problem._K.indices)
+            np.save(os.path.join(tmp_dir, 'K_indptr.npy'), problem._K.indptr)
 
-    files = [os.path.join(tmp_dir, f) for f in os.listdir(tmp_dir)]
+        with open(os.path.join(tmp_dir, 'bc.yaml'), 'w') as f:
+            yaml.dump(problem._bc, f)
 
-    with tarfile.open(filename, "w:gz") as tar:
-        for file in files:
-            tar.add(file, arcname=os.path.basename(file))
+        with open(os.path.join(tmp_dir, 'prop.yaml'), 'w') as f:
+            yaml.dump(problem._beam_prop, f)
 
-    shutil.rmtree(tmp_dir)
+        if problem.has_solution:
+            np.save(os.path.join(tmp_dir, 'sol.npy'), problem.sol)
+            np.save(os.path.join(tmp_dir, 'sVM.npy'), problem._sVM)
+            misc['has_solution'] = True
+        else:
+            misc['has_solution'] = False
+
+        with open(os.path.join(tmp_dir, 'misc.yaml'), 'w') as f:
+            yaml.dump(misc, f)
+
+        files = [os.path.join(tmp_dir, f) for f in os.listdir(tmp_dir)]
+
+        with tarfile.open(filename, "w:gz") as tar:
+            for file in files:
+                tar.add(file, arcname=os.path.basename(file))
 
 
 def _from_tar(filename):
@@ -270,32 +360,6 @@ def _to_vtk_periodic(nodes,
                                       mode='mean')
 
     _write_vtk(file, points, lines, disp, rot, stress)
-
-
-# def _to_vtk(nodes, edges, displacement, rotation, stress, file="foo.vtk"):
-#     """Write structure and possibly solution to VTK file
-
-#     Parameters
-#     ----------
-
-#     nodes : numpy.ndarray
-#         Nodal coordinates
-#     edges : numpy.ndarray
-#         Edge indices
-#     displacement : numpy.ndarray
-#         Nodal displacements
-#     rotation : numpy.ndarray
-#         Nodal rotations
-#     stress : numpy.ndarray
-#         Element von Mises stress
-#     file : str or path-like, optional
-#         Filename (the default is "out.vtk")
-#     """
-
-#     points = zero_pad_2d_array(nodes)
-#     disp = zero_pad_2d_array(displacement)
-
-#     _write_vtk(file, points, edges, disp, rotation, stress)
 
 
 def _to_vtk(file, coords, adj,
