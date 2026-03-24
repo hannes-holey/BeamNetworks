@@ -18,6 +18,7 @@ from .network import Network
 from .problem import ElasticNetwork
 from .fracture import FractureProblem
 from .log import set_level
+from .solvers.nonlinear import ConvergenceError
 
 try:
     __version__ = version("beam_networks")

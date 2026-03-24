@@ -16,7 +16,7 @@ from beam_networks.fem.corotational import (
     element_mises_stress_2d as _corot_mises_2d,
     element_mises_stress_3d as _corot_mises_3d,
 )
-from beam_networks.solvers.nonlinear import solve_nonlinear as _solve_nonlinear
+from beam_networks.solvers.nonlinear import solve_nonlinear as _solve_nonlinear, ConvergenceError
 from beam_networks.io.formats import _to_vtk, _to_vtk_periodic, _to_stl, _from_tar, _to_npz, _from_npz
 from beam_networks.postprocess.viz import _plot_network, _plot_network_3d
 from beam_networks.geometry.selection import _remove_isolated_nodes_edges, _mic
@@ -860,31 +860,36 @@ class ElasticNetwork(Network):
             if ref_vectors is not None:
                 rv = np.asarray(ref_vectors, dtype=float)
             else:
-                rv = _default_ref_vectors(self._nodes, self._edges)
+                rv = _default_ref_vectors(self._nodes, self.edges)
 
-        self.sol = _solve_nonlinear(
-            self._nodes,
-            self._edges,
-            self._beam_prop,
-            dof_D=self._dof_D,
-            dof_N=self._dof_N,
-            val_N=self._val_N,
-            val_D=self._val_D,
-            n_steps=n_steps,
-            max_iter=max_iter,
-            tol=tol,
-            verbose=verbose,
-            callback=callback,
-            matrix=matrix,
-            ndim=self.dim,
-            ref_vectors=rv,
-        )
+        try:
+            self.sol = _solve_nonlinear(
+                self._nodes,
+                self.edges,
+                self._beam_prop,
+                dof_D=self._dof_D,
+                dof_N=self._dof_N,
+                val_N=self._val_N,
+                val_D=self._val_D,
+                n_steps=n_steps,
+                max_iter=max_iter,
+                tol=tol,
+                verbose=verbose,
+                callback=callback,
+                matrix=matrix,
+                ndim=self.dim,
+                ref_vectors=rv,
+            )
+        except ConvergenceError:
+            self.has_solution = False
+            return
+
         self.has_solution = True
 
         if self.dim == 2:
-            self._sVM = _corot_mises_2d(self._nodes, self._edges, self.sol, self._beam_prop)
+            self._sVM = _corot_mises_2d(self._nodes, self.edges, self.sol, self._beam_prop)
         else:
-            self._sVM = _corot_mises_3d(self._nodes, self._edges, self.sol, self._beam_prop, rv)
+            self._sVM = _corot_mises_3d(self._nodes, self.edges, self.sol, self._beam_prop, rv)
 
     def _get_reaction_forces(self, F):
         """Extract reaction forces from global force vector

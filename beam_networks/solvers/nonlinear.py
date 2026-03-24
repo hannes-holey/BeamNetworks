@@ -40,6 +40,11 @@ from beam_networks.geometry.geo import get_geometric_props
 _logger = get_logger("solvers.nonlinear")
 
 
+class ConvergenceError(RuntimeError):
+    """Raised when the Newton–Raphson solver fails to converge within the
+    allowed number of iterations for a load step."""
+
+
 def solve_nonlinear(
         nodes: np.ndarray,
         edges: np.ndarray,
@@ -256,8 +261,16 @@ def solve_nonlinear(
             if norm < tol:
                 break
 
-        _logger.info(f"Step {step + 1:4d}/{n_steps}: converged in {it + 1:4d} iter,"
-                     f" |Δu| = {norm:.3e}")
+        if norm < tol:
+            _logger.info(f"Step {step + 1:4d}/{n_steps}: converged in {it + 1:4d} iter,"
+                         f" |Δu| = {norm:.3e}")
+        else:
+            _logger.warning(f"Step {step + 1:4d}/{n_steps}: did NOT converge after"
+                            f" {max_iter:4d} iter, |Δu| = {norm:.3e}")
+            raise ConvergenceError(
+                f"Newton-Raphson did not converge at load step {step + 1}/{n_steps} "
+                f"after {max_iter} iterations (|Δu| = {norm:.3e} > tol = {tol:.3e})."
+            )
 
         if callback is not None:
             nodes_current = nodes.copy()
