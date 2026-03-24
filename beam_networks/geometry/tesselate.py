@@ -19,6 +19,10 @@ from scipy.spatial import cKDTree
 from scipy.sparse.csgraph import connected_components
 from scipy.sparse import csr_matrix
 
+from beam_networks.log import get_logger
+
+_logger = get_logger("geometry.tesselate")
+
 
 def tesselate(coords, adj, rep,
               cell=None, pbc=False,
@@ -99,7 +103,7 @@ def tesselate(coords, adj, rep,
     # sort by first column
     overlaps = overlaps[np.argsort(overlaps[:, 0])]
     if debug:
-        print(overlaps)
+        _logger.debug("overlaps: %s", overlaps)
     # replace entries of overlapping nodes in adj
     _, first_ind = np.unique(overlaps[:, 1],
                              return_index=True)
@@ -109,7 +113,7 @@ def tesselate(coords, adj, rep,
     node_inds_new = np.arange(coords_t.shape[0])
     node_inds_new[node_dictionary[:, 1]] = node_dictionary[:, 0].copy()
     if debug:
-        print(node_dictionary)
+        _logger.debug("node_dictionary: %s", node_dictionary)
     for i, connect in enumerate(adj_new):
         mask = np.isin(connect, node_dictionary[:, 1])
         if mask.any():
@@ -120,14 +124,14 @@ def tesselate(coords, adj, rep,
     # renumber adjacency matrix
     adj_new = renumber_adjacency(adj_new, node_dictionary[:, 1])
     if debug:
-        print(adj_new.shape)
+        _logger.debug("adj_new.shape: %s", adj_new.shape)
     # delete overlapping coordinates. Of the overlapping ones keep only the one
     # with the lowest index
     if debug:
-        print(coords_t.shape)
+        _logger.debug("coords_t.shape before delete: %s", coords_t.shape)
     coords_t = np.delete(coords_t, node_dictionary[:, 1], axis=0)
     if debug:
-        print(coords_t.shape)
+        _logger.debug("coords_t.shape after delete: %s", coords_t.shape)
     #
     cell[:ndim] = cell[:ndim] * rep[:ndim]
     return coords_t+shift[None, :], adj_new, cell
@@ -209,8 +213,8 @@ def sanity_checks(coords, adj, cell,
         try:
             assert n_comp == 1
         except AssertionError:
-            print(coords.shape)
-            print(adj.shape)
+            _logger.debug("coords.shape: %s", coords.shape)
+            _logger.debug("adj.shape: %s", adj.shape)
             raise AssertionError(f"Network disconnected with {n_comp} connected components")
 
     # check for doubled bonds

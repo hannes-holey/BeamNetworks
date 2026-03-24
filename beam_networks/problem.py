@@ -12,24 +12,27 @@
 # You should have received a copy of the GNU General Public License along with
 # beam_networks. If not, see <https://www.gnu.org/licenses/>.
 #
-import os
-import warnings
-import numpy as np
-
-from beam_networks.network import Network
-from beam_networks.solvers.linear import solve
-from beam_networks.fem.assembly import assemble_global_system
-from beam_networks.postprocess.stress import get_element_mises_stress, get_element_principal_stress
-from beam_networks.fem.bc import _get_bc_dof, _assemble_BCs
-from beam_networks.io.validation import check_input_dict
-from beam_networks.geometry.selection import _remove_isolated_nodes_edges, _mic
-from beam_networks.postprocess.viz import _plot_network, _plot_network_3d
-from beam_networks.io.formats import _to_vtk, _to_vtk_periodic, _to_stl, _from_tar, _to_npz, _from_npz
-from beam_networks.solvers.nonlinear import solve_nonlinear as _solve_nonlinear
 from beam_networks.fem.corotational import (
     element_mises_stress_2d as _corot_mises_2d,
     element_mises_stress_3d as _corot_mises_3d,
 )
+from beam_networks.solvers.nonlinear import solve_nonlinear as _solve_nonlinear
+from beam_networks.io.formats import _to_vtk, _to_vtk_periodic, _to_stl, _from_tar, _to_npz, _from_npz
+from beam_networks.postprocess.viz import _plot_network, _plot_network_3d
+from beam_networks.geometry.selection import _remove_isolated_nodes_edges, _mic
+from beam_networks.io.validation import check_input_dict
+from beam_networks.fem.bc import _get_bc_dof, _assemble_BCs
+from beam_networks.postprocess.stress import get_element_mises_stress, get_element_principal_stress
+from beam_networks.fem.assembly import assemble_global_system
+import os
+import warnings
+import numpy as np
+
+from beam_networks.log import get_logger, verbose_to_level, set_level
+from beam_networks.network import Network
+from beam_networks.solvers.linear import solve
+
+_logger = get_logger("problem")
 
 
 def _default_ref_vectors(nodes: np.ndarray, edges: np.ndarray) -> np.ndarray:
@@ -105,8 +108,10 @@ class ElasticNetwork(Network):
                 Default True.
             ``'matrix'`` (``'bsr'`` | ``'lil'`` | ``'dense'``)
                 Sparse format for the global stiffness matrix. Default ``'bsr'``.
-            ``'verbose'`` (bool)
-                Show a progress bar during assembly. Default True.
+            ``'verbose'`` (bool or int)
+                Control log output during assembly. ``False``/``0`` is
+                silent, ``True``/``1`` shows progress (INFO), ``2`` adds
+                detailed diagnostics (DEBUG). Default True.
             ``'euler_bernoulli'`` (bool)
                 Use Euler-Bernoulli beam theory (ignore shear deformation).
                 Default False (Timoshenko).
@@ -132,9 +137,9 @@ class ElasticNetwork(Network):
                          valid=valid)
 
         self._options = check_input_dict(options,
-                                         ['verbose', 'vectorize', 'matrix'],
-                                         [True, True, 'bsr'],
-                                         [None, None, ['bsr', 'lil', 'dense']])
+                                         ['vectorize', 'matrix'],
+                                         [True, 'bsr'],
+                                         [None, ['bsr', 'lil', 'dense']])
         self._options['n_elem_per_length'] = options.get('n_elem_per_length', None)
         self._options['min_element_length'] = options.get('min_element_length', None)
         self._options['euler_bernoulli'] = bool(options.get('euler_bernoulli', False))
@@ -149,7 +154,8 @@ class ElasticNetwork(Network):
 
         self._beam_prop = beam_prop
         self._outdir = outdir
-        self._verbose = options['verbose']
+        self._verbose = options.get('verbose', True)
+        set_level(verbose_to_level(self._verbose))
 
         if assemble_on_init:
             self._assemble_global_system()
@@ -554,8 +560,7 @@ class ElasticNetwork(Network):
         Assemble the stiffness matrix in the global coordinate system using Timoshenko beam theory.
         """
 
-        if self._verbose:
-            print(f"Assemble elastic network with {self.num_nodes} nodes and {self.num_edges} edges")
+        _logger.info(f"Assemble elastic network with {self.num_nodes} nodes and {self.num_edges} edges")
 
         n_elems = self._compute_edge_discretization()
 
@@ -783,7 +788,7 @@ class ElasticNetwork(Network):
             self.compute_equivalent_stress(mode=stress_mode)
 
     def solve_nonlinear(self, n_steps: int = 100, max_iter: int = 10000,
-                        tol: float = 1e-9, verbose: bool = True,
+                        tol: float = 1e-9, verbose: bool | int = True,
                         callback=None, matrix: str = 'dense',
                         ref_vectors=None) -> None:
         """Solve the geometrically nonlinear elastic system.
@@ -813,8 +818,10 @@ class ElasticNetwork(Network):
         tol : float, optional
             Convergence tolerance on the incremental displacement norm.
             The default is 1e-9.
-        verbose : bool, optional
-            Print per-step convergence information. The default is True.
+        verbose : bool or int, optional
+            Control log output. ``False``/``0`` silent, ``True``/``1``
+            prints per-step convergence (INFO), ``2`` enables debug output.
+            The default is True.
         callback : callable or None, optional
             If provided, called at the end of each converged load step as
             ``callback(step, nodes_current, sol_total)`` where *nodes_current*

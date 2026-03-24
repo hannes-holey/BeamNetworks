@@ -23,6 +23,7 @@ across all load steps.
 import numpy as np
 import scipy.sparse as sp
 
+from beam_networks.log import get_logger, verbose_to_level, set_level
 from beam_networks.fem.corotational import (
     assemble_nonlinear_system_2d,
     assemble_nonlinear_system_3d,
@@ -36,6 +37,8 @@ from beam_networks.fem.topology import _build_bsr_node_sparsity
 from beam_networks.fem.partitioning import partition_stiffness
 from beam_networks.geometry.geo import get_geometric_props
 
+_logger = get_logger("solvers.nonlinear")
+
 
 def solve_nonlinear(
         nodes: np.ndarray,
@@ -48,7 +51,7 @@ def solve_nonlinear(
         n_steps: int = 100,
         max_iter: int = 100,
         tol: float = 1e-9,
-        verbose: bool = True,
+        verbose: bool | int = True,
         callback=None,
         matrix: str = 'bsr',
         out: dict | None = None,
@@ -96,8 +99,10 @@ def solve_nonlinear(
     tol : float, optional
         Convergence tolerance on the Euclidean norm of the incremental
         displacement correction ``|Δu|``.  The default is 1e-9.
-    verbose : bool, optional
-        Print per-step convergence information.  The default is True.
+    verbose : bool or int, optional
+        Control log output. ``False``/``0`` silent, ``True``/``1`` logs
+        per-step convergence at INFO, ``2`` enables DEBUG output.
+        The default is True.
     callback : callable or None, optional
         If provided, called after each converged load step as
         ``callback(step, nodes_current, sol_total)`` where *nodes_current* is
@@ -134,6 +139,8 @@ def solve_nonlinear(
     sol_total : np.ndarray, shape (ndof_per_node * N,)
         Total displacement vector measured from the original *nodes*.
     """
+    set_level(verbose_to_level(verbose))
+
     if ndim not in (2, 3):
         raise ValueError(f"ndim must be 2 or 3, got {ndim}.")
     if ndim == 3 and ref_vectors is None:
@@ -249,9 +256,8 @@ def solve_nonlinear(
             if norm < tol:
                 break
 
-        if verbose:
-            print(f"Step {step + 1:4d}/{n_steps}: converged in {it + 1:4d} iter,"
-                  f" |Δu| = {norm:.3e}")
+        _logger.info(f"Step {step + 1:4d}/{n_steps}: converged in {it + 1:4d} iter,"
+                     f" |Δu| = {norm:.3e}")
 
         if callback is not None:
             nodes_current = nodes.copy()

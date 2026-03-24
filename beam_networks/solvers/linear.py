@@ -15,7 +15,10 @@
 import numpy as np
 import scipy.sparse as sp
 
+from beam_networks.log import get_logger
 from beam_networks.fem.partitioning import partition_stiffness, scatter_solution
+
+_logger = get_logger("solvers.linear")
 
 
 # Solvers that apply Jacobi scaling and use an iterative Krylov method.
@@ -145,22 +148,22 @@ def _solve_sparse(K_global, bc_D, d_D, bc_N, F_N,
         f[bc_N] = F_N
 
     if verbosity >= 50 and verbosity < 100:
-        print("Global stiffness matrix statistics")
-        print("min(|K|): ", K_global.data.min())
-        print("median(|K|): ", np.median(K_global.data))
-        print("max(|K|): ", K_global.data.max())
+        _logger.debug("Global stiffness matrix statistics")
+        _logger.debug("min(|K|): %s", K_global.data.min())
+        _logger.debug("median(|K|): %s", np.median(K_global.data))
+        _logger.debug("max(|K|): %s", K_global.data.max())
 
     KFF, KFE, f_free, free_dofs = partition_stiffness(K_global, bc_D, f)
 
     if verbosity >= 50 and verbosity < 100:
-        print("Free stiffness matrix statistics")
-        print("min(|KFF|): ", KFF.data.min())
-        print("median(|KFF|): ", np.median(KFF.data))
-        print("max(|KFF|): ", KFF.data.max())
-        print("Essential stiffness matrix statistics")
-        print("min(|KFE|): ", KFE.data.min())
-        print("median(|KFE|): ", np.median(KFE.data))
-        print("max(|KFE|): ", KFE.data.max())
+        _logger.debug("Free stiffness matrix statistics")
+        _logger.debug("min(|KFF|): %s", KFF.data.min())
+        _logger.debug("median(|KFF|): %s", np.median(KFF.data))
+        _logger.debug("max(|KFF|): %s", KFF.data.max())
+        _logger.debug("Essential stiffness matrix statistics")
+        _logger.debug("min(|KFE|): %s", KFE.data.min())
+        _logger.debug("median(|KFE|): %s", np.median(KFE.data))
+        _logger.debug("max(|KFE|): %s", KFE.data.max())
 
     # Right-hand-side
     rhs = -KFE.dot(d_D) + f_free
@@ -193,14 +196,13 @@ def _solve_sparse(K_global, bc_D, d_D, bc_N, F_N,
                                              which='LM',
                                              maxiter=1e7)[0][-1]
         diag_ratio = np.abs(KFF.diagonal())/np.abs(KFF.max(axis=1).todense())
-        print("number/ratio of diagonal weak rows in free stiffness matrix: ",
-              np.sum(diag_ratio < 1e-4),
-              np.sum(diag_ratio < 1e-4)/diag_ratio.shape[0])
-        print("number/ratio of diagonal dominant rows in free stiffness matrix: ",
-              np.sum(diag_ratio > 1e-4),
-              np.sum(diag_ratio > 1e-4)/diag_ratio.shape[0])
-        print("condition number: ",
-              largest_eigenvalue/smallest_eigenvalue)
+        _logger.debug("number/ratio of diagonal weak rows in free stiffness matrix: %s %s",
+                      np.sum(diag_ratio < 1e-4),
+                      np.sum(diag_ratio < 1e-4)/diag_ratio.shape[0])
+        _logger.debug("number/ratio of diagonal dominant rows in free stiffness matrix: %s %s",
+                      np.sum(diag_ratio > 1e-4),
+                      np.sum(diag_ratio > 1e-4)/diag_ratio.shape[0])
+        _logger.debug("condition number: %s", largest_eigenvalue/smallest_eigenvalue)
 
     # ------------------------------------------------------------------
     # Solve reduced system
@@ -228,7 +230,7 @@ def _solve_sparse(K_global, bc_D, d_D, bc_N, F_N,
             dF = factor.solve(rhs)
             info = 0
         except Exception as e:
-            print(e)
+            _logger.error(str(e))
             dF = np.zeros_like(rhs)
             info = 1
 
@@ -288,10 +290,10 @@ def _solve_sparse(K_global, bc_D, d_D, bc_N, F_N,
         dF = s * dF
 
     if verbosity >= 25 and verbosity < 50:
-        print("Free displacements dF statistics")
-        print("min(|dF|): ", dF.min())
-        print("median(|dF|): ", np.median(dF))
-        print("max(|dF|): ", dF.max())
+        _logger.debug("Free displacements dF statistics")
+        _logger.debug("min(|dF|): %s", dF.min())
+        _logger.debug("median(|dF|): %s", np.median(dF))
+        _logger.debug("max(|dF|): %s", dF.max())
 
     # Solution all DOFs
     d = scatter_solution(dF, bc_D, d_D, num_dof, free_dofs)
@@ -300,10 +302,10 @@ def _solve_sparse(K_global, bc_D, d_D, bc_N, F_N,
     F = K_global.dot(d)
 
     if verbosity >= 25 and verbosity < 50:
-        print("Reaction force F statistics")
-        print("min(|F|): ", F.min())
-        print("median(|F|): ", np.median(F))
-        print("max(|F|): ", F.max())
+        _logger.debug("Reaction force F statistics")
+        _logger.debug("min(|F|): %s", F.min())
+        _logger.debug("median(|F|): %s", np.median(F))
+        _logger.debug("max(|F|): %s", F.max())
 
     return d, F, info
 

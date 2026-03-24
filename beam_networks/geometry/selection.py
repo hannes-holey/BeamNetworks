@@ -14,6 +14,10 @@
 #
 import numpy as np
 
+from beam_networks.log import get_logger
+
+_logger = get_logger("geometry.selection")
+
 
 def _mic(dr, boxsize, periodic):
     """Apply minimum image convention
@@ -176,7 +180,7 @@ def _remove_isolated_nodes_edges(nodes, edges, max_depth=None):
     if max_depth is None:
         max_depth = initial_edges_size
 
-    print(f"Pre-processing: reading input with {initial_nodes_size} nodes and {initial_edges_size} edges.")
+    _logger.info(f"Pre-processing: reading input with {initial_nodes_size} nodes and {initial_edges_size} edges.")
 
     i = 0
 
@@ -203,7 +207,7 @@ def _remove_isolated_nodes_edges(nodes, edges, max_depth=None):
     nodes_diff = initial_nodes_size - new_nodes.shape[0]
     edges_diff = initial_edges_size - new_edges.shape[0]
 
-    print(f"Pre-processing: removing {nodes_diff} isloated nodes and {edges_diff} dangling bonds.")
+    _logger.info(f"Pre-processing: removing {nodes_diff} isloated nodes and {edges_diff} dangling bonds.")
 
     return new_nodes, new_edges
 

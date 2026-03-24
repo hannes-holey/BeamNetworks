@@ -19,8 +19,11 @@ import shutil
 import yaml
 import scipy.sparse as sp
 
+from beam_networks.log import get_logger
 from beam_networks.io.validation import zero_pad_2d_array
 from beam_networks.postprocess.stress import get_element_mises_stress
+
+_logger = get_logger("io.formats")
 
 
 def _to_npz(filename, problem):
@@ -584,8 +587,8 @@ def _to_stl(file, coords, edges, props):
                                  engine='manifold'
                                  )
 
-    print('Mesh is convex :', mesh.is_convex)
-    print('Mesh is watertight :', mesh.is_watertight)
-    print('Mesh is winding consistent :', mesh.is_winding_consistent)
+    _logger.info("Mesh is convex: %s", mesh.is_convex)
+    _logger.info("Mesh is watertight: %s", mesh.is_watertight)
+    _logger.info("Mesh is winding consistent: %s", mesh.is_winding_consistent)
 
     mesh.export(file)

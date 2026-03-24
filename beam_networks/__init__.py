@@ -17,10 +17,11 @@ from importlib.metadata import version, PackageNotFoundError
 from .network import Network
 from .problem import ElasticNetwork
 from .fracture import FractureProblem
+from .log import set_level
 
 try:
     __version__ = version("beam_networks")
 except PackageNotFoundError:
     __version__ = "unknown"
 
-__all__ = ["Network", "ElasticNetwork", "FractureProblem"]
+__all__ = ["Network", "ElasticNetwork", "FractureProblem", "set_level"]
