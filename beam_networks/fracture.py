@@ -85,6 +85,30 @@ class FractureProblem(ElasticNetwork):
             solver='cg',
             fail_crit='vM',
             no_output=False):
+        """Run a fracture simulation.
+
+        Parameters
+        ----------
+        mode : {'cascade', 'adiabatic'}, optional
+            Fracture mode.  ``'cascade'`` removes one bond per step and
+            immediately re-solves; ``'adiabatic'`` removes all bonds that
+            exceed their threshold before re-solving.  Default ``'cascade'``.
+        sign : {-1, 1}, optional
+            Sign of the applied displacement (``-1`` for compression,
+            ``1`` for tension).  Default ``-1``.
+        dist : array-like or None, optional
+            Per-edge strength multipliers drawn from a distribution.  If
+            ``None`` all edges share the same strength.
+        solver : str, optional
+            Linear solver passed to
+            :meth:`~beam_networks.problem.ElasticNetwork.solve`.
+            Default ``'cg'``.
+        fail_crit : {'vM', 'pS', 'pE'}, optional
+            Failure criterion used to identify the most-stressed bond.
+            Default ``'vM'``.
+        no_output : bool, optional
+            Reserved; currently unused.
+        """
 
         i = 0
 
@@ -106,6 +130,8 @@ class FractureProblem(ElasticNetwork):
         u = sign * 1. * self.Ly
         self.modify_BC('1', [None, u, None])
         self.solve(solver=solver, stress_mode='max')
+        if not self.has_solution:
+            return
 
         E = self._beam_prop.get('E')
         fail = self._beam_prop.get('strength', 0.1 * E)
@@ -126,6 +152,8 @@ class FractureProblem(ElasticNetwork):
                 self.scale_BC('D', factor)
 
             self.solve(solver=solver, stress_mode='max')
+            if not self.has_solution:
+                break
 
             # Reaction forces
             Fy1 = self.Freact['1']
