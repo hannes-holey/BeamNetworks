@@ -178,6 +178,7 @@ class ElasticNetwork(Network):
         filename : str
             Path to the output archive file.
         """
+        filename = os.path.join(self._outdir, filename)
         _to_npz(filename, self)
 
     @classmethod
@@ -882,7 +883,7 @@ class ElasticNetwork(Network):
             )
         except ConvergenceError:
             self.has_solution = False
-            return
+            raise
 
         self.has_solution = True
 
