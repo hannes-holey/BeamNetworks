@@ -57,105 +57,119 @@ def generate_cubic_lattice(a=1.,
     else:
         pbc = np.array(pbc).astype(bool)
 
-    a0 = a
+    _dir_map = {
+        'x': np.array([1, 0, 0]),
+        'y': np.array([0, 1, 0]),
+        'z': np.array([0, 0, 1]),
+    }
+    _bcc_directional = {'bccx', 'bccy', 'bccz'}
+    _fcc_directional = {'fccx', 'fccy', 'fccz'}
 
-    if lattice_type == "sc":
-        basis = np.array(
-            [
-                [0, 0, 0],  # Corner of the cube
-            ]
-        ) * a
-    elif lattice_type == "fcc":
-        basis = (
-            np.array(
-                [
-                    [0, 0, 0],  # Corner of the cube
-                    [0.5, 0.5, 0],  # Face centers
-                    [0.5, 0, 0.5],
-                    [0, 0.5, 0.5],
-                ]
-            )
-            * a
-        )
-        a0 = a * np.sqrt(2) / 2
-    elif lattice_type == "bcc":
-        basis = (
-            np.array(
-                [
-                    [0, 0, 0],  # Corner of the cube
-                    [0.5, 0.5, 0.5],  # Center of the cube
-                ]
-            )
-            * a
-        )
-        a0 = a * np.sqrt(3) / 2
-    elif lattice_type == "dia":
-        basis = (
-            np.array(
-                [
-                    [0, 0, 0],      # FCC sub-lattice A
-                    [0.5, 0.5, 0],
-                    [0.5, 0, 0.5],
-                    [0, 0.5, 0.5],
-                    [0.25, 0.25, 0.25],  # FCC sub-lattice B (shifted by a/4)
-                    [0.75, 0.75, 0.25],
-                    [0.75, 0.25, 0.75],
-                    [0.25, 0.75, 0.75],
-                ]
-            )
-            * a
-        )
-        a0 = a * np.sqrt(3) / 4
-    elif lattice_type == "sc-bcc":
-        basis = (
-            np.array(
-                [
-                    [0, 0, 0],      # SC corners
-                    [0.5, 0.5, 0.5],  # BCC body centre
-                ]
-            )
-            * a
-        )
-        a0 = None  # special: two bond lengths
-    else:
-        raise RuntimeError("Lattice must be one of ['sc', 'fcc', 'bcc', 'dia', 'sc-bcc']")
+    # Basis and nearest-neighbour distance for each primitive lattice type.
+    _bases = {
+        'sc': np.array([[0, 0, 0]]) * a,
+        'fcc': np.array([[0, 0, 0], [0.5, 0.5, 0], [0.5, 0, 0.5], [0, 0.5, 0.5]]) * a,
+        'bcc': np.array([[0, 0, 0], [0.5, 0.5, 0.5]]) * a,
+        'dia': np.array([[0, 0, 0],
+                         [0.5, 0.5, 0],
+                         [0.5, 0, 0.5],
+                         [0, 0.5, 0.5],
+                         [0.25, 0.25, 0.25],
+                         [0.75, 0.75, 0.25],
+                         [0.75, 0.25, 0.75],
+                         [0.25, 0.75, 0.75]]) * a,
+    }
+    # Directional variants share basis/a0 with their base type.
+    for _d in 'xyz':
+        _bases[f'bcc{_d}'] = _bases['bcc']
+        _bases[f'fcc{_d}'] = _bases['fcc']
+
+    _a0s = {
+        'sc':  a,
+        'fcc': a * np.sqrt(2) / 2,
+        'bcc': a * np.sqrt(3) / 2,
+        'dia': a * np.sqrt(3) / 4,
+    }
+    for _d in 'xyz':
+        _a0s[f'bcc{_d}'] = _a0s['bcc']
+        _a0s[f'fcc{_d}'] = _a0s['fcc']
+
+    _valid_types = set(_bases.keys())
 
     bbox = tuple(bbox)
 
-    nx, ny, nz = (
-        np.array(bbox) / np.maximum(np.ones(3) * a, np.amax(basis, axis=0))
-    ).astype(int) + 1
+    def _make_coords(basis):
+        """Fill bbox with one sublattice and return deduplicated node coords."""
+        nx, ny, nz = (
+            np.array(bbox) / np.maximum(np.ones(3) * a, np.amax(basis, axis=0))
+        ).astype(int) + 1
+        grid = (
+            np.stack(
+                np.meshgrid(np.arange(nx), np.arange(ny), np.arange(nz), indexing="ij"),
+                axis=-1,
+            ).reshape(-1, 3)
+            * a
+        )
+        coords = (grid[:, None, :] + basis).reshape(-1, 3)
+        mask = np.all(coords >= 0.0, axis=1) & np.all(coords <= bbox, axis=1)
+        return np.unique(coords[mask], axis=0)
 
-    # Generate the grid of unit cells
-    grid_x, grid_y, grid_z = np.meshgrid(
-        np.arange(nx), np.arange(ny), np.arange(nz), indexing="ij"
-    )
+    # ------------------------------------------------------------------ #
+    # Parse lattice type: split on '-' to support compound specifications #
+    # ------------------------------------------------------------------ #
+    subtypes = lattice_type.split('-')
 
-    # Stack the grid into vectors of unit cell origins and scale by a
-    grid_coords = (
-        np.stack((grid_x, grid_y, grid_z), axis=-1).reshape(-1, 3) * a
-    )
+    unknown = [s for s in subtypes if s not in _valid_types]
+    if unknown:
+        raise RuntimeError(
+            f"Unknown sublattice type(s): {unknown}. "
+            "Each component must be one of: "
+            + str(sorted(_valid_types))
+        )
 
-    # Add the basis atoms to the grid
-    lattice_coords = grid_coords[:, None, :] + basis
-    lattice_coords = lattice_coords.reshape(
-        -1, 3
-    )  # Reshape into list of 3D coordinates
+    if len(subtypes) == 1:
+        # ---- Single lattice (including directional variants) ----
+        basis = _bases[lattice_type]
+        a0 = _a0s[lattice_type]
+        lattice_coords = _make_coords(basis)
 
-    # Select only nodes within the box
-    mask = np.logical_and(
-        np.all(lattice_coords <= bbox, axis=-1),
-        np.all(lattice_coords >= 0.0, axis=-1),
-    )
-    lattice_coords = lattice_coords[mask]
+        if lattice_type in _bcc_directional | _fcc_directional:
+            # Directional reinforcement: bonds of length a along one axis only.
+            # Includes both corner-to-corner and body/face-center-to-body/face-center
+            # bonds along that direction.
+            dir_vec = _dir_map[lattice_type[-1]]
+            all_a_edges = _get_connections(lattice_coords, a)
+            if len(all_a_edges):
+                edge_vecs = (lattice_coords[all_a_edges[:, 1]]
+                             - lattice_coords[all_a_edges[:, 0]])
+                dir_mask = np.isclose(np.abs(edge_vecs @ dir_vec), a)
+                dir_edges = all_a_edges[dir_mask]
+            else:
+                dir_edges = np.empty((0, 2), dtype=int)
+            connections = np.vstack([dir_edges, _get_connections(lattice_coords, a0)])
 
-    if lattice_type == "sc-bcc":
-        connections = np.vstack([
-            _get_connections(lattice_coords, a),           # SC edges
-            _get_connections(lattice_coords, a * np.sqrt(3) / 2),  # BCC edges
-        ])
+        else:
+            connections = _get_connections(lattice_coords, a0)
+
     else:
-        connections = _get_connections(lattice_coords, a0)
+        # ---- Compound lattice: iterate over sublattices ----
+        # Generate each sublattice's nodes independently, then merge.
+        sub_coords_list = [_make_coords(_bases[s]) for s in subtypes]
+
+        # Merge all sublattice coords into a single deduplicated array.
+        lattice_coords = np.unique(np.vstack(sub_coords_list), axis=0)
+
+        # For each sublattice, find its local edges and remap to merged indices.
+        tree = cKDTree(lattice_coords)
+        all_edges = []
+        for sub_type, sub_coords in zip(subtypes, sub_coords_list):
+            _, idx = tree.query(sub_coords)          # exact match (distance ≈ 0)
+            local_edges = _get_connections(sub_coords, _a0s[sub_type])
+            if len(local_edges):
+                all_edges.append(idx[local_edges])
+        connections = (
+            np.vstack(all_edges) if all_edges else np.empty((0, 2), dtype=int)
+        )
 
     for d in np.arange(3)[pbc]:
 
@@ -178,7 +192,13 @@ def generate_cubic_lattice(a=1.,
 
     # Lattice types with a multi-atom basis can produce boundary nodes whose
     # all neighbours fall outside the bounding box — prune them now.
-    if lattice_type in ("dia", "sc-bcc"):
+    # This applies to: diamond, all directional variants, and any compound type.
+    _needs_prune = (
+        lattice_type == "dia"
+        or lattice_type in _bcc_directional | _fcc_directional
+        or len(subtypes) > 1
+    )
+    if _needs_prune:
         lattice_coords, connections = _remove_isolated(lattice_coords, connections)
 
     # Need to delete obsolete nodes for pbc, thus set valid to false

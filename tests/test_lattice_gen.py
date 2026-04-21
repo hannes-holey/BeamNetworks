@@ -13,6 +13,7 @@
 # beam_networks. If not, see <https://www.gnu.org/licenses/>.
 #
 import numpy as np
+import pytest
 from beam_networks.network import Network
 
 
@@ -94,6 +95,73 @@ def test_sc_bcc_coordination():
     """Fully connected interior nodes of sc-bcc must have coordination 14."""
     bbox = (3., 3., 3.)
     lattice = Network.generate_cubic_lattice(a=1., bbox=bbox, lattice_type='sc-bcc')
+    deg = np.bincount(lattice.edges.ravel(), minlength=lattice.num_nodes)
+    assert deg.max() == 14
+
+
+def test_sc_bcc_no_spurious_sc_bonds():
+    """SC bonds in sc-bcc must only connect corners, not body centers."""
+    bbox = (2., 2., 2.)
+    lattice = Network.generate_cubic_lattice(a=1., bbox=bbox, lattice_type='sc-bcc')
+    coords = lattice.nodes
+    el = np.linalg.norm(coords[lattice.edges[:, 1]] - coords[lattice.edges[:, 0]], axis=1)
+    sc_bonds = lattice.edges[np.isclose(el, 1.0)]
+    body = set(np.where(np.all(np.isclose(coords % 1.0, 0.5), axis=1))[0])
+    spurious = [(e0, e1) for e0, e1 in sc_bonds if e0 in body and e1 in body]
+    assert len(spurious) == 0
+
+
+def test_sc_fcc():
+    bbox = (1., 1., 1.)
+    lattice = Network.generate_cubic_lattice(a=1., bbox=bbox, lattice_type='sc-fcc')
+
+    assert lattice.num_nodes == 14
+    assert lattice.num_edges == 48
+    assert np.all(np.amax(lattice.nodes, axis=0) <= bbox)
+
+
+def test_sc_fcc_coordination():
+    """Fully connected interior nodes of sc-fcc must have coordination 18."""
+    bbox = (3., 3., 3.)
+    lattice = Network.generate_cubic_lattice(a=1., bbox=bbox, lattice_type='sc-fcc')
+    deg = np.bincount(lattice.edges.ravel(), minlength=lattice.num_nodes)
+    assert deg.max() == 18
+
+
+@pytest.mark.parametrize("lattice_type", ["bccx", "bccy", "bccz"])
+def test_bcc_directional(lattice_type):
+    bbox = (1., 1., 1.)
+    lattice = Network.generate_cubic_lattice(a=1., bbox=bbox, lattice_type=lattice_type)
+
+    assert lattice.num_nodes == 9
+    assert lattice.num_edges == 12
+    assert np.all(np.amax(lattice.nodes, axis=0) <= bbox)
+
+
+@pytest.mark.parametrize("lattice_type", ["bccx", "bccy", "bccz"])
+def test_bcc_directional_coordination(lattice_type):
+    """Interior nodes of bcc[xyz] must have coordination 10."""
+    bbox = (3., 3., 3.)
+    lattice = Network.generate_cubic_lattice(a=1., bbox=bbox, lattice_type=lattice_type)
+    deg = np.bincount(lattice.edges.ravel(), minlength=lattice.num_nodes)
+    assert deg.max() == 10
+
+
+@pytest.mark.parametrize("lattice_type", ["fccx", "fccy", "fccz"])
+def test_fcc_directional(lattice_type):
+    bbox = (1., 1., 1.)
+    lattice = Network.generate_cubic_lattice(a=1., bbox=bbox, lattice_type=lattice_type)
+
+    assert lattice.num_nodes == 14
+    assert lattice.num_edges == 41
+    assert np.all(np.amax(lattice.nodes, axis=0) <= bbox)
+
+
+@pytest.mark.parametrize("lattice_type", ["fccx", "fccy", "fccz"])
+def test_fcc_directional_coordination(lattice_type):
+    """Interior nodes of fcc[xyz] must have coordination 14."""
+    bbox = (3., 3., 3.)
+    lattice = Network.generate_cubic_lattice(a=1., bbox=bbox, lattice_type=lattice_type)
     deg = np.bincount(lattice.edges.ravel(), minlength=lattice.num_nodes)
     assert deg.max() == 14
 
