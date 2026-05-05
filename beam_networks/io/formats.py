@@ -26,6 +26,22 @@ from beam_networks.postprocess.stress import get_element_mises_stress
 _logger = get_logger("io.formats")
 
 
+class _NumpyDumper(yaml.Dumper):
+    """yaml.Dumper that serialises NumPy scalars/arrays as plain Python types."""
+
+
+def _represent_numpy_scalar(dumper, data):
+    return dumper.represent_data(data.item())
+
+
+def _represent_numpy_array(dumper, data):
+    return dumper.represent_data(data.tolist())
+
+
+_NumpyDumper.add_multi_representer(np.generic, _represent_numpy_scalar)
+_NumpyDumper.add_multi_representer(np.ndarray, _represent_numpy_array)
+
+
 def _to_npz(filename, problem):
     """Save an ElasticNetwork instance to a compressed NumPy archive (.npz).
 
@@ -65,9 +81,9 @@ def _to_npz(filename, problem):
     misc['periodic'] = problem._periodic.tolist()
     misc['has_solution'] = problem.has_solution
 
-    arrays['bc'] = np.array(yaml.dump(problem._bc))
-    arrays['beam_prop'] = np.array(yaml.dump(problem._beam_prop))
-    arrays['misc'] = np.array(yaml.dump(misc))
+    arrays['bc'] = np.array(yaml.dump(problem._bc, Dumper=_NumpyDumper))
+    arrays['beam_prop'] = np.array(yaml.dump(problem._beam_prop, Dumper=_NumpyDumper))
+    arrays['misc'] = np.array(yaml.dump(misc, Dumper=_NumpyDumper))
 
     np.savez_compressed(filename, **arrays)
 
@@ -150,10 +166,10 @@ def _to_tar(filename, problem):
             np.save(os.path.join(tmp_dir, 'K_indptr.npy'), problem._K.indptr)
 
         with open(os.path.join(tmp_dir, 'bc.yaml'), 'w') as f:
-            yaml.dump(problem._bc, f)
+            yaml.dump(problem._bc, f, Dumper=_NumpyDumper)
 
         with open(os.path.join(tmp_dir, 'prop.yaml'), 'w') as f:
-            yaml.dump(problem._beam_prop, f)
+            yaml.dump(problem._beam_prop, f, Dumper=_NumpyDumper)
 
         if problem.has_solution:
             np.save(os.path.join(tmp_dir, 'sol.npy'), problem.sol)
@@ -163,7 +179,7 @@ def _to_tar(filename, problem):
             misc['has_solution'] = False
 
         with open(os.path.join(tmp_dir, 'misc.yaml'), 'w') as f:
-            yaml.dump(misc, f)
+            yaml.dump(misc, f, Dumper=_NumpyDumper)
 
         files = [os.path.join(tmp_dir, f) for f in os.listdir(tmp_dir)]
 
