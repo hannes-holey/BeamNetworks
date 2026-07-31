@@ -58,7 +58,8 @@ def assemble_global_system(nodes_positions: np.ndarray,
                            matrix: str = 'bsr',
                            n_elems: np.ndarray | None = None,
                            fem_poly_order: int = 3,
-                           fem_n_gauss: int | None = None):
+                           fem_n_gauss: int | None = None,
+                           rho: np.ndarray | None = None):
     """Assemble the global stiffness matrix for a Timoshenko beam network.
 
     Parameters
@@ -97,12 +98,19 @@ def assemble_global_system(nodes_positions: np.ndarray,
         None (default) selects ``fem_poly_order`` (reduced integration),
         which avoids shear locking for slender Timoshenko beams.
         Ignored when ``n_elems`` is None.
+    rho : np.ndarray or None, optional
+        Per-edge density scale factors, shape (num_edges,).  When provided,
+        element stiffness matrix ``i`` is multiplied by ``rho[i]`` before
+        assembly (SIMP-style penalization).  Not supported with ``n_elems``.
 
     Returns
     -------
     np.ndarray or scipy.sparse.bsr_array
         The global matrix
     """
+
+    if rho is not None and n_elems is not None:
+        raise NotImplementedError("rho scaling is not supported with FEM sub-elements (n_elems).")
 
     if not sorted_edges:
         edges_indices = np.sort(edges_indices, axis=1)
@@ -175,17 +183,20 @@ def assemble_global_system(nodes_positions: np.ndarray,
             K_global = _assemble_sparse_bsr_vec(nodes_positions,
                                                 edges_indices,
                                                 dr,
-                                                beam_prop)
+                                                beam_prop,
+                                                rho=rho)
         elif matrix == 'lil':
             K_global = _assemble_sparse_lil_vec(nodes_positions,
                                                 edges_indices,
                                                 dr,
-                                                beam_prop)
+                                                beam_prop,
+                                                rho=rho)
         elif matrix == 'dense':
             K_global = _assemble_dense_vec(nodes_positions,
                                            edges_indices,
                                            dr,
-                                           beam_prop)
+                                           beam_prop,
+                                           rho=rho)
         else:
             raise ValueError
     else:
@@ -193,24 +204,27 @@ def assemble_global_system(nodes_positions: np.ndarray,
             K_global = _assemble_sparse_bsr(nodes_positions,
                                             edges_indices,
                                             dr,
-                                            beam_prop)
+                                            beam_prop,
+                                            rho=rho)
         elif matrix == 'lil':
             K_global = _assemble_sparse_lil(nodes_positions,
                                             edges_indices,
                                             dr,
-                                            beam_prop)
+                                            beam_prop,
+                                            rho=rho)
         elif matrix == 'dense':
             K_global = _assemble_dense(nodes_positions,
                                        edges_indices,
                                        dr,
-                                       beam_prop)
+                                       beam_prop,
+                                       rho=rho)
         else:
             raise ValueError
 
     return K_global
 
 
-def _assemble_sparse_bsr(nodes, edges, dr, beam_prop):
+def _assemble_sparse_bsr(nodes, edges, dr, beam_prop, rho=None):
     """Assemble global stiffness matrix in BSR format.
 
     Parameters
@@ -223,6 +237,8 @@ def _assemble_sparse_bsr(nodes, edges, dr, beam_prop):
         Edge vectors
     beam_prop : dict
         Beam properties (cross section and elastic properties)
+    rho : np.ndarray or None, optional
+        Per-edge density scale factors, shape (num_edges,).
 
     Returns
     -------
@@ -240,6 +256,7 @@ def _assemble_sparse_bsr(nodes, edges, dr, beam_prop):
 
     sort_idx = np.lexsort((edges[:, 1], edges[:, 0]))
     dr_s = dr[sort_idx]
+    rho_s = rho[sort_idx] if rho is not None else None
 
     data = np.zeros((len(indices), num_dof_per_node, num_dof_per_node))
     ndpn = num_dof_per_node
@@ -252,6 +269,9 @@ def _assemble_sparse_bsr(nodes, edges, dr, beam_prop):
         else:
             Ke = global_element_stiffness_timoshenko_exact_single(beam_prop, dr_s[i])
 
+        if rho_s is not None:
+            Ke = Ke * rho_s[i]
+
         data[diag_pos_n0[i]] += Ke[:ndpn, :ndpn]
         data[diag_pos_n1[i]] += Ke[ndpn:, ndpn:]
         data[offdiag_pos_upper[i]] += Ke[:ndpn, ndpn:]
@@ -262,7 +282,7 @@ def _assemble_sparse_bsr(nodes, edges, dr, beam_prop):
                         blocksize=(num_dof_per_node, num_dof_per_node))
 
 
-def _assemble_sparse_bsr_vec(nodes, edges, dr, beam_prop):
+def _assemble_sparse_bsr_vec(nodes, edges, dr, beam_prop, rho=None):
     """Assemble global stiffness matrix in BSR format.
 
     All element stiffness matrices are computed at once, then scattered into
@@ -278,6 +298,8 @@ def _assemble_sparse_bsr_vec(nodes, edges, dr, beam_prop):
         Edge vectors
     beam_prop : dict
         Beam properties (cross section and elastic properties)
+    rho : np.ndarray or None, optional
+        Per-edge density scale factors, shape (num_edges,).
 
     Returns
     -------
@@ -303,6 +325,9 @@ def _assemble_sparse_bsr_vec(nodes, edges, dr, beam_prop):
     else:
         Ke = global_element_stiffness_timoshenko_exact_all(beam_prop, dr_s)
 
+    if rho is not None:
+        Ke = Ke * rho[sort_idx, None, None]
+
     data = np.zeros((len(indices), num_dof_per_node, num_dof_per_node))
     ndpn = num_dof_per_node
     np.add.at(data, diag_pos_n0,       Ke[:, :ndpn, :ndpn])
@@ -315,7 +340,7 @@ def _assemble_sparse_bsr_vec(nodes, edges, dr, beam_prop):
                         blocksize=(num_dof_per_node, num_dof_per_node))
 
 
-def _assemble_sparse_lil(nodes, edges, dr, beam_prop):
+def _assemble_sparse_lil(nodes, edges, dr, beam_prop, rho=None):
     """Assemble global stiffness matrix in LIL format.
 
     Parameters
@@ -328,6 +353,8 @@ def _assemble_sparse_lil(nodes, edges, dr, beam_prop):
         Edge vectors
     beam_prop : dict
         Beam properties (cross section and elastic properties)
+    rho : np.ndarray or None, optional
+        Per-edge density scale factors, shape (num_edges,).
 
     Returns
     -------
@@ -351,6 +378,9 @@ def _assemble_sparse_lil(nodes, edges, dr, beam_prop):
         else:
             Ke = global_element_stiffness_timoshenko_exact_single(beam_prop, dr[i])
 
+        if rho is not None:
+            Ke = Ke * rho[i]
+
         K_global[s1, s1] += Ke[:num_dof_per_node, :num_dof_per_node] / 2.
         K_global[s1, s2] += Ke[:num_dof_per_node, num_dof_per_node:]
         K_global[s2, s2] += Ke[num_dof_per_node:, num_dof_per_node:] / 2.
@@ -360,7 +390,7 @@ def _assemble_sparse_lil(nodes, edges, dr, beam_prop):
     return K_global.tobsr()
 
 
-def _assemble_sparse_lil_vec(nodes, edges, dr, beam_prop):
+def _assemble_sparse_lil_vec(nodes, edges, dr, beam_prop, rho=None):
     """Assemble global stiffness matrix in LIL format.
 
     Vectorized version
@@ -375,6 +405,8 @@ def _assemble_sparse_lil_vec(nodes, edges, dr, beam_prop):
         Edge vectors
     beam_prop : dict
         Beam properties (cross section and elastic properties)
+    rho : np.ndarray or None, optional
+        Per-edge density scale factors, shape (num_edges,).
 
     Returns
     -------
@@ -394,6 +426,9 @@ def _assemble_sparse_lil_vec(nodes, edges, dr, beam_prop):
         Ke = global_element_stiffness_euler_exact_all(beam_prop, dr)
     else:
         Ke = global_element_stiffness_timoshenko_exact_all(beam_prop, dr)
+
+    if rho is not None:
+        Ke = Ke * rho[:, None, None]
 
     for i, element in enumerate(edges):
         e0, e1 = element
@@ -409,7 +444,7 @@ def _assemble_sparse_lil_vec(nodes, edges, dr, beam_prop):
     return K_global.tobsr()
 
 
-def _assemble_dense(nodes, edges, dr, beam_prop):
+def _assemble_dense(nodes, edges, dr, beam_prop, rho=None):
     """Assemble global stiffness matrix as dense array.
 
     Parameters
@@ -422,6 +457,8 @@ def _assemble_dense(nodes, edges, dr, beam_prop):
         Edge vectors
     beam_prop : dict
         Beam properties (cross section and elastic properties)
+    rho : np.ndarray or None, optional
+        Per-edge density scale factors, shape (num_edges,).
 
     Returns
     -------
@@ -445,6 +482,9 @@ def _assemble_dense(nodes, edges, dr, beam_prop):
         else:
             Ke = global_element_stiffness_timoshenko_exact_single(beam_prop, dr[i])
 
+        if rho is not None:
+            Ke = Ke * rho[i]
+
         K_global[s1, s1] += Ke[:num_dof_per_node, :num_dof_per_node]
         K_global[s1, s2] += Ke[:num_dof_per_node, num_dof_per_node:]
         K_global[s2, s1] += Ke[num_dof_per_node:, :num_dof_per_node]
@@ -453,7 +493,7 @@ def _assemble_dense(nodes, edges, dr, beam_prop):
     return K_global
 
 
-def _assemble_dense_vec(nodes, edges, dr, beam_prop):
+def _assemble_dense_vec(nodes, edges, dr, beam_prop, rho=None):
     """Assemble global stiffness matrix as dense array.
 
     Vectorized version.
@@ -468,6 +508,8 @@ def _assemble_dense_vec(nodes, edges, dr, beam_prop):
         Edge vectors
     beam_prop : dict
         Beam properties (cross section and elastic properties)
+    rho : np.ndarray or None, optional
+        Per-edge density scale factors, shape (num_edges,).
 
     Returns
     -------
@@ -486,6 +528,9 @@ def _assemble_dense_vec(nodes, edges, dr, beam_prop):
         Ke = global_element_stiffness_euler_exact_all(beam_prop, dr)
     else:
         Ke = global_element_stiffness_timoshenko_exact_all(beam_prop, dr)
+
+    if rho is not None:
+        Ke = Ke * rho[:, None, None]
 
     for i, element in enumerate(edges):
         e0, e1 = element
