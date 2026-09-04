@@ -26,7 +26,9 @@ from beam_networks.fem.stiffness import (
     global_element_stiffness_timoshenko_numeric_single,
     global_element_stiffness_timoshenko_numeric_all,
     global_element_stiffness_truss_exact_single,
-    global_element_stiffness_truss_exact_all)
+    global_element_stiffness_truss_exact_all,
+    embed_truss_stiffness_single,
+    embed_truss_stiffness_all)
 
 
 def _dof_per_node(ndim, beam_prop):
@@ -59,7 +61,8 @@ def assemble_global_system(nodes_positions: np.ndarray,
                            n_elems: np.ndarray | None = None,
                            fem_poly_order: int = 3,
                            fem_n_gauss: int | None = None,
-                           rho: np.ndarray | None = None):
+                           rho: np.ndarray | None = None,
+                           is_truss: np.ndarray | None = None):
     """Assemble the global stiffness matrix for a Timoshenko beam network.
 
     Parameters
@@ -102,6 +105,15 @@ def assemble_global_system(nodes_positions: np.ndarray,
         Per-edge density scale factors, shape (num_edges,).  When provided,
         element stiffness matrix ``i`` is multiplied by ``rho[i]`` before
         assembly (SIMP-style penalization).  Not supported with ``n_elems``.
+    is_truss : np.ndarray or None, optional
+        Per-edge boolean override, shape (num_edges,).  Where ``True`` (and
+        the network isn't already globally truss via
+        ``beam_prop['truss']``), that edge is assembled as a pin-jointed
+        truss bar (translational DOFs only) instead of the network's normal
+        beam element, and its stiffness is zero-padded into the full beam
+        DOF blocks.  Used to mix in a handful of truss "spring" elements
+        into an otherwise beam-only network.  Only supported with
+        ``matrix='bsr'`` and ``n_elems=None``.
 
     Returns
     -------
@@ -111,6 +123,12 @@ def assemble_global_system(nodes_positions: np.ndarray,
 
     if rho is not None and n_elems is not None:
         raise NotImplementedError("rho scaling is not supported with FEM sub-elements (n_elems).")
+
+    if is_truss is not None:
+        if n_elems is not None:
+            raise NotImplementedError("is_truss is not supported with FEM sub-elements (n_elems).")
+        if matrix != 'bsr':
+            raise NotImplementedError("is_truss is only supported with matrix='bsr'.")
 
     if not sorted_edges:
         edges_indices = np.sort(edges_indices, axis=1)
@@ -184,7 +202,8 @@ def assemble_global_system(nodes_positions: np.ndarray,
                                                 edges_indices,
                                                 dr,
                                                 beam_prop,
-                                                rho=rho)
+                                                rho=rho,
+                                                is_truss=is_truss)
         elif matrix == 'lil':
             K_global = _assemble_sparse_lil_vec(nodes_positions,
                                                 edges_indices,
@@ -205,7 +224,8 @@ def assemble_global_system(nodes_positions: np.ndarray,
                                             edges_indices,
                                             dr,
                                             beam_prop,
-                                            rho=rho)
+                                            rho=rho,
+                                            is_truss=is_truss)
         elif matrix == 'lil':
             K_global = _assemble_sparse_lil(nodes_positions,
                                             edges_indices,
@@ -224,7 +244,7 @@ def assemble_global_system(nodes_positions: np.ndarray,
     return K_global
 
 
-def _assemble_sparse_bsr(nodes, edges, dr, beam_prop, rho=None):
+def _assemble_sparse_bsr(nodes, edges, dr, beam_prop, rho=None, is_truss=None):
     """Assemble global stiffness matrix in BSR format.
 
     Parameters
@@ -239,6 +259,10 @@ def _assemble_sparse_bsr(nodes, edges, dr, beam_prop, rho=None):
         Beam properties (cross section and elastic properties)
     rho : np.ndarray or None, optional
         Per-edge density scale factors, shape (num_edges,).
+    is_truss : np.ndarray or None, optional
+        Per-edge boolean override to assemble that edge as a pin-jointed
+        truss bar instead of the network's normal beam element (ignored if
+        the network is already globally truss). Shape (num_edges,).
 
     Returns
     -------
@@ -249,6 +273,7 @@ def _assemble_sparse_bsr(nodes, edges, dr, beam_prop, rho=None):
     num_nodes, ndim = nodes.shape
     num_dof_per_node = _dof_per_node(ndim, beam_prop)
     num_dof = num_nodes * num_dof_per_node
+    global_truss = beam_prop.get('truss', False)
 
     (edges_sorted, indices, indptr,
      diag_pos_n0, diag_pos_n1,
@@ -257,12 +282,16 @@ def _assemble_sparse_bsr(nodes, edges, dr, beam_prop, rho=None):
     sort_idx = np.lexsort((edges[:, 1], edges[:, 0]))
     dr_s = dr[sort_idx]
     rho_s = rho[sort_idx] if rho is not None else None
+    is_truss_s = is_truss[sort_idx] if is_truss is not None else None
 
     data = np.zeros((len(indices), num_dof_per_node, num_dof_per_node))
     ndpn = num_dof_per_node
 
     for i in range(len(edges_sorted)):
-        if beam_prop.get('truss', False):
+        if is_truss_s is not None and is_truss_s[i] and not global_truss:
+            Ke_small = global_element_stiffness_truss_exact_single(beam_prop, dr_s[i])
+            Ke = embed_truss_stiffness_single(Ke_small, ndim, ndpn)
+        elif global_truss:
             Ke = global_element_stiffness_truss_exact_single(beam_prop, dr_s[i])
         elif beam_prop.get('euler_bernoulli', False):
             Ke = global_element_stiffness_euler_exact_single(beam_prop, dr_s[i])
@@ -282,7 +311,7 @@ def _assemble_sparse_bsr(nodes, edges, dr, beam_prop, rho=None):
                         blocksize=(num_dof_per_node, num_dof_per_node))
 
 
-def _assemble_sparse_bsr_vec(nodes, edges, dr, beam_prop, rho=None):
+def _assemble_sparse_bsr_vec(nodes, edges, dr, beam_prop, rho=None, is_truss=None):
     """Assemble global stiffness matrix in BSR format.
 
     All element stiffness matrices are computed at once, then scattered into
@@ -300,6 +329,10 @@ def _assemble_sparse_bsr_vec(nodes, edges, dr, beam_prop, rho=None):
         Beam properties (cross section and elastic properties)
     rho : np.ndarray or None, optional
         Per-edge density scale factors, shape (num_edges,).
+    is_truss : np.ndarray or None, optional
+        Per-edge boolean override to assemble that edge as a pin-jointed
+        truss bar instead of the network's normal beam element (ignored if
+        the network is already globally truss). Shape (num_edges,).
 
     Returns
     -------
@@ -309,6 +342,7 @@ def _assemble_sparse_bsr_vec(nodes, edges, dr, beam_prop, rho=None):
     num_nodes, ndim = nodes.shape
     num_dof_per_node = _dof_per_node(ndim, beam_prop)
     num_dof = num_nodes * num_dof_per_node
+    global_truss = beam_prop.get('truss', False)
 
     (edges_sorted, indices, indptr,
      diag_pos_n0, diag_pos_n1,
@@ -318,12 +352,18 @@ def _assemble_sparse_bsr_vec(nodes, edges, dr, beam_prop, rho=None):
     sort_idx = np.lexsort((edges[:, 1], edges[:, 0]))
     dr_s = dr[sort_idx]
 
-    if beam_prop.get('truss', False):
+    if global_truss:
         Ke = global_element_stiffness_truss_exact_all(beam_prop, dr_s)
     elif beam_prop.get('euler_bernoulli', False):
         Ke = global_element_stiffness_euler_exact_all(beam_prop, dr_s)
     else:
         Ke = global_element_stiffness_timoshenko_exact_all(beam_prop, dr_s)
+
+    if is_truss is not None and not global_truss:
+        is_truss_s = is_truss[sort_idx]
+        if np.any(is_truss_s):
+            Ke_truss_small = global_element_stiffness_truss_exact_all(beam_prop, dr_s[is_truss_s])
+            Ke[is_truss_s] = embed_truss_stiffness_all(Ke_truss_small, ndim, num_dof_per_node)
 
     if rho is not None:
         Ke = Ke * rho[sort_idx, None, None]

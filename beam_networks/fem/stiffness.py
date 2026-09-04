@@ -1490,3 +1490,58 @@ def global_element_stiffness_truss_exact_all(
     c = d_vec / L[:, None]
     c_ext = np.concatenate([c, -c], axis=1)
     return gamma[:, None, None] * np.einsum('ni,nj->nij', c_ext, c_ext)
+
+
+def embed_truss_stiffness_single(Ke_truss: np.ndarray, ndim: int, ndpn: int) -> np.ndarray:
+    """Zero-pad a truss element stiffness matrix into full beam DOF blocks.
+
+    A truss element has only translational DOFs (``2*ndim`` total). When one
+    truss element is mixed into a network of beam elements (which carry
+    rotational DOFs too, ``ndpn`` per node), its stiffness must be embedded
+    into the larger DOF space: translational entries go to the right offsets,
+    all rotational rows/cols are zero (a pin-jointed bar contributes no
+    bending/torsional stiffness).
+
+    Parameters
+    ----------
+    Ke_truss : np.ndarray
+        Truss element stiffness matrix, shape (2*ndim, 2*ndim), as returned
+        by :func:`global_element_stiffness_truss_exact_single`.
+    ndim : int
+        Spatial dimension (2 or 3).
+    ndpn : int
+        Number of DOFs per node in the (beam) network, ``3*(ndim-1)``.
+
+    Returns
+    -------
+    np.ndarray
+        Embedded stiffness matrix, shape (2*ndpn, 2*ndpn).
+    """
+    trans = np.r_[np.arange(ndim), ndpn + np.arange(ndim)]
+    Ke = np.zeros((2 * ndpn, 2 * ndpn))
+    Ke[np.ix_(trans, trans)] = Ke_truss
+    return Ke
+
+
+def embed_truss_stiffness_all(Ke_truss_all: np.ndarray, ndim: int, ndpn: int) -> np.ndarray:
+    """Vectorised version of :func:`embed_truss_stiffness_single`.
+
+    Parameters
+    ----------
+    Ke_truss_all : np.ndarray
+        Truss element stiffness matrices, shape (n_edges, 2*ndim, 2*ndim).
+    ndim : int
+        Spatial dimension (2 or 3).
+    ndpn : int
+        Number of DOFs per node in the (beam) network, ``3*(ndim-1)``.
+
+    Returns
+    -------
+    np.ndarray
+        Embedded stiffness matrices, shape (n_edges, 2*ndpn, 2*ndpn).
+    """
+    trans = np.r_[np.arange(ndim), ndpn + np.arange(ndim)]
+    n = Ke_truss_all.shape[0]
+    Ke = np.zeros((n, 2 * ndpn, 2 * ndpn))
+    Ke[:, trans[:, None], trans[None, :]] = Ke_truss_all
+    return Ke
