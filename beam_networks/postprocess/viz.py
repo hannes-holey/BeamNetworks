@@ -107,13 +107,11 @@ def _plot_network(ax, nodes, edges, dr,
             ax.text(x, y, f'{i}', ha='left', va='top', fontsize=8,
                     bbox=dict(ec='none', fc='none'))
 
-    xlo = min(np.amin(nodes[:, 0]), ax.get_xlim()[0])
-    xhi = max(np.amax(nodes[:, 0]), ax.get_xlim()[1])
-    ylo = min(np.amin(nodes[:, 1]), ax.get_ylim()[0])
-    yhi = max(np.amax(nodes[:, 1]), ax.get_ylim()[1])
-
-    ax.set_xlim(xlo - 0.01 * (xhi - xlo), xhi + 0.01 * (xhi - xlo))
-    ax.set_ylim(ylo - 0.01 * (yhi - ylo), yhi + 0.01 * (yhi - ylo))
+    # Let matplotlib accumulate the data limits from the collection(s) added
+    # so far (correctly handling repeated calls, e.g. undeformed + deformed
+    # overlays)
+    ax.autoscale_view()
+    ax.margins(0.01)
 
     ax.set_xlabel(r'$x$')
     ax.set_ylabel(r'$y$')
